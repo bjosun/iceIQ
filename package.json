@@ -1,5 +1,42 @@
 {
-  "name": "iceiq",
-  "version": "0.0.1",
-  "private": true
+  "name": "iceiq-react",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@stripe/stripe-js": "^2.1.7",
+    "autoprefixer": "^10.4.0",
+    "chart.js": "^4.5.1",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "firebase": "^10.7.1",
+    "lucide-react": "^0.309.0",
+    "postcss": "^8.4.0",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.69.0",
+    "react-router-dom": "^6.20.0",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss": "^3.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.11",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.0",
+    "typescript": "^5.0.0",
+    "vite": "^4.4.0"
+  }
 }
