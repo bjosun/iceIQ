@@ -4,14 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "build": "vite build",
-    "preview": "vite preview",
-    "deploy:staging": "npm run build && firebase deploy --only hosting:iceiq-react",
-    "deploy:production": "npm run build && firebase deploy --only hosting" 
-  },
+  "dev": "vite",
+  "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+  "build": "vite build",
+  "preview": "vite preview",
+  "deploy:v2": "npm run build && firebase deploy --only hosting:iceiq-v2"
+},
   "dependencies": {
     "@stripe/stripe-js": "^2.1.7",
     "autoprefixer": "^10.4.0",
