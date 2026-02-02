@@ -1,15 +1,5 @@
-// TODO: implement firebase service
 import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  sendPasswordResetEmail,
-  User
-} from 'firebase/auth';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import {
   getFirestore,
   doc,
@@ -18,22 +8,20 @@ import {
   updateDoc,
   collection,
   query,
-  where,
   orderBy,
   limit,
   getDocs,
-  writeBatch,
   deleteDoc
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: "AIzaSyDqNv_T3YlD3k68-Xzsj7dE_R0daChru_I",
+  authDomain: "squareverse-36179.firebaseapp.com",
+  projectId: "squareverse-36179",
+  storageBucket: "squareverse-36179.firebasestorage.app",
+  messagingSenderId: "478064861646",
+  appId: "1:478064861646:web:6a4b8d7351f60dd7668b9f"
 };
 
 // Initialize Firebase
@@ -44,8 +32,8 @@ export const functions = getFunctions(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // Database paths helper
-export const getAppId = () => import.meta.env.VITE_APP_ID || 'default-app-id';
-
+//export const getAppId = () => 'iceiq-react'; 
+export const getAppId = () => 'default-app-id';
 // User document reference
 export const getUserDocRef = (userId: string) => 
   doc(db, "artifacts", getAppId(), "users", userId);
@@ -88,7 +76,8 @@ export const firestore = {
   // Player operations
   async getPlayers(userId: string) {
     const snapshot = await getDocs(getPlayersCollectionRef(userId));
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // FIX: Lade till "as any" här för att TypeScript ska förstå att objektet har egenskaper
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
   },
 
   async savePlayer(userId: string, playerName: string, data: any) {
@@ -121,13 +110,15 @@ export const firestore = {
     });
   },
 
-  async getGames(userId: string, playerName: string, limit?: number) {
+  async getGames(userId: string, playerName: string, limitCount?: number) {
     const gamesRef = getGamesCollectionRef(userId, playerName);
     let q = query(gamesRef, orderBy("date", "desc"));
-    if (limit) q = query(q, limit(limit));
+    
+    if (limitCount) q = query(q, limit(limitCount));
     
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Vi lägger till "as any" här också för säkerhets skull
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
   },
 
   // Template operations
@@ -164,7 +155,8 @@ export const firestore = {
     let totalMatches = 0;
     
     for (const player of players) {
-      const games = await this.getGames(userId, player.name, 1000); // Large limit for counting
+      // Nu kommer player.name att fungera eftersom players är "any"
+      const games = await this.getGames(userId, player.name, 1000); 
       totalMatches += games.length;
     }
     

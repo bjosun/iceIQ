@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import logo from '../../assets/images/iceiq-logo.png'; // Import av loggan
 import { 
   Menu, 
   User, 
@@ -36,16 +37,29 @@ export default function Header() {
     <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-lg flex items-center justify-center">
-              <span className="text-xl font-bold text-gray-900">🏒</span>
+          
+          {/* --- LOGO START (Uppdaterad design) --- */}
+          <Link to="/" className="flex items-center gap-3 group">
+            {/* Logga-bild med hover-effekt */}
+            <div className="relative w-10 h-10 transition-transform transform group-hover:scale-110">
+              <img 
+                src={logo} 
+                alt="Ice IQ Logo" 
+                className="w-full h-full object-contain rounded-full shadow-lg shadow-cyan-500/20" 
+              />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">Ice IQ</h1>
-              <p className="text-xs text-gray-400">{t('appSubtitle')}</p>
+            
+            {/* Text-del: ICE IQ + Scouting V2 */}
+            <div className="flex flex-col">
+              <span className="text-xl font-bold tracking-tight text-white leading-none">
+                ICE <span className="text-cyan-400">IQ</span>
+              </span>
+              <span className="text-[0.6rem] uppercase tracking-wider text-gray-400 font-medium">
+                Scouting V2
+              </span>
             </div>
           </Link>
+          {/* --- LOGO SLUT --- */}
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">

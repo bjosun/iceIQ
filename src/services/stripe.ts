@@ -1,4 +1,4 @@
-// TODO: implement stripe service
+/// <reference types="vite/client" />
 import { loadStripe } from '@stripe/stripe-js';
 
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -22,7 +22,8 @@ export const stripeService = {
         interval, 
         lang: language 
       });
-      return result.data;
+      // Vi berättar för TS att vi förväntar oss ett ID tillbaka
+      return result.data as { id: string };
     } catch (error) {
       console.error('Error creating checkout session:', error);
       throw error;
@@ -33,7 +34,8 @@ export const stripeService = {
     try {
       const { createStripePortalSession } = await import('./firebase');
       const result = await createStripePortalSession();
-      return result.data;
+      // HÄR LÖSER VI FELET: Vi berättar att datan innehåller en URL
+      return result.data as { url: string };
     } catch (error) {
       console.error('Error creating portal session:', error);
       throw error;
@@ -58,6 +60,7 @@ export const stripeService = {
   async manageBilling() {
     try {
       const result = await this.createPortalSession();
+      // Nu vet TypeScript att result har en .url property
       window.location.href = result.url;
     } catch (error) {
       console.error('Error managing billing:', error);

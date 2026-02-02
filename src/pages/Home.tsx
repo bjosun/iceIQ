@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
+import heroBg from '../assets/images/hero-bg.jpg';
+import dashboardPreview from '../assets/images/dashboard-preview.png';
 import { 
   BarChart3, 
   Cloud, 
@@ -71,38 +73,65 @@ export default function Home() {
 
   return (
     <div className="bg-gray-900">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 sm:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+{/* Hero Section */}
+      <section className="relative overflow-hidden py-20 sm:py-32 min-h-[80vh] flex items-center">
+        
+        {/* --- BAKGRUNDSBILD & OVERLAY START --- */}
+        <div className="absolute inset-0 z-0">
+          {/* Själva bilden */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${heroBg})` }}
+          ></div>
+          
+          {/* Mörkt filter (Overlay) för att göra texten läsbar */}
+          {/* Vi använder en gradient som är mörkast i botten för att smälta ihop med nästa sektion */}
+          <div className="absolute inset-0 bg-gray-900/70 bg-gradient-to-b from-gray-900/80 via-gray-900/60 to-gray-900"></div>
+        </div>
+        {/* --- BAKGRUNDSBILD SLUT --- */}
+
+        {/* Innehåll (Notera relative z-10 för att ligga ovanpå bilden) */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="inline-block mb-6">
-              <div className="w-24 h-24 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto">
-                <span className="text-4xl">🏒</span>
+            
+            {/* Ikon/Logga */}
+            <div className="inline-block mb-6 animate-fade-in-up">
+              <div className="w-24 h-24 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl flex items-center justify-center mx-auto shadow-2xl">
+                <span className="text-5xl filter drop-shadow-lg">🏒</span>
               </div>
             </div>
-            <h1 className="text-5xl sm:text-6xl font-bold text-white mb-6">
+
+            {/* Rubrik */}
+            <h1 className="text-5xl sm:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-lg">
               Hockey Analytics
-              <span className="block text-cyan-400">Made Simple</span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-cyan-200">
+                Made Simple
+              </span>
             </h1>
-            <p className="text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
+
+            {/* Underrubrik */}
+            <p className="text-xl sm:text-2xl text-gray-200 mb-10 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
               Professional scouting tools for coaches, players, and supportive parents.
               Track performance, visualize progress, and make data-driven decisions.
             </p>
+
+            {/* Knappar */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/dashboard"
-                className="inline-flex items-center justify-center px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-semibold text-lg transition-colors"
+                className="inline-flex items-center justify-center px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25 border border-cyan-500"
               >
                 Get Started Free
                 <ArrowRight className="ml-2" size={20} />
               </Link>
               <a
                 href="#pricing"
-                className="inline-flex items-center justify-center px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-semibold text-lg transition-colors"
+                className="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-xl font-semibold text-lg transition-all border border-white/20"
               >
                 View Plans
               </a>
             </div>
+
           </div>
         </div>
       </section>

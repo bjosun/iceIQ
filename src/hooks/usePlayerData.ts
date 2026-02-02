@@ -146,12 +146,15 @@ export function usePlayerData() {
     if (!user) return null;
 
     try {
-      const games = await getPlayerHistory(playerName, 1000);
+      // Vi sätter en typ på games här för att hjälpa TypeScript
+      const games = (await getPlayerHistory(playerName, 1000)) as GameRecord[];
       
       if (games.length === 0) return null;
 
       const totalPoints = games.reduce((sum, game) => sum + (game.points || 0), 0);
       const avgPoints = totalPoints / games.length;
+      
+      // Vi anger typer för best/worst game explicit
       const bestGame = games.reduce((best, game) => 
         (game.points || 0) > (best.points || 0) ? game : best
       );
@@ -161,9 +164,13 @@ export function usePlayerData() {
 
       // Calculate action frequencies
       const actionCounts: Record<string, number> = {};
+      
       games.forEach(game => {
+        // HÄR VAR FELET: Vi castar count till 'number'
         Object.entries(game.counts || {}).forEach(([action, count]) => {
-          actionCounts[action] = (actionCounts[action] || 0) + count;
+          // Lägg till 'as number' här nedanför
+          const countVal = count as number; 
+          actionCounts[action] = (actionCounts[action] || 0) + countVal;
         });
       });
 
