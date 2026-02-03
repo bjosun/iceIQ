@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Save, MoveUp, MoveDown, Type, Hash } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTemplates } from '../../contexts/TemplateContext';
@@ -16,45 +16,46 @@ export default function TemplateEditorModal({ isOpen, onClose }: TemplateEditorM
   const { t, language } = useLanguage();
   const { currentTemplate, saveTemplate } = useTemplates();
   const [templateName, setTemplateName] = useState({ sv: '', en: '' });
-  const [actions, setActions] = useState(currentTemplate?.actions || []);
+  const [actions, setActions] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
 
   // Initialize with current template data
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentTemplate) {
       setTemplateName(currentTemplate.name);
+      // Se till att vi skapar en kopia av arrayen
       setActions([...currentTemplate.actions]);
     }
-  }, [currentTemplate]);
+  }, [currentTemplate, isOpen]);
 
-  const addAction = () => {
+  const addAction = (type: 'positive' | 'negative') => {
     setActions([
       ...actions,
       {
         name: { sv: '', en: '' },
-        points: 1,
-        type: 'positive'
+        points: type === 'positive' ? 1 : -1,
+        type: type
       }
     ]);
   };
 
   const updateAction = (index: number, field: string, value: any) => {
     const updatedActions = [...actions];
-    if (field === 'name.sv') {
-      updatedActions[index] = {
-        ...updatedActions[index],
-        name: { ...updatedActions[index].name, sv: value }
-      };
-    } else if (field === 'name.en') {
-      updatedActions[index] = {
-        ...updatedActions[index],
-        name: { ...updatedActions[index].name, en: value }
-      };
+    // Hantera nested objects (name.sv, name.en)
+    if (field.includes('.')) {
+        const [parent, child] = field.split('.');
+        updatedActions[index] = {
+            ...updatedActions[index],
+            [parent]: {
+                ...updatedActions[index][parent],
+                [child]: value
+            }
+        };
     } else {
-      updatedActions[index] = {
-        ...updatedActions[index],
-        [field]: value
-      };
+        updatedActions[index] = {
+            ...updatedActions[index],
+            [field]: value
+        };
     }
     setActions(updatedActions);
   };
@@ -78,6 +79,12 @@ export default function TemplateEditorModal({ isOpen, onClose }: TemplateEditorM
   const handleSave = async () => {
     if (!currentTemplate) return;
     
+    // Enkel validering
+    if (!templateName.sv && !templateName.en) {
+        alert("Please enter a template name");
+        return;
+    }
+
     setSaving(true);
     try {
       await saveTemplate(currentTemplate.id, {
@@ -93,8 +100,12 @@ export default function TemplateEditorModal({ isOpen, onClose }: TemplateEditorM
     }
   };
 
-  const positiveActions = actions.filter(a => a.type === 'positive');
-  const negativeActions = actions.filter(a => a.type === 'negative');
+  // --- VIKTIG FIX: Mappa med original-index ---
+  // Detta löser problemet med dubbletter och felaktiga uppdateringar
+  const indexedActions = actions.map((action, index) => ({ ...action, originalIndex: index }));
+  
+  const positiveActions = indexedActions.filter(a => a.type === 'positive');
+  const negativeActions = indexedActions.filter(a => a.type === 'negative');
 
   return (
     <Modal
@@ -128,6 +139,7 @@ export default function TemplateEditorModal({ isOpen, onClose }: TemplateEditorM
 
         {/* Actions Editor */}
         <div className="space-y-8">
+          
           {/* Positive Actions */}
           <Card>
             <div className="flex items-center justify-between mb-6">
@@ -137,7 +149,7 @@ export default function TemplateEditorModal({ isOpen, onClose }: TemplateEditorM
               <Button
                 variant="success"
                 size="sm"
-                onClick={() => addAction()}
+                onClick={() => addAction('positive')}
                 icon={Plus}
               >
                 Add Positive Action
@@ -145,18 +157,22 @@ export default function TemplateEditorModal({ isOpen, onClose }: TemplateEditorM
             </div>
 
             <div className="space-y-4">
-              {positiveActions.map((action, index) => (
+              {positiveActions.map((item) => (
                 <ActionEditor
-                  key={index}
-                  action={action}
-                  index={actions.findIndex(a => a === action)}
-                  onUpdate={(field, value) => updateAction(index, field, value)}
-                  onRemove={() => removeAction(index)}
+                  key={item.originalIndex} // Använd stabilt index som key
+                  action={item}
+                  index={item.originalIndex}
+                  onUpdate={updateAction}
+                  onRemove={removeAction}
                   onMove={moveAction}
-                  isFirst={index === 0}
-                  isLast={index === positiveActions.length - 1}
+                  // Disable move up om det är absolut första, disable move down om absolut sista
+                  isFirst={item.originalIndex === 0}
+                  isLast={item.originalIndex === actions.length - 1}
                 />
               ))}
+              {positiveActions.length === 0 && (
+                  <p className="text-gray-500 text-sm italic text-center">No positive actions added.</p>
+              )}
             </div>
           </Card>
 
@@ -169,12 +185,7 @@ export default function TemplateEditorModal({ isOpen, onClose }: TemplateEditorM
               <Button
                 variant="danger"
                 size="sm"
-                onClick={() => {
-                  setActions([
-                    ...actions,
-                    { name: { sv: '', en: '' }, points: -1, type: 'negative' }
-                  ]);
-                }}
+                onClick={() => addAction('negative')}
                 icon={Plus}
               >
                 Add Negative Action
@@ -182,21 +193,21 @@ export default function TemplateEditorModal({ isOpen, onClose }: TemplateEditorM
             </div>
 
             <div className="space-y-4">
-              {negativeActions.map((action, index) => {
-                const globalIndex = actions.findIndex(a => a === action);
-                return (
-                  <ActionEditor
-                    key={globalIndex}
-                    action={action}
-                    index={globalIndex}
-                    onUpdate={(field, value) => updateAction(globalIndex, field, value)}
-                    onRemove={() => removeAction(globalIndex)}
-                    onMove={moveAction}
-                    isFirst={globalIndex === positiveActions.length}
-                    isLast={globalIndex === actions.length - 1}
-                  />
-                );
-              })}
+              {negativeActions.map((item) => (
+                <ActionEditor
+                  key={item.originalIndex}
+                  action={item}
+                  index={item.originalIndex}
+                  onUpdate={updateAction}
+                  onRemove={removeAction}
+                  onMove={moveAction}
+                  isFirst={item.originalIndex === 0}
+                  isLast={item.originalIndex === actions.length - 1}
+                />
+              ))}
+               {negativeActions.length === 0 && (
+                  <p className="text-gray-500 text-sm italic text-center">No negative actions added.</p>
+              )}
             </div>
           </Card>
         </div>
@@ -220,8 +231,8 @@ export default function TemplateEditorModal({ isOpen, onClose }: TemplateEditorM
 interface ActionEditorProps {
   action: any;
   index: number;
-  onUpdate: (field: string, value: any) => void;
-  onRemove: () => void;
+  onUpdate: (index: number, field: string, value: any) => void;
+  onRemove: (index: number) => void;
   onMove: (index: number, direction: 'up' | 'down') => void;
   isFirst: boolean;
   isLast: boolean;
@@ -236,23 +247,21 @@ function ActionEditor({
   isFirst,
   isLast
 }: ActionEditorProps) {
-  const { t } = useLanguage();
-
   return (
-    <div className="flex items-start space-x-4 p-4 bg-gray-750 rounded-xl">
+    <div className="flex items-start space-x-4 p-4 bg-gray-750 rounded-xl border border-gray-700">
       {/* Move buttons */}
       <div className="flex flex-col space-y-1">
         <button
           onClick={() => onMove(index, 'up')}
           disabled={isFirst}
-          className="p-1 rounded hover:bg-gray-700 disabled:opacity-30"
+          className="p-1 rounded hover:bg-gray-700 disabled:opacity-30 transition-colors"
         >
           <MoveUp size={16} className="text-gray-400" />
         </button>
         <button
           onClick={() => onMove(index, 'down')}
           disabled={isLast}
-          className="p-1 rounded hover:bg-gray-700 disabled:opacity-30"
+          className="p-1 rounded hover:bg-gray-700 disabled:opacity-30 transition-colors"
         >
           <MoveDown size={16} className="text-gray-400" />
         </button>
@@ -262,13 +271,13 @@ function ActionEditor({
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
         <Input
           value={action.name.sv}
-          onChange={(e) => onUpdate('name.sv', e.target.value)}
+          onChange={(e) => onUpdate(index, 'name.sv', e.target.value)}
           placeholder="Name (Swedish)"
           className="text-sm"
         />
         <Input
           value={action.name.en}
-          onChange={(e) => onUpdate('name.en', e.target.value)}
+          onChange={(e) => onUpdate(index, 'name.en', e.target.value)}
           placeholder="Name (English)"
           className="text-sm"
         />
@@ -279,26 +288,26 @@ function ActionEditor({
         <Input
           type="number"
           value={action.points}
-          onChange={(e) => onUpdate('points', Number(e.target.value))}
-          placeholder="Points"
+          onChange={(e) => onUpdate(index, 'points', Number(e.target.value))}
+          placeholder="Pts"
           icon={Hash}
           className="text-sm"
         />
       </div>
 
       {/* Type indicator */}
-      <div className={`px-3 py-2 rounded-lg ${
+      <div className={`px-3 py-2 rounded-lg font-bold ${
         action.type === 'positive' 
-          ? 'bg-green-900/30 text-green-400' 
-          : 'bg-red-900/30 text-red-400'
+          ? 'bg-green-900/30 text-green-400 border border-green-900/50' 
+          : 'bg-red-900/30 text-red-400 border border-red-900/50'
       }`}>
         {action.type === 'positive' ? '+' : '-'}
       </div>
 
       {/* Remove button */}
       <button
-        onClick={onRemove}
-        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg"
+        onClick={() => onRemove(index)}
+        className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
       >
         <Trash2 size={18} />
       </button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react'; // Tog bort useState härifrån
 import { Calendar, Users, FileText, Search, Edit } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTemplates } from '../../contexts/TemplateContext';
@@ -6,28 +6,43 @@ import { useSubscription } from '../../contexts/SubscriptionContext';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Card from '../ui/Card';
-import TemplateSelectModal from '../modals/TemplateEditorModal';
 
 interface PlayerFormProps {
   onShowHistory: () => void;
   onEditTemplate: () => void;
+  
+  // NYA PROPS: Vi tar emot state från föräldern (Dashboard)
+  selectedPlayerName: string;
+  onPlayerNameChange: (name: string) => void;
+  teamName: string;
+  onTeamNameChange: (name: string) => void;
+  gameDate: string;
+  onGameDateChange: (date: string) => void;
+  onOpenPlayerSelect: () => void; // För förstoringsglaset
 }
 
-export default function PlayerForm({ onShowHistory, onEditTemplate }: PlayerFormProps) {
+export default function PlayerForm({ 
+  onShowHistory, 
+  onEditTemplate,
+  selectedPlayerName,
+  onPlayerNameChange,
+  teamName,
+  onTeamNameChange,
+  gameDate,
+  onGameDateChange,
+  onOpenPlayerSelect
+}: PlayerFormProps) {
+  
   const { t, language } = useLanguage();
   const { subscription } = useSubscription();
   const { templates, currentTemplateId, setCurrentTemplate, currentTemplate } = useTemplates();
-  const [playerName, setPlayerName] = useState('');
-  const [teamName, setTeamName] = useState('');
-  const [gameDate, setGameDate] = useState(new Date().toISOString().split('T')[0]);
-  const [showTemplateSelect, setShowTemplateSelect] = useState(false);
+  
+  // Tog bort lokala useState. Vi använder props istället.
 
   const templateOptions = Object.entries(templates).map(([id, template]) => ({
     value: id,
     label: template.name[language]
   }));
-
-  const currentTemplateName = currentTemplate?.name[language] || '';
 
   return (
     <Card elevated className="mb-6">
@@ -39,15 +54,15 @@ export default function PlayerForm({ onShowHistory, onEditTemplate }: PlayerForm
           </label>
           <div className="flex">
             <Input
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
+              value={selectedPlayerName} // Använder prop
+              onChange={(e) => onPlayerNameChange(e.target.value)} // Uppdaterar föräldern
               placeholder="Enter player name"
               className="rounded-r-none"
             />
             <Button
               variant="secondary"
               className="rounded-l-none border-l-0"
-              onClick={() => {/* Open player select modal */}}
+              onClick={onOpenPlayerSelect} // Öppnar modalen i Dashboard
             >
               <Search size={18} />
             </Button>
@@ -60,8 +75,8 @@ export default function PlayerForm({ onShowHistory, onEditTemplate }: PlayerForm
             {t('team')}
           </label>
           <Input
-            value={teamName}
-            onChange={(e) => setTeamName(e.target.value)}
+            value={teamName} // Använder prop
+            onChange={(e) => onTeamNameChange(e.target.value)}
             placeholder="Team name"
             icon={Users}
           />
@@ -74,8 +89,8 @@ export default function PlayerForm({ onShowHistory, onEditTemplate }: PlayerForm
           </label>
           <Input
             type="date"
-            value={gameDate}
-            onChange={(e) => setGameDate(e.target.value)}
+            value={gameDate} // Använder prop
+            onChange={(e) => onGameDateChange(e.target.value)}
             icon={Calendar}
           />
         </div>
@@ -129,7 +144,7 @@ export default function PlayerForm({ onShowHistory, onEditTemplate }: PlayerForm
         {subscription.plan === 'free' && (
           <Button
             variant="premium"
-            onClick={() => {/* Open upgrade modal */}}
+            onClick={() => { /* Open upgrade modal logic here or via prop if needed */ }}
             className="sm:ml-auto"
             fullWidth={window.innerWidth < 640}
           >

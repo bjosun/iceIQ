@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Search } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
+// 1. IMPORTERA HOOKEN
+import { usePlayerData } from '../../hooks/usePlayerData'; 
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -28,6 +30,10 @@ export default function PlayerSelectModal({
 }: PlayerSelectModalProps) {
   const { t } = useLanguage();
   const { user } = useAuth();
+  
+  // 2. HÄMTA FUNKTIONEN
+  const { getPlayers } = usePlayerData();
+
   const [players, setPlayers] = useState<Player[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,19 +44,23 @@ export default function PlayerSelectModal({
     }
   }, [isOpen, user]);
 
+  // 3. BYT UT HELA loadPlayers MOT DETTA:
   const loadPlayers = async () => {
     setLoading(true);
-    // Mock data - replace with actual API call
-    setTimeout(() => {
-      setPlayers([
-        { id: '1', name: 'Erik Karlsson', gameCount: 12, lastGameDate: '2024-02-15' },
-        { id: '2', name: 'Victor Hedman', gameCount: 8, lastGameDate: '2024-02-10' },
-        { id: '3', name: 'Mika Zibanejad', gameCount: 15, lastGameDate: '2024-02-18' },
-        { id: '4', name: 'Elias Pettersson', gameCount: 10, lastGameDate: '2024-02-12' },
-        { id: '5', name: 'William Nylander', gameCount: 14, lastGameDate: '2024-02-16' },
-      ]);
+    try {
+      // Hämta riktiga spelare från databasen
+      const fetchedPlayers = await getPlayers();
+      
+      // Din hook returnerar redan gameCount, så vi kan använda datan direkt
+      // Vi måste dock se till att typerna matchar. 
+      // Din hook returnerar 'any', så vi castar det till Player[] för säkerhets skull.
+      setPlayers(fetchedPlayers as Player[]);
+      
+    } catch (error) {
+      console.error("Failed to load players", error);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const filteredPlayers = players.filter(player =>
@@ -72,6 +82,7 @@ export default function PlayerSelectModal({
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search players..."
             icon={Search}
+            autoFocus // Lade till denna för bättre UX
           />
         </div>
 
@@ -102,7 +113,9 @@ export default function PlayerSelectModal({
                         {player.name}
                       </h4>
                       <p className="text-sm text-gray-400">
-                        {player.gameCount} games • Last: {player.lastGameDate}
+                        {/* Visar riktig statistik om den finns, annars 0 */}
+                        {player.gameCount || 0} games 
+                        {player.lastGameDate && ` • Last: ${player.lastGameDate}`}
                       </p>
                     </div>
                   </div>
@@ -118,9 +131,13 @@ export default function PlayerSelectModal({
             <div className="text-center py-12">
               <Users size={48} className="text-gray-600 mx-auto mb-4" />
               <p className="text-gray-400">No players found</p>
-              {searchTerm && (
+              {searchTerm ? (
                 <p className="text-sm text-gray-500 mt-2">
                   Try a different search term
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500 mt-2">
+                  Create a new player to get started
                 </p>
               )}
             </div>

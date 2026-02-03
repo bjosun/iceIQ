@@ -1,75 +1,50 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, History, Crown, User, Plus } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { History, Crown, Save } from 'lucide-react'; // Eller vilka ikoner du använder
 
+// 1. HÄR ÄR FIXEN: Vi definierar att komponenten ska ta emot dessa tre funktioner
 interface MobileBottomNavProps {
-  onRecordGame?: () => void;
+  onHistoryClick: () => void;
+  onPremiumClick: () => void;
+  onRecordGame: () => void;
 }
 
-export default function MobileBottomNav({ onRecordGame }: MobileBottomNavProps) {
-  const { user } = useAuth();
-  const location = useLocation();
-
-  if (!user) return null;
-
-  const isActive = (path: string) => location.pathname === path;
-
+export default function MobileBottomNav({ 
+  onHistoryClick, 
+  onPremiumClick, 
+  onRecordGame 
+}: MobileBottomNavProps) {
+  
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-50">
-      <div className="flex justify-around items-center h-16 px-2">
-        <Link
-          to="/dashboard"
-          className={`flex flex-col items-center justify-center flex-1 p-2 ${
-            isActive('/dashboard') ? 'text-cyan-400' : 'text-gray-400'
-          }`}
-        >
-          <Home size={24} />
-          <span className="text-xs mt-1">Home</span>
-        </Link>
-
-        <Link
-          to="/dashboard?history=true"
-          className={`flex flex-col items-center justify-center flex-1 p-2 ${
-            location.search.includes('history') ? 'text-cyan-400' : 'text-gray-400'
-          }`}
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 p-4 md:hidden z-50">
+      <div className="flex justify-around items-center">
+        
+        {/* History Button */}
+        <button 
+          onClick={onHistoryClick}
+          className="flex flex-col items-center text-gray-400 hover:text-cyan-400"
         >
           <History size={24} />
           <span className="text-xs mt-1">History</span>
-        </Link>
+        </button>
 
-        {onRecordGame && (
-          <button
-            onClick={onRecordGame}
-            className="flex flex-col items-center justify-center flex-1 p-2 text-cyan-400"
-          >
-            <div className="w-12 h-12 bg-cyan-600 rounded-full flex items-center justify-center -mt-4 shadow-lg">
-              <Plus size={24} />
-            </div>
-            <span className="text-xs mt-1">Record</span>
-          </button>
-        )}
+        {/* Record Game Button (Big Center Button) */}
+        <button 
+          onClick={onRecordGame}
+          className="flex flex-col items-center justify-center w-14 h-14 bg-cyan-600 rounded-full -mt-8 shadow-lg hover:bg-cyan-500 text-white border-4 border-gray-900"
+        >
+          <Save size={24} />
+        </button>
 
-        <Link
-          to="/dashboard?premium=true"
-          className={`flex flex-col items-center justify-center flex-1 p-2 ${
-            location.search.includes('premium') ? 'text-yellow-400' : 'text-gray-400'
-          }`}
+        {/* Premium Button */}
+        <button 
+          onClick={onPremiumClick}
+          className="flex flex-col items-center text-gray-400 hover:text-yellow-400"
         >
           <Crown size={24} />
           <span className="text-xs mt-1">Premium</span>
-        </Link>
-
-        <Link
-          to="/dashboard?profile=true"
-          className={`flex flex-col items-center justify-center flex-1 p-2 ${
-            location.search.includes('profile') ? 'text-cyan-400' : 'text-gray-400'
-          }`}
-        >
-          <User size={24} />
-          <span className="text-xs mt-1">Profile</span>
-        </Link>
+        </button>
+        
       </div>
-    </nav>
+    </div>
   );
 }

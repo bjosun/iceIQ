@@ -25,8 +25,8 @@ interface TemplateContextType {
   saveTemplate: (templateId: string, template: Template) => Promise<void>;
   deleteTemplate: (templateId: string) => Promise<void>;
   addAction: (action: TemplateAction) => void;
-  updateAction: (actionId: string, updates: Partial<TemplateAction>) => void;
-  deleteAction: (actionId: string) => void;
+  updateAction: (actionIndex: number, updates: Partial<TemplateAction>) => void;
+  deleteAction: (actionIndex: number) => void;
 }
 
 const defaultTemplates: Record<string, Template> = {
@@ -42,6 +42,7 @@ const defaultTemplates: Record<string, Template> = {
       { name: {sv: 'Assist', en: 'Assist'}, points: 5, type: 'positive' },
       { name: {sv: 'Löser stressad situation', en: 'Solves Pressured Situation'}, points: 5, type: 'positive' },
       { name: {sv: 'Blockerat skott', en: 'Blocked Shot'}, points: 3, type: 'positive' },
+      { name: {sv: 'Höll blålinjen', en: 'Kept Zone'}, points: 2, type: 'positive' },
       { name: {sv: 'Misslyckad passning', en: 'Failed Pass'}, points: -1, type: 'negative' },
       { name: {sv: 'Pucktapp (turnover)', en: 'Turnover'}, points: -3, type: 'negative' },
       { name: {sv: 'Utvisning', en: 'Penalty'}, points: -4, type: 'negative' },

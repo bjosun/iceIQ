@@ -14,22 +14,36 @@ interface SubscriptionModalProps {
 
 export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModalProps) {
   const { t, language } = useLanguage();
-  const { subscription, upgradeToPremium } = useSubscription();
+  
+  // 1. Hämta även manageSubscription här
+  const { subscription, upgradeToPremium, manageSubscription } = useSubscription();
+  
   const { user } = useAuth();
   const [selectedInterval, setSelectedInterval] = useState<'monthly' | 'yearly'>('monthly');
   const [processing, setProcessing] = useState(false);
 
-  const handleUpgrade = async () => {
+  // 2. Smartare hanterare som väljer rätt funktion
+  const handleAction = async () => {
     if (!user) {
-      alert('Please log in to upgrade');
+      alert('Please log in first');
       return;
     }
 
     setProcessing(true);
     try {
-      await upgradeToPremium(selectedInterval);
+      if (subscription.plan === 'premium') {
+        // Om man redan är premium -> Öppna portalen
+        if (manageSubscription) {
+            await manageSubscription();
+        } else {
+            console.error("Manage subscription function missing in context");
+        }
+      } else {
+        // Annars -> Starta köp
+        await upgradeToPremium(selectedInterval);
+      }
     } catch (error) {
-      console.error('Upgrade failed:', error);
+      console.error('Action failed:', error);
     } finally {
       setProcessing(false);
     }
@@ -50,9 +64,10 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
     },
     premium: {
       name: 'Premium',
-      price: language === 'en' ? '2.90' : '29',
+      // 3. Lade till valutasymboler här
+      price: language === 'en' ? '$2.90' : '29 kr',
       period: t('perMonth'),
-      yearlyPrice: language === 'en' ? '29' : '299',
+      yearlyPrice: language === 'en' ? '$29' : '299 kr',
       yearlyPeriod: language === 'en' ? '/year' : '/år',
       features: [
         { icon: Check, text: t('premiumFeaturePlus'), included: true },
@@ -85,7 +100,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                 </p>
               </div>
               {subscription.plan === 'premium' && (
-                <div className="premium-badge">
+                <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
                   ACTIVE
                 </div>
               )}
@@ -130,6 +145,9 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
               variant={subscription.plan === 'free' ? 'primary' : 'secondary'}
               disabled={subscription.plan === 'free'}
               fullWidth
+              // Här inaktiverar vi knappen om man redan har Free, 
+              // annars kanske man vill ha en "Downgrade"-logik (Customer Portal)
+              onClick={manageSubscription} 
             >
               {subscription.plan === 'free' ? 'Current Plan' : 'Downgrade'}
             </Button>
@@ -138,7 +156,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
           {/* Premium Plan */}
           <Card className="relative border-2 border-yellow-500">
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <span className="bg-yellow-500 text-black px-4 py-1 rounded-full text-sm font-bold flex items-center">
+              <span className="bg-yellow-500 text-black px-4 py-1 rounded-full text-sm font-bold flex items-center shadow-lg">
                 <Crown size={14} className="mr-1" />
                 {t('recommended')}
               </span>
@@ -165,9 +183,9 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             <div className="flex mb-6 bg-gray-800 rounded-xl p-1">
               <button
                 onClick={() => setSelectedInterval('monthly')}
-                className={`flex-1 py-2 rounded-lg font-semibold transition-colors ${
+                className={`flex-1 py-2 rounded-lg font-semibold transition-colors text-sm ${
                   selectedInterval === 'monthly'
-                    ? 'bg-cyan-600 text-white'
+                    ? 'bg-cyan-600 text-white shadow-md'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
@@ -175,13 +193,13 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
               </button>
               <button
                 onClick={() => setSelectedInterval('yearly')}
-                className={`flex-1 py-2 rounded-lg font-semibold transition-colors ${
+                className={`flex-1 py-2 rounded-lg font-semibold transition-colors text-sm ${
                   selectedInterval === 'yearly'
-                    ? 'bg-cyan-600 text-white'
+                    ? 'bg-cyan-600 text-white shadow-md'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
-                Yearly (Save 20%)
+                Yearly (-20%)
               </button>
             </div>
 
@@ -197,7 +215,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             <Button
               variant="premium"
               loading={processing}
-              onClick={handleUpgrade}
+              onClick={handleAction} // 4. Använder nya funktionen
               icon={Sparkles}
               fullWidth
             >

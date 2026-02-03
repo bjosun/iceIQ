@@ -32,8 +32,8 @@ export const functions = getFunctions(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // Database paths helper
-//export const getAppId = () => 'iceiq-react'; 
 export const getAppId = () => 'default-app-id';
+
 // User document reference
 export const getUserDocRef = (userId: string) => 
   doc(db, "artifacts", getAppId(), "users", userId);
@@ -63,20 +63,13 @@ export const firestore = {
     await setDoc(getUserDocRef(userId), data, { merge: true });
   },
 
-  async updateSubscription(userId: string, subscriptionData: any) {
-    await updateDoc(getUserDocRef(userId), {
-      subscriptionPlan: subscriptionData.plan,
-      subscriptionStatus: subscriptionData.status,
-      subscriptionInterval: subscriptionData.interval,
-      subscriptionEnd: subscriptionData.subscriptionEnd,
-      lastUpdated: new Date().toISOString()
-    });
-  },
+  // OBS: updateSubscription är borttagen härifrån. 
+  // Frontend ska bara LÄSA status, aldrig SKRIVA den. 
+  // Det sköter din Cloud Function (Webhook).
 
   // Player operations
   async getPlayers(userId: string) {
     const snapshot = await getDocs(getPlayersCollectionRef(userId));
-    // FIX: Lade till "as any" här för att TypeScript ska förstå att objektet har egenskaper
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
   },
 
@@ -117,32 +110,39 @@ export const firestore = {
     if (limitCount) q = query(q, limit(limitCount));
     
     const snapshot = await getDocs(q);
-    // Vi lägger till "as any" här också för säkerhets skull
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
   },
 
   // Template operations
   async saveTemplate(userId: string, templateKey: string, templateData: any) {
     const userRef = getUserDocRef(userId);
+    // Vi hämtar datan först för att inte skriva över gamla mallar
     const userData = await getDoc(userRef);
     const currentTemplates = userData.exists() ? userData.data()?.customTemplates || {} : {};
     
-    await updateDoc(userRef, {
+    // SÄKRARE METOD: Använd setDoc med merge istället för updateDoc
+    // Detta skapar dokumentet om det inte finns.
+    await setDoc(userRef, {
       customTemplates: {
         ...currentTemplates,
         [templateKey]: templateData
       },
       lastUpdated: new Date().toISOString()
-    });
+    }, { merge: true });
   },
 
   async deleteTemplate(userId: string, templateKey: string) {
     const userRef = getUserDocRef(userId);
     const userData = await getDoc(userRef);
-    const currentTemplates = userData.exists() ? userData.data()?.customTemplates || {} : {};
+    
+    // Om användaren inte finns, finns inga mallar att ta bort
+    if (!userData.exists()) return;
+
+    const currentTemplates = userData.data()?.customTemplates || {};
     
     delete currentTemplates[templateKey];
     
+    // Här kan vi använda updateDoc eftersom vi vet att dokumentet finns (vi kollade nyss)
     await updateDoc(userRef, {
       customTemplates: currentTemplates,
       lastUpdated: new Date().toISOString()
@@ -155,7 +155,6 @@ export const firestore = {
     let totalMatches = 0;
     
     for (const player of players) {
-      // Nu kommer player.name att fungera eftersom players är "any"
       const games = await this.getGames(userId, player.name, 1000); 
       totalMatches += games.length;
     }

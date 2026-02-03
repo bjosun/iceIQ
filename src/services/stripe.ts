@@ -2,7 +2,7 @@
 import { loadStripe } from '@stripe/stripe-js';
 
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
+//console.log("Laddar Stripe med nyckel:", STRIPE_PUBLISHABLE_KEY);
 // Initialize Stripe
 let stripePromise: Promise<any> | null = null;
 

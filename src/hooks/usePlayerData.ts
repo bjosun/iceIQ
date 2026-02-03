@@ -27,7 +27,13 @@ export function usePlayerData() {
 
   const saveGame = useCallback(async (
     playerName: string,
-    gameData: Omit<GameRecord, 'id'>,
+    gameData: { 
+      date: string; 
+      team: string; 
+      points?: number; 
+      softSkillCounts?: Record<string, number> 
+    },
+    
     template: string,
     counts: Record<string, number>,
     bonusFactor: number
@@ -40,12 +46,39 @@ export function usePlayerData() {
     setError(null);
 
     try {
-      const totalPoints = Object.entries(counts).reduce((sum, [key, count]) => {
-        // You'll need to get points from template actions
-        // This is simplified - you'll need to adjust based on your template structure
-        return sum + (count * 1); // Replace with actual point calculation
-      }, 0);
+      // 1. STÄDA DATAN (Fixar problemet med JSON-nycklar)
+      const cleanCounts: Record<string, number> = {};
+      let calculatedPoints = 0;
 
+      // Vi måste hämta poängvärdet för varje action. 
+      // Eftersom vi inte har tillgång till currentTemplate här inne direkt, 
+      // måste vi antingen skicka med det eller göra en kvalificerad gissning.
+      // För att lösa spar-problemet nu, städar vi bara nycklarna.
+      
+      Object.entries(counts).forEach(([key, count]) => {
+        try {
+          // Försök parsa nyckeln (eftersom den ser ut som '{"sv":"Mål"...}')
+          const nameObj = JSON.parse(key);
+          
+          // Använd det engelska namnet som nyckel i databasen (mycket renare)
+          const dbKey = nameObj.en || nameObj.sv; 
+          cleanCounts[dbKey] = count;
+
+          // TODO: Här borde du egentligen slå upp poängen från mallen.
+          // Just nu sätter du poäng * 1 vilket kanske inte stämmer?
+          // calculatedPoints += count * (action.points || 1); 
+          
+        } catch (e) {
+          // Om nyckeln inte var JSON (gammal data?), spara som den är
+          cleanCounts[key] = count;
+        }
+      });
+
+      // OBS: Du räknade poäng manuellt i din förra kod (count * 1). 
+      // Du bör se till att gameData.points som skickas in är korrekt uträknat 
+      // från komponenten (SummarySection) innan det skickas hit.
+      // Vi använder gameData.points om det finns, annars default.
+      const totalPoints = gameData.points || 0;
       const currentBonus = totalPoints * bonusFactor;
 
       const gameRecord: GameRecord = {
@@ -53,10 +86,12 @@ export function usePlayerData() {
         team: gameData.team.trim(),
         points: totalPoints,
         bonus: currentBonus,
-        counts,
+        counts: cleanCounts, // <--- SKICKA DEN STÄDADE DATAN HÄR
         template,
         ...(gameData.softSkillCounts && { softSkillCounts: gameData.softSkillCounts })
       };
+
+      console.log("Saving sanitized game record:", gameRecord); // Debug-logg
 
       // Save player info
       await firestore.savePlayer(user.uid, playerName, {
@@ -79,13 +114,13 @@ export function usePlayerData() {
 
       return { success: true, gameRecord };
     } catch (err) {
+      console.error("Save game failed:", err); // Se det riktiga felet i konsolen
       setError(err instanceof Error ? err.message : 'Failed to save game');
       throw err;
     } finally {
       setLoading(false);
     }
   }, [user]);
-
   const getPlayers = useCallback(async (): Promise<Player[]> => {
     if (!user) return [];
 
