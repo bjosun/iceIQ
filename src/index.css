@@ -69,3 +69,34 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-500;
 }
+/* Fix för att datumväljaren inte ska sticka ut på mobilen */
+@layer base {
+  input[type="date"] {
+    /* Tvingar fältet att hålla sig inom ramen */
+    max-width: 100%;
+    min-width: 0;
+    /* Gör att texten och ikonerna får plats bättre */
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  /* Rensar bort inbyggda ikoner som krockar med dina egna ikoner */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+  }
+
+  /* Säkerställer att texten inte trycks åt sidan på iOS */
+  input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+    margin-left: 0.5rem; /* Justera så texten inte krockar med din kalender-ikon */
+  }
+}

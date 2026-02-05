@@ -52,6 +52,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               'focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent',
               'disabled:opacity-50 disabled:cursor-not-allowed',
               'placeholder:text-gray-500',
+              'min-w-0', // VIKTIGT: Tillåter fältet att krympa under sin naturliga storlek
+              'box-border', // Säkerställer att padding inte ökar totalbredden
+              'appearance-none', // Tar bort webbläsarspecifik styling som kan spöka
               Icon && 'pl-10',
               error && 'border-red-500 focus:ring-red-500',
               fullWidth && 'w-full',

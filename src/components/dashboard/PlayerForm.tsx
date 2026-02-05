@@ -83,7 +83,7 @@ export default function PlayerForm({
         </div>
 
         {/* Game Date */}
-        <div className="w-full min-w-0"> {/* Tillagt: w-full min-w-0 för att säkra kolumnen */}
+        <div className="w-full min-w-0 overflow-hidden"> 
           <label className="block text-sm font-medium text-gray-300 mb-2">
             {t('gameDate')}
           </label>
@@ -92,7 +92,7 @@ export default function PlayerForm({
             value={gameDate}
             onChange={(e) => onGameDateChange(e.target.value)}
             icon={Calendar}
-            className="w-full" // Tillagt: Tvinga inputen att hålla sig inom ramen
+            className="w-full" // Detta matchar nu din uppdaterade Input-komponent
           />
         </div>
 
