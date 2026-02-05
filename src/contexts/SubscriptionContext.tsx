@@ -56,33 +56,18 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const userData = await firestore.getUserData(user.uid);
       
       if (userData) {
-        const sub: Subscription = {
+        // Vi bara läser datat. Om det är utgånget så är det 
+        // Cloud Functionens jobb att se till att 'plan' är 'free'.
+        setSubscription({
           plan: userData.subscriptionPlan || 'free',
           status: userData.subscriptionStatus || 'active',
           interval: userData.subscriptionInterval,
           subscriptionEnd: userData.subscriptionEnd
-        };
-
-        // Check if subscription has expired
-        if (sub.subscriptionEnd && new Date() > new Date(sub.subscriptionEnd)) {
-          await firestore.updateSubscription(user.uid, {
-            plan: 'free',
-            status: 'active',
-            interval: null,
-            subscriptionEnd: null
-          });
-          setSubscription({ plan: 'free', status: 'active' });
-        } else {
-          setSubscription(sub);
-        }
-      } else {
-        // Initialize new user
-        await firestore.updateUserData(user.uid, {
-          subscriptionPlan: 'free',
-          subscriptionStatus: 'active',
-          createdAt: new Date().toISOString(),
-          customTemplates: {}
         });
+      } else {
+        // Här kan du fortfarande skapa ett grund-dokument för en helt ny användare
+        // så länge dina säkerhetsregler (Firestore Rules) tillåter det,
+        // men abonnemangsstatusen bör sättas via backend/webhooks.
         setSubscription({ plan: 'free', status: 'active' });
       }
     } catch (error) {

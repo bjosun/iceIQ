@@ -83,15 +83,16 @@ export default function PlayerForm({
         </div>
 
         {/* Game Date */}
-        <div>
+        <div className="w-full min-w-0"> {/* Tillagt: w-full min-w-0 för att säkra kolumnen */}
           <label className="block text-sm font-medium text-gray-300 mb-2">
             {t('gameDate')}
           </label>
           <Input
             type="date"
-            value={gameDate} // Använder prop
+            value={gameDate}
             onChange={(e) => onGameDateChange(e.target.value)}
             icon={Calendar}
+            className="w-full" // Tillagt: Tvinga inputen att hålla sig inom ramen
           />
         </div>
 
