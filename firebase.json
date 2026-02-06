@@ -13,12 +13,18 @@
     }
   ],
   "hosting": {
-    "site": "iceiq-v2",
-    "public": "dist",
+    "public": "dist", 
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "redirects": [
+      {
+        "source": "www.iceiq.app",
+        "destination": "https://iceiq.app",
+        "type": 301
+      }
     ],
     "rewrites": [
       {

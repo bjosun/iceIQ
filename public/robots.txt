@@ -1,0 +1,10 @@
+# Säg till alla sökmotorer att de får indexera sajten
+User-agent: *
+Allow: /
+
+# Blockera känsliga sidor (valfritt)
+Disallow: /admin
+Disallow: /settings
+
+# Länk till din sitemap
+Sitemap: https://iceiq.app/sitemap.xml
