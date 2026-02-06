@@ -47,7 +47,8 @@ export default function Dashboard() {
   const [bonusFactor, setBonusFactor] = useState<number>(10); 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [actionCounts, setActionCounts] = useState<Record<string, number>>({});
-  
+  const [carriedOverBalance, setCarriedOverBalance] = useState<number>(0); 
+
   const [stats, setStats] = useState({
     players: 0,
     matches: 0,
@@ -121,7 +122,41 @@ export default function Dashboard() {
     return () => { isMounted = false; };
   }, [user, getPlayers, getPlayerHistory, refreshTrigger]); 
 
+// Lägg till detta i Dashboard.tsx för att automatisera hämtningen
 
+useEffect(() => {
+  const syncPlayerBalance = async () => {
+    // Om ingen spelare är vald, nollställ saldot och avbryt
+    if (!selectedPlayerName || !user) {
+      setCarriedOverBalance(0);
+      return;
+    }
+    
+    try {
+      // 1. Hämta alla spelare (inklusive deras currentBalance från Firestore)
+      const playerData = await getPlayers(); 
+      
+      // 2. Hitta just den valda spelaren
+      const currentPlayer = playerData.find(p => p.name === selectedPlayerName);
+      
+      if (currentPlayer) {
+        // 3. VIKTIGT: Om fältet inte finns (undefined), använd 0
+        // Detta löser problemet med dina gamla spelare!
+        const balance = currentPlayer.currentBalance ?? 0;
+        setCarriedOverBalance(balance);
+        console.log(`Saldo synkat för ${selectedPlayerName}: ${balance}`);
+      } else {
+        setCarriedOverBalance(0);
+      }
+    } catch (error) {
+      console.error("Kunde inte synka saldo:", error);
+      setCarriedOverBalance(0);
+    }
+  };
+
+  syncPlayerBalance();
+  // refreshTrigger ser till att saldot laddas om när du sparat en match
+}, [selectedPlayerName, user, refreshTrigger, getPlayers]);
   // --- 2. URL Hantering (Upgrade länk) ---
   useEffect(() => {
     if (searchParams.get('upgrade') === 'true') {
@@ -131,6 +166,40 @@ export default function Dashboard() {
     }
   }, [searchParams, setSearchParams]);
 
+// Beräkna poäng live
+const getLiveTotals = () => {
+  let actionsPoints = 0;
+  let bonusPoints = 0;
+
+  if (currentTemplate) {
+    Object.entries(actionCounts).forEach(([key, count]) => {
+      try {
+        const keyObj = JSON.parse(key);
+        const action = currentTemplate.actions.find(a => a.name.en === keyObj.en);
+        if (action) {
+          // Summera baspoäng
+          actionsPoints += count * action.points;
+          // Exempel på bonusberäkning (justera efter din logik)
+          // Om bonusFactor är 10, ger varje poäng 10% extra i bonus
+          bonusPoints += (count * action.points) * (bonusFactor / 100);
+        }
+      } catch (e) {
+        // Fallback om JSON.parse misslyckas
+        actionsPoints += count * 1;
+      }
+    });
+  }
+
+  const total = actionsPoints + bonusPoints + carriedOverBalance;
+
+  return {
+    actionsPoints,
+    bonusPoints: Math.round(bonusPoints),
+    total: Math.round(total)
+  };
+};
+
+const totals = getLiveTotals();
 
   // --- 3. Spara Match Logik ---
   const handleSaveGame = async () => {
@@ -163,7 +232,8 @@ export default function Dashboard() {
         const gameData = {
             date: gameDate,      
             team: teamName || 'My Team',
-            points: totalPoints,
+            points: totals.total,
+            carriedOverBalance: carriedOverBalance,
             softSkillCounts: {}
         };
 
@@ -177,6 +247,7 @@ export default function Dashboard() {
 
         // Nollställ och ladda om
         setActionCounts({});
+        setCarriedOverBalance(0);
         setRefreshTrigger(prev => prev + 1); 
         alert("Game saved!");
 
@@ -280,6 +351,12 @@ export default function Dashboard() {
             actionCounts={actionCounts}
             onSaveGame={handleSaveGame}
             onReset={handleReset}
+            // Skicka med de nya värdena (du kan behöva uppdatera props i SummarySection.tsx också)
+            totalPoints={totals.actionsPoints}
+            totalBonus={totals.bonusPoints}
+            totalFinal={totals.total}
+            carriedOverBalance={carriedOverBalance}
+            onBalanceChange={setCarriedOverBalance}
           />
         </div>
       </div>

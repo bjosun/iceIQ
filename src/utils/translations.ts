@@ -89,6 +89,9 @@ export const translations = {
     myAccount: "My Account",
     termsLink: "Terms of Service",
     privacyLink: "Privacy Policy",
+    markAsSettled: "Mark as settled",
+    settleBalanceConfirm: "Do you want to reset the balance? Only do this if payment/settlement has occurred.",
+    totalBalance: "Total Balance",
     upgradeCTA: "🔒 Upgrade to Premium"
   },
   sv: {
@@ -180,6 +183,9 @@ export const translations = {
     myAccount: "Mitt Konto",
     termsLink: "Användarvillkor",
     privacyLink: "Integritetspolicy",
+    markAsSettled: "Markera som reglerat",
+    settleBalanceConfirm: "Vill du nollställa saldot? Markera detta endast om betalning/reglering har skett.",
+    totalBalance: "Totalt Saldo",
     upgradeCTA: "🔒 Uppgradera till Premium"
   }
 };

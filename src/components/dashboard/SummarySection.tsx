@@ -1,73 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { Calculator, DollarSign, TrendingUp, Target } from 'lucide-react';
+import React from 'react';
+import { Calculator, DollarSign, TrendingUp, Target, Check, MousePointer2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useTemplates } from '../../contexts/TemplateContext';
 import Card from '../ui/Card';
-import Input from '../ui/Input';
+import Button from '../ui/Button';
 
 interface SummarySectionProps {
   actionCounts: Record<string, number>;
-  carriedOverBonus?: number;
-  onSaveGame?: () => void;
-  onReset?: () => void;
+  onSaveGame: () => Promise<void>;
+  onReset: () => void;
+  totalPoints: number;
+  totalBonus: number;
+  totalFinal: number;
+  carriedOverBalance: number;
+  onBalanceChange: (value: number) => void;
 }
 
 export default function SummarySection({
-  actionCounts,
-  carriedOverBonus = 0,
+  actionCounts, // Används nu för att visa antal registrerade händelser
   onSaveGame,
-  onReset
+  onReset,
+  totalPoints,
+  totalBonus,
+  totalFinal,
+  carriedOverBalance,
+  onBalanceChange
 }: SummarySectionProps) {
   const { t, language } = useLanguage();
-  const { currentTemplate } = useTemplates();
-  const [bonusFactor, setBonusFactor] = useState(10);
-  const [totalPoints, setTotalPoints] = useState(0);
-  const [currentBonus, setCurrentBonus] = useState(0);
-  const [totalBonus, setTotalBonus] = useState(0);
-
-  // Calculate totals when actionCounts change
-  useEffect(() => {
-    if (!currentTemplate) return;
-
-    let calculatedTotal = 0;
-    Object.entries(actionCounts).forEach(([key, count]) => {
-      try {
-        const actionName = JSON.parse(key);
-        const action = currentTemplate.actions.find(a => 
-          a.name.en === actionName.en || a.name.sv === actionName.sv
-        );
-        if (action) {
-          calculatedTotal += count * action.points;
-        }
-      } catch {
-        // Handle non-JSON keys (for backward compatibility)
-        const action = currentTemplate.actions.find(a => 
-          a.name.en === key || a.name.sv === key
-        );
-        if (action) {
-          calculatedTotal += count * action.points;
-        }
-      }
-    });
-
-    setTotalPoints(calculatedTotal);
-    const calculatedCurrentBonus = calculatedTotal * bonusFactor;
-    setCurrentBonus(calculatedCurrentBonus);
-    setTotalBonus(calculatedCurrentBonus + carriedOverBonus);
-  }, [actionCounts, bonusFactor, carriedOverBonus, currentTemplate]);
-
+  
   const currencySymbol = language === 'en' ? 'USD' : 'SEK';
+
+  // Räkna totalt antal registrerade klick för att använda actionCounts
+  const totalActionsRegistered = Object.values(actionCounts).reduce((sum, count) => sum + count, 0);
 
   return (
     <Card elevated className="mb-6">
-      <h2 className="text-2xl font-bold text-cyan-400 mb-6">
-        {t('summaryAndControls')}
-      </h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h2 className="text-2xl font-bold text-cyan-400">
+          {t('summaryAndControls')}
+        </h2>
+        
+        {/* Visar antal registrerade aktioner - här används actionCounts */}
+        <div className="flex items-center gap-2 bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700">
+          <MousePointer2 size={16} className="text-cyan-400" />
+          <span className="text-sm font-medium text-gray-300">
+            {totalActionsRegistered} {t('actionsRegistered') || 'Actions'}
+          </span>
+        </div>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {/* Total Points */}
-        <Card border={false} className="text-center p-4">
+        
+        {/* 1. Aktioner (Baspoäng) */}
+        <Card border={false} className="text-center p-4 bg-gray-800/40">
           <div className="flex items-center justify-center mb-2">
             <Target className="text-cyan-400 mr-2" size={20} />
             <h3 className="text-sm font-medium text-gray-300">
@@ -82,79 +67,85 @@ export default function SummarySection({
           </p>
         </Card>
 
-        {/* Bonus Factor */}
-        <Card border={false} className="text-center p-4">
+        {/* 2. Bonus Poäng */}
+        <Card border={false} className="text-center p-4 bg-gray-800/40">
           <div className="flex items-center justify-center mb-2">
             <Calculator className="text-cyan-400 mr-2" size={20} />
             <h3 className="text-sm font-medium text-gray-300">
-              {t('bonusFactor')}
+              Bonus
             </h3>
           </div>
-          <div className="flex items-center justify-center">
-            <Input
-              type="number"
-              value={bonusFactor}
-              onChange={(e) => setBonusFactor(Number(e.target.value))}
-              className="w-20 text-center text-2xl font-bold"
-              min="0"
-              step="1"
-            />
-            <span className="ml-2 text-gray-400">/pt</span>
-          </div>
+          <p className="text-3xl font-bold text-cyan-400">
+            +{totalBonus}
+          </p>
         </Card>
 
-        {/* Carried Over Balance */}
-        <Card border={false} className="text-center p-4">
+        {/* 3. Överfört Saldo (Med Reset-knapp) */}
+        <Card border={false} className="text-center p-4 bg-gray-800/40 border border-yellow-500/20 relative group">
           <div className="flex items-center justify-center mb-2">
-            <TrendingUp className="text-cyan-400 mr-2" size={20} />
+            <TrendingUp className="text-yellow-500 mr-2" size={20} />
             <h3 className="text-sm font-medium text-gray-300">
               {t('carriedOverBalance')}
             </h3>
           </div>
-          <p className={`text-2xl font-bold ${
-            carriedOverBonus >= 0 ? 'text-green-400' : 'text-red-400'
-          }`}>
-            {carriedOverBonus.toLocaleString()} {currencySymbol}
-          </p>
+          <div className="flex flex-col items-center justify-center">
+            <div className="text-2xl font-bold text-yellow-500 mb-2">
+              {carriedOverBalance} <span className="text-xs font-normal opacity-70">{currencySymbol}</span>
+            </div>
+            
+            {/* Reglera-knapp (visas bara om saldo finns) */}
+            {carriedOverBalance !== 0 && (
+              <button
+                onClick={() => {
+                  if (window.confirm(t('settleBalanceConfirm') || 'Reset balance?')) {
+                    onBalanceChange(0);
+                  }
+                }}
+                className="flex items-center gap-1 text-[10px] uppercase tracking-wider bg-green-500/20 hover:bg-green-500/40 text-green-400 px-2 py-1 rounded-full transition-all"
+              >
+                <Check size={10} /> {t('markAsSettled') || 'Settle'}
+              </button>
+            )}
+          </div>
         </Card>
 
-        {/* Total Bonus */}
-        <Card border={false} className="text-center p-4">
+        {/* 4. Slutsumma (Total) */}
+        <Card border={false} className="text-center p-4 bg-cyan-500/10 border border-cyan-500/20">
           <div className="flex items-center justify-center mb-2">
-            <DollarSign className="text-yellow-400 mr-2" size={20} />
+            <DollarSign className="text-cyan-400 mr-2" size={20} />
             <h3 className="text-sm font-medium text-gray-300">
-              {t('totalBonus')}
+              {t('totalBalance') || 'Total Balance'}
             </h3>
           </div>
-          <p className={`text-3xl font-bold ${
-            totalBonus >= 0 ? 'text-yellow-400' : 'text-red-400'
-          }`}>
-            {totalBonus.toLocaleString()} {currencySymbol}
+          <p className="text-3xl font-black text-white">
+            {totalFinal.toLocaleString()} <span className="text-sm font-normal text-gray-400">{currencySymbol}</span>
           </p>
         </Card>
       </div>
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <button
+        <Button
+          variant="primary"
           onClick={onSaveGame}
-          className="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:opacity-90 text-white rounded-xl font-semibold transition-all"
+          className="flex-1 py-4 text-lg shadow-lg shadow-cyan-500/20"
         >
           {t('saveMatchAndReset')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
           onClick={onReset}
-          className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-semibold transition-all"
+          className="flex-1 py-4 text-lg"
         >
           {t('resetAll')}
-        </button>
+        </Button>
       </div>
 
       {/* Save Limit Warning */}
-      <div className="mt-4 text-center">
-        <p className="text-sm text-gray-400">
+      <div className="mt-6 text-center">
+        <p className="text-sm text-gray-400 italic">
           {t('freeTierLimitPlayer')}{' '}
-          <button className="text-cyan-400 hover:text-cyan-300 underline">
+          <button className="text-cyan-400 hover:text-cyan-300 underline not-italic font-medium">
             {t('upgrade')}
           </button>
         </p>
