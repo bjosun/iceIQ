@@ -1,5 +1,5 @@
-import React from 'react'; // Tog bort useState härifrån
-import { Calendar, Users, FileText, Search, Edit } from 'lucide-react';
+import React from 'react';
+import { Calendar, Users, FileText, Search, Edit, Mail } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTemplates } from '../../contexts/TemplateContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
@@ -10,15 +10,15 @@ import Card from '../ui/Card';
 interface PlayerFormProps {
   onShowHistory: () => void;
   onEditTemplate: () => void;
-  
-  // NYA PROPS: Vi tar emot state från föräldern (Dashboard)
   selectedPlayerName: string;
   onPlayerNameChange: (name: string) => void;
   teamName: string;
   onTeamNameChange: (name: string) => void;
+  playerEmail: string; // Ny prop
+  onPlayerEmailChange: (email: string) => void; // Ny prop
   gameDate: string;
   onGameDateChange: (date: string) => void;
-  onOpenPlayerSelect: () => void; // För förstoringsglaset
+  onOpenPlayerSelect: () => void;
 }
 
 export default function PlayerForm({ 
@@ -28,6 +28,8 @@ export default function PlayerForm({
   onPlayerNameChange,
   teamName,
   onTeamNameChange,
+  playerEmail,
+  onPlayerEmailChange,
   gameDate,
   onGameDateChange,
   onOpenPlayerSelect
@@ -35,9 +37,7 @@ export default function PlayerForm({
   
   const { t, language } = useLanguage();
   const { subscription } = useSubscription();
-  const { templates, currentTemplateId, setCurrentTemplate, currentTemplate } = useTemplates();
-  
-  // Tog bort lokala useState. Vi använder props istället.
+  const { templates, currentTemplateId, setCurrentTemplate } = useTemplates();
 
   const templateOptions = Object.entries(templates).map(([id, template]) => ({
     value: id,
@@ -46,44 +46,58 @@ export default function PlayerForm({
 
   return (
     <Card elevated className="mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Player Name */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* 1. Player Name */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
             {t('playerName')}
           </label>
           <div className="flex">
             <Input
-              value={selectedPlayerName} // Använder prop
-              onChange={(e) => onPlayerNameChange(e.target.value)} // Uppdaterar föräldern
-              placeholder="Enter player name"
+              value={selectedPlayerName}
+              onChange={(e) => onPlayerNameChange(e.target.value)}
+              placeholder="Enter name"
               className="rounded-r-none"
             />
             <Button
               variant="secondary"
-              className="rounded-l-none border-l-0"
-              onClick={onOpenPlayerSelect} // Öppnar modalen i Dashboard
+              className="rounded-l-none border-l-0 px-3"
+              onClick={onOpenPlayerSelect}
             >
               <Search size={18} />
             </Button>
           </div>
         </div>
 
-        {/* Team Name */}
+        {/* 2. Team Name */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
             {t('team')}
           </label>
           <Input
-            value={teamName} // Använder prop
+            value={teamName}
             onChange={(e) => onTeamNameChange(e.target.value)}
             placeholder="Team name"
             icon={Users}
           />
         </div>
 
-        {/* Game Date */}
-        <div className="w-full min-w-0 overflow-hidden"> 
+        {/* 3. Player Email (Framtidssäkring) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            {t('playerEmail') || 'Player Email'}
+          </label>
+          <Input
+            type="email"
+            value={playerEmail}
+            onChange={(e) => onPlayerEmailChange(e.target.value)}
+            placeholder="Email for login"
+            icon={Mail}
+          />
+        </div>
+
+        {/* 4. Game Date */}
+        <div className="w-full min-w-0"> 
           <label className="block text-sm font-medium text-gray-300 mb-2">
             {t('gameDate')}
           </label>
@@ -92,11 +106,11 @@ export default function PlayerForm({
             value={gameDate}
             onChange={(e) => onGameDateChange(e.target.value)}
             icon={Calendar}
-            className="w-full" // Detta matchar nu din uppdaterade Input-komponent
+            className="w-full"
           />
         </div>
 
-        {/* Template Selector */}
+        {/* 5. Template Selector */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
             {t('template')}
@@ -105,7 +119,7 @@ export default function PlayerForm({
             <select
               value={currentTemplateId}
               onChange={(e) => setCurrentTemplate(e.target.value)}
-              className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
             >
               {templateOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -123,11 +137,6 @@ export default function PlayerForm({
               </Button>
             )}
           </div>
-          {subscription.plan === 'free' && (
-            <p className="mt-2 text-sm text-yellow-400">
-              {t('upgradeCTA')}
-            </p>
-          )}
         </div>
       </div>
 
@@ -137,7 +146,7 @@ export default function PlayerForm({
           variant="secondary"
           onClick={onShowHistory}
           icon={FileText}
-          fullWidth={window.innerWidth < 640}
+          className="sm:w-auto w-full"
         >
           {t('showPlayerHistory')}
         </Button>
@@ -145,9 +154,8 @@ export default function PlayerForm({
         {subscription.plan === 'free' && (
           <Button
             variant="premium"
-            onClick={() => { /* Open upgrade modal logic here or via prop if needed */ }}
-            className="sm:ml-auto"
-            fullWidth={window.innerWidth < 640}
+            onClick={() => {}}
+            className="sm:ml-auto sm:w-auto w-full"
           >
             {t('upgradeToPremium')}
           </Button>

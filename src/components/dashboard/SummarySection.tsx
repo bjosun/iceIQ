@@ -13,6 +13,7 @@ interface SummarySectionProps {
   totalFinal: number;
   carriedOverBalance: number;
   onBalanceChange: (value: number) => void;
+  bonusFactor: number;
 }
 
 export default function SummarySection({
@@ -23,7 +24,8 @@ export default function SummarySection({
   totalBonus,
   totalFinal,
   carriedOverBalance,
-  onBalanceChange
+  onBalanceChange,
+  bonusFactor
 }: SummarySectionProps) {
   const { t, language } = useLanguage();
   
@@ -67,17 +69,15 @@ export default function SummarySection({
           </p>
         </Card>
 
-        {/* 2. Bonus Poäng */}
+        {/* 2. Bonus Points - Nu visar vi faktorn! */}
         <Card border={false} className="text-center p-4 bg-gray-800/40">
-          <div className="flex items-center justify-center mb-2">
-            <Calculator className="text-cyan-400 mr-2" size={20} />
-            <h3 className="text-sm font-medium text-gray-300">
-              Bonus
-            </h3>
+          <div className="flex items-center justify-center mb-1">
+             <Calculator size={14} className="text-cyan-400 mr-1"/>
+             <h3 className="text-sm font-medium text-gray-300">
+               Bonus <span className="text-cyan-400 text-xs">(x{bonusFactor})</span>
+             </h3>
           </div>
-          <p className="text-3xl font-bold text-cyan-400">
-            +{totalBonus}
-          </p>
+          <p className="text-2xl font-bold text-cyan-400">+{totalBonus}</p>
         </Card>
 
         {/* 3. Överfört Saldo (Med Reset-knapp) */}

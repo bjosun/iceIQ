@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-  "dev": "vite",
-  "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-  "build": "vite build",
-  "preview": "vite preview",
-  "deploy:v2": "npm run build && firebase deploy --only hosting:iceiq-v2"
-},
+    "dev": "vite",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy:v2": "npm run build && firebase deploy --only hosting:iceiq-v2"
+  },
   "dependencies": {
     "@stripe/stripe-js": "^2.1.7",
     "autoprefixer": "^10.4.0",
@@ -23,6 +23,7 @@
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.69.0",
+    "react-hot-toast": "^2.6.0",
     "react-router-dom": "^6.20.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss": "^3.3.0"

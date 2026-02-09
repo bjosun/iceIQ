@@ -6,13 +6,14 @@ export interface TemplateAction {
   name: { sv: string; en: string };
   points: number;
   type: 'positive' | 'negative';
+  isBonus?: boolean;
 }
 
 export interface Template {
   id: string;
   name: { sv: string; en: string };
   actions: TemplateAction[];
-  softSkills?: TemplateAction[];
+  isDefault?: boolean;
 }
 
 interface TemplateContextType {

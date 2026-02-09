@@ -4,7 +4,7 @@ import { usePlayerData } from '../hooks/usePlayerData';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTemplates } from '../contexts/TemplateContext';
-
+import toast from 'react-hot-toast';
 import LoginForm from '../components/auth/LoginForm';
 import SignupForm from '../components/auth/SignupForm';
 import PlayerForm from '../components/dashboard/PlayerForm';
@@ -16,12 +16,13 @@ import TemplateEditorModal from '../components/modals/TemplateEditorModal';
 import PlayerSelectModal from '../components/modals/PlayerSelectModal';
 import MobileBottomNav from '../components/layout/MobileBottomNav';
 import Card from '../components/ui/Card';
-import { BarChart3, Users, Target, TrendingUp } from 'lucide-react';
+import { BarChart3, Users, Target, TrendingUp, Zap } from 'lucide-react'; // Zap ikon för bonus
 
 // Definiera interface för Player
 interface Player {
   id: string;
   name: string;
+  currentBalance?: number;
 }
 
 export default function Dashboard() {
@@ -38,13 +39,17 @@ export default function Dashboard() {
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [showPlayerSelect, setShowPlayerSelect] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
+  
   // State för data
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>('');
-  //const [teamName, setTeamName] = useState<string>('');
+  const [playerEmail, setPlayerEmail] = useState('');
+  const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
   const [gameDate, setGameDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  
+  // Variabel bonusfaktor (Default 10x)
   const [bonusFactor, setBonusFactor] = useState<number>(10); 
+  
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [actionCounts, setActionCounts] = useState<Record<string, number>>({});
   const [carriedOverBalance, setCarriedOverBalance] = useState<number>(0); 
@@ -59,105 +64,61 @@ export default function Dashboard() {
   // --- 1. Ladda Statistik & Spelare ---
   useEffect(() => {
     let isMounted = true;
-
     const fetchData = async () => {
       if (!user) return;
-
       try {
-        // Hämta spelare
         const fetchedPlayers = await getPlayers();
-        
         if (isMounted) {
-            // Spara spelare i state (VIKTIGT för modalen)
             setPlayers(fetchedPlayers as Player[]);
-
-            // Välj första spelaren automatiskt om ingen är vald
             if (fetchedPlayers.length > 0 && !selectedPlayerName) {
                 setSelectedPlayerName(fetchedPlayers[0].name);
             }
         }
-
         if (!isMounted) return;
 
-        // Hämta statistik (matcher)
-        const gamesPromises = fetchedPlayers.map(player => 
-          getPlayerHistory(player.name, 1000)
-        );
-
+        const gamesPromises = fetchedPlayers.map(player => getPlayerHistory(player.name, 1000));
         const gamesResults = await Promise.all(gamesPromises);
         const allGames = gamesResults.flat();
-
-        const totalMatches = allGames.length;
-        const totalPoints = allGames.reduce((sum, game) => sum + (game.points || 0), 0);
         
-        const avgPoints = totalMatches > 0 
-          ? (totalPoints / totalMatches).toFixed(1) 
-          : 0;
-
+        const avgPoints = allGames.length > 0 ? (allGames.reduce((sum, g) => sum + (g.points || 0), 0) / allGames.length).toFixed(1) : 0;
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        oneWeekAgo.setHours(0, 0, 0, 0);
-
-        const recentGamesCount = allGames.filter(game => {
-          const gameDate = new Date(game.date);
-          return gameDate >= oneWeekAgo;
-        }).length;
-
+        
         if (isMounted) {
           setStats({
             players: fetchedPlayers.length,
-            matches: totalMatches,
+            matches: allGames.length,
             avgPoints: Number(avgPoints),
-            thisWeek: recentGamesCount
+            thisWeek: allGames.filter(g => new Date(g.date) >= oneWeekAgo).length
           });
         }
-
-      } catch (error) {
-        console.error("Kunde inte hämta dashboard-data:", error);
-      }
+      } catch (error) { console.error(error); }
     };
-
     fetchData();
-
     return () => { isMounted = false; };
-  }, [user, getPlayers, getPlayerHistory, refreshTrigger]); 
+  }, [user, refreshTrigger, getPlayers, getPlayerHistory]); 
 
-// Lägg till detta i Dashboard.tsx för att automatisera hämtningen
-
-useEffect(() => {
-  const syncPlayerBalance = async () => {
-    // Om ingen spelare är vald, nollställ saldot och avbryt
-    if (!selectedPlayerName || !user) {
-      setCarriedOverBalance(0);
-      return;
-    }
-    
-    try {
-      // 1. Hämta alla spelare (inklusive deras currentBalance från Firestore)
-      const playerData = await getPlayers(); 
-      
-      // 2. Hitta just den valda spelaren
-      const currentPlayer = playerData.find(p => p.name === selectedPlayerName);
-      
-      if (currentPlayer) {
-        // 3. VIKTIGT: Om fältet inte finns (undefined), använd 0
-        // Detta löser problemet med dina gamla spelare!
-        const balance = currentPlayer.currentBalance ?? 0;
-        setCarriedOverBalance(balance);
-        console.log(`Saldo synkat för ${selectedPlayerName}: ${balance}`);
-      } else {
+  // --- 2. Saldo Synkning ---
+  useEffect(() => {
+    const syncPlayerBalance = async () => {
+      if (!selectedPlayerName || !user) {
         setCarriedOverBalance(0);
+        return;
       }
-    } catch (error) {
-      console.error("Kunde inte synka saldo:", error);
-      setCarriedOverBalance(0);
-    }
-  };
+      try {
+        const playerData = await getPlayers(); 
+        const currentPlayer = playerData.find(p => p.name === selectedPlayerName);
+        if (currentPlayer) {
+          setCarriedOverBalance(currentPlayer.currentBalance ?? 0);
+        } else {
+          setCarriedOverBalance(0);
+        }
+      } catch (error) { setCarriedOverBalance(0); }
+    };
+    syncPlayerBalance();
+  }, [selectedPlayerName, user, refreshTrigger, getPlayers]);
 
-  syncPlayerBalance();
-  // refreshTrigger ser till att saldot laddas om när du sparat en match
-}, [selectedPlayerName, user, refreshTrigger, getPlayers]);
-  // --- 2. URL Hantering (Upgrade länk) ---
+  // --- 3. URL Hantering ---
   useEffect(() => {
     if (searchParams.get('upgrade') === 'true') {
       setShowSubscriptionModal(true);
@@ -166,75 +127,61 @@ useEffect(() => {
     }
   }, [searchParams, setSearchParams]);
 
-// Beräkna poäng live
-const getLiveTotals = () => {
-  let actionsPoints = 0;
-  let bonusPoints = 0;
+  // --- 4. Live Poängberäkning (Den viktiga delen!) ---
+  const getLiveTotals = () => {
+    let actionsPoints = 0;
+    let bonusPoints = 0;
 
-  if (currentTemplate) {
-    Object.entries(actionCounts).forEach(([key, count]) => {
-      try {
-        const keyObj = JSON.parse(key);
-        const action = currentTemplate.actions.find(a => a.name.en === keyObj.en);
-        if (action) {
-          // Summera baspoäng
-          actionsPoints += count * action.points;
-          // Exempel på bonusberäkning (justera efter din logik)
-          // Om bonusFactor är 10, ger varje poäng 10% extra i bonus
-          bonusPoints += (count * action.points) * (bonusFactor / 100);
+    if (currentTemplate) {
+      Object.entries(actionCounts).forEach(([key, count]) => {
+        try {
+          const keyObj = JSON.parse(key);
+          const action = currentTemplate.actions.find(a => a.name.en === keyObj.en);
+          if (action) {
+            // Kontrollera om isBonus är sant (satt i TemplateEditor)
+            if (action.isBonus) {
+              // Multiplicera med vald bonusFactor (t.ex. 10x)
+              bonusPoints += count * action.points * bonusFactor;
+            } else {
+              // Vanlig poäng
+              actionsPoints += count * action.points;
+            }
+          }
+        } catch (e) {
+          actionsPoints += count * 1;
         }
-      } catch (e) {
-        // Fallback om JSON.parse misslyckas
-        actionsPoints += count * 1;
-      }
-    });
-  }
+      });
+    }
 
-  const total = actionsPoints + bonusPoints + carriedOverBalance;
+    const total = actionsPoints + bonusPoints + carriedOverBalance;
 
-  return {
-    actionsPoints,
-    bonusPoints: Math.round(bonusPoints),
-    total: Math.round(total)
+    return {
+      actionsPoints,
+      bonusPoints: Math.round(bonusPoints),
+      total: Math.round(total)
+    };
   };
-};
 
-const totals = getLiveTotals();
+  const totals = getLiveTotals();
 
-  // --- 3. Spara Match Logik ---
+  // --- 5. Spara Match ---
   const handleSaveGame = async () => {
     if (!selectedPlayerName) {
-      alert("Please select a player first");
+      toast.error(t('selectPlayerFirst') || "Please select a player first");
+      return;
+    }
+    if (Object.keys(actionCounts).length === 0) {
+      toast.error(t('registerActionsFirst') || "Register some actions first");
       return;
     }
 
-    if (Object.keys(actionCounts).length === 0) {
-        alert("Register some actions first");
-        return;
-    }
-
     try {
-        let totalPoints = 0;
-        
-        // Räkna ut poäng baserat på mallen
-        if (currentTemplate) {
-            Object.entries(actionCounts).forEach(([key, count]) => {
-                let points = 1; 
-                try {
-                    const keyObj = JSON.parse(key);
-                    const action = currentTemplate.actions.find(a => a.name.en === keyObj.en);
-                    if (action) points = action.points;
-                } catch {}
-                totalPoints += count * points;
-            });
-        }
-
         const gameData = {
             date: gameDate,      
             team: teamName || 'My Team',
+            playerEmail: playerEmail,
             points: totals.total,
             carriedOverBalance: carriedOverBalance,
-            softSkillCounts: {}
         };
 
         await saveGame(
@@ -244,19 +191,19 @@ const totals = getLiveTotals();
             actionCounts,
             bonusFactor        
           );
-        if (teamName) {
-          localStorage.setItem('lastUsedTeam', teamName);
-        }
-        // Nollställ och ladda om
+
+        if (teamName) localStorage.setItem('lastUsedTeam', teamName);
+
+        // Reset
         setActionCounts({});
         setCarriedOverBalance(0);
+        setPlayerEmail('');
         setRefreshTrigger(prev => prev + 1); 
-
-        alert("Game saved!");
+        toast.success(t('gameSavedSuccessfully') || 'Matchen har sparats!');
 
     } catch (error) {
         console.error("Failed to save game:", error);
-        alert("Failed to save game. See console.");
+        toast.error(t('saveError') || "Kunde inte spara matchen.");
     }
   };
 
@@ -266,30 +213,22 @@ const totals = getLiveTotals();
     }
   };
 
-  // --- 4. Visa Login/Signup om ej inloggad (VIKTIG FIX) ---
+  // --- Render ---
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
-          {showSignup ? (
-            <SignupForm onSwitchToLogin={() => setShowSignup(false)} />
-          ) : (
-            <LoginForm
-              onSwitchToSignup={() => setShowSignup(true)}
-              onForgotPassword={() => console.log("Forgot password clicked")}
-            />
-          )}
+          {showSignup ? <SignupForm onSwitchToLogin={() => setShowSignup(false)} /> : <LoginForm onSwitchToSignup={() => setShowSignup(true)} onForgotPassword={() => {}} />}
         </Card>
       </div>
     );
   }
 
-  // --- 5. Main Dashboard Render ---
   return (
     <div className="min-h-screen pb-20 md:pb-0 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Welcome Section */}
+        {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-cyan-400 mb-2">
             Welcome back, {user.displayName || user.email?.split('@')[0]}!
@@ -297,45 +236,35 @@ const totals = getLiveTotals();
           <p className="text-gray-400">Track player performance with real-time analytics</p>
         </div>
 
-        {/* Quick Stats Cards */}
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <Card className="text-center p-4">
-                <div className="flex items-center justify-center mb-2">
-                    <Users className="text-cyan-400 mr-2" size={20} />
-                    <h3 className="text-sm font-medium text-gray-300">Players</h3>
-                </div>
+                <Users className="text-cyan-400 mx-auto mb-2" size={20} />
                 <p className="text-2xl font-bold text-white">{stats.players}</p>
+                <p className="text-xs text-gray-400">Players</p>
             </Card>
             <Card className="text-center p-4">
-                <div className="flex items-center justify-center mb-2">
-                    <BarChart3 className="text-green-400 mr-2" size={20} />
-                    <h3 className="text-sm font-medium text-gray-300">Matches</h3>
-                </div>
+                <BarChart3 className="text-green-400 mx-auto mb-2" size={20} />
                 <p className="text-2xl font-bold text-white">{stats.matches}</p>
+                <p className="text-xs text-gray-400">Matches</p>
             </Card>
             <Card className="text-center p-4">
-                <div className="flex items-center justify-center mb-2">
-                    <Target className="text-yellow-400 mr-2" size={20} />
-                    <h3 className="text-sm font-medium text-gray-300">Avg Points</h3>
-                </div>
+                <Target className="text-yellow-400 mx-auto mb-2" size={20} />
                 <p className="text-2xl font-bold text-white">{stats.avgPoints}</p>
+                <p className="text-xs text-gray-400">Avg Points</p>
             </Card>
             <Card className="text-center p-4">
-                <div className="flex items-center justify-center mb-2">
-                    <TrendingUp className="text-red-400 mr-2" size={20} />
-                    <h3 className="text-sm font-medium text-gray-300">This Week</h3>
-                </div>
+                <TrendingUp className="text-red-400 mx-auto mb-2" size={20} />
                 <p className="text-2xl font-bold text-white">{stats.thisWeek}</p>
+                <p className="text-xs text-gray-400">This Week</p>
             </Card>
         </div>
 
-        {/* Input Forms & Grid */}
+        {/* Main Interface */}
         <div className="space-y-6">
           <PlayerForm
             onShowHistory={() => setShowHistoryModal(true)}
             onEditTemplate={() => setShowTemplateEditor(true)}
-            
-            // Skicka ner state för att kontrollera formuläret
             selectedPlayerName={selectedPlayerName}
             onPlayerNameChange={setSelectedPlayerName} 
             teamName={teamName}
@@ -343,6 +272,8 @@ const totals = getLiveTotals();
             gameDate={gameDate}
             onGameDateChange={setGameDate}
             onOpenPlayerSelect={() => setShowPlayerSelect(true)}
+            playerEmail={playerEmail}
+            onPlayerEmailChange={setPlayerEmail}
           />
           
           <ActionGrid 
@@ -350,53 +281,64 @@ const totals = getLiveTotals();
             onCountChange={setActionCounts}
           />
           
+          {/* NYTT: Viktning Väljare */}
+          <Card className="flex items-center justify-between p-4 border-cyan-500/20 bg-cyan-500/5">
+            <div className="flex items-center">
+              <Zap className="text-yellow-400 mr-3" size={24} />
+              <div>
+                <p className="text-sm font-bold text-white">Bonus Weighting</p>
+                <p className="text-xs text-gray-400">Multiplier for actions marked as 'Bonus'</p>
+              </div>
+            </div>
+            <select 
+              value={bonusFactor}
+              onChange={(e) => setBonusFactor(Number(e.target.value))}
+              className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-cyan-400 font-bold outline-none focus:ring-2 focus:ring-cyan-500"
+            >
+              <option value={0.5}>0.5x</option>
+              <option value={1}>1x</option>
+              <option value={2}>2x</option>
+              <option value={5}>5x</option>
+              <option value={10}>10x</option>
+              <option value={50}>50x</option>
+              <option value={100}>100x</option>
+            </select>
+          </Card>
+          
           <SummarySection
             actionCounts={actionCounts}
             onSaveGame={handleSaveGame}
             onReset={handleReset}
-            // Skicka med de nya värdena (du kan behöva uppdatera props i SummarySection.tsx också)
             totalPoints={totals.actionsPoints}
             totalBonus={totals.bonusPoints}
             totalFinal={totals.total}
             carriedOverBalance={carriedOverBalance}
             onBalanceChange={setCarriedOverBalance}
+            bonusFactor={bonusFactor}
           />
         </div>
       </div>
 
       {/* Modals */}
-      
-      {/* VIKTIGT: Skicka med players-listan till historik-modalen */}
       <PlayerHistoryModal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
         players={players} 
       />
-
       <SubscriptionModal
         isOpen={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
       />
-      
       <TemplateEditorModal
         isOpen={showTemplateEditor}
         onClose={() => setShowTemplateEditor(false)}
       />
-      
       <PlayerSelectModal
         isOpen={showPlayerSelect}
         onClose={() => setShowPlayerSelect(false)}
-        onSelectPlayer={(playerName) => {
-          setSelectedPlayerName(playerName);
-        }}
-        onAddNewPlayer={() => {
-          // Här kan du lägga till logik för att öppna en "Create Player"-modal om du vill
-          // eller bara sätta fokus på namnfältet
-          console.log('Add new player clicked');
-          setSelectedPlayerName('');
-        }}
+        onSelectPlayer={setSelectedPlayerName}
+        onAddNewPlayer={() => { setSelectedPlayerName(''); setShowPlayerSelect(false); }}
       />
-
       <MobileBottomNav 
         onHistoryClick={() => setShowHistoryModal(true)}
         onPremiumClick={() => setShowSubscriptionModal(true)}

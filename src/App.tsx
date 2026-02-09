@@ -4,13 +4,14 @@ import { SubscriptionProvider } from './contexts/SubscriptionContext'
 import { TemplateProvider } from './contexts/TemplateContext'
 import { LanguageProvider } from './contexts/LanguageContext'
 
+// 1. Importera Toaster och CSS
+import { Toaster } from 'react-hot-toast'
+
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import Success from './pages/Success'
-
-// 1. LÄGG TILL IMPORTEN HÄR:
 import MatchTracker from './pages/MatchTracker' 
 
 import Layout from './components/layout/Layout'
@@ -19,27 +20,45 @@ import './index.css'
 function AppContent() {
   const location = useLocation();
   
-  // Check if we should hide layout for success pages
   const hideLayout = location.pathname === '/success';
   
-  return hideLayout ? (
-    <Routes>
-      <Route path="/success" element={<Success />} />
-    </Routes>
-  ) : (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        
-        {/* 2. LÄGG TILL ROUTEN HÄR: */}
-        {/* Nu kan du nå sidan via din-url.com/match */}
-        <Route path="/match" element={<MatchTracker />} />
-
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-      </Routes>
-    </Layout>
+  return (
+    <>
+      {/* 2. Toaster placeras här så den ligger "över" allt annat */}
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1f2937', // Grå mörk bakgrund (gray-800)
+            color: '#fff',
+            border: '1px solid rgba(34, 211, 238, 0.3)', // Cyan-kant
+          },
+          success: {
+            iconTheme: {
+              primary: '#22d3ee', // Cyan färg för ikonen
+              secondary: '#1f2937',
+            },
+          },
+        }} 
+      />
+      
+      {hideLayout ? (
+        <Routes>
+          <Route path="/success" element={<Success />} />
+        </Routes>
+      ) : (
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/match" element={<MatchTracker />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+          </Routes>
+        </Layout>
+      )}
+    </>
   );
 }
 
