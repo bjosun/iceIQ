@@ -38,11 +38,11 @@ export default function Dashboard() {
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [showPlayerSelect, setShowPlayerSelect] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  
+  const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
   // State för data
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>('');
-  const [teamName, setTeamName] = useState<string>('');
+  //const [teamName, setTeamName] = useState<string>('');
   const [gameDate, setGameDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [bonusFactor, setBonusFactor] = useState<number>(10); 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -244,11 +244,14 @@ const totals = getLiveTotals();
             actionCounts,
             bonusFactor        
           );
-
+        if (teamName) {
+          localStorage.setItem('lastUsedTeam', teamName);
+        }
         // Nollställ och ladda om
         setActionCounts({});
         setCarriedOverBalance(0);
         setRefreshTrigger(prev => prev + 1); 
+
         alert("Game saved!");
 
     } catch (error) {

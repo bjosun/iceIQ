@@ -87,7 +87,8 @@ export function usePlayerData() {
       await firestore.savePlayer(user.uid, playerName, {
         name: playerName,
         lastGameDate: gameRecord.date,
-        currentBalance: newBalance // Här sparas det automatiserade saldot
+        currentBalance: newBalance, // Här sparas det automatiserade saldot
+        lastTeam: gameData.team.trim()
       });
 
       // Spara själva match-loggen
