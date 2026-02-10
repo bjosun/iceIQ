@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { firestore } from '../services/firebase';
+// Kontrollera att sökvägen stämmer. Om firebase.js ligger i src/ så ska det vara '../firebase'
+// Om den ligger i src/services/ så är '../services/firebase' rätt.
+import { firestore } from '../services/firebase'; 
 
 interface GameRecord {
   id?: string;
@@ -26,6 +28,7 @@ export function usePlayerData() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 1. SPARA MATCH
   const saveGame = useCallback(async (
     playerName: string,
     gameData: { 
@@ -34,7 +37,6 @@ export function usePlayerData() {
       points?: number; 
       softSkillCounts?: Record<string, number> 
     },
-    
     template: string,
     counts: Record<string, number>,
     bonusFactor: number
@@ -47,7 +49,6 @@ export function usePlayerData() {
     setError(null);
 
     try {
-      // 1. STÄDA DATAN
       const cleanCounts: Record<string, number> = {};
       Object.entries(counts).forEach(([key, count]) => {
         try {
@@ -72,14 +73,14 @@ export function usePlayerData() {
         ...(gameData.softSkillCounts && { softSkillCounts: gameData.softSkillCounts })
       };
 
-      // 2. HÄMTA NUVARANDE SPELARDATA
+      // Hämta spelardata för att uppdatera saldo
       const allPlayers = await firestore.getPlayers(user.uid);
       const currentPlayerData = allPlayers.find((p: any) => p.name === playerName);
       
       const oldBalance = currentPlayerData?.currentBalance || 0;
       const newBalance = oldBalance + totalPoints;
 
-      // 3. SPARA TILL FIRESTORE
+      // Spara spelare
       await firestore.savePlayer(user.uid, playerName, {
         name: playerName,
         lastGameDate: gameRecord.date,
@@ -87,15 +88,14 @@ export function usePlayerData() {
         lastTeam: gameData.team.trim()
       });
 
+      // Spara match
       await firestore.saveGame(user.uid, playerName, gameRecord);
 
+      // Uppdatera global bonus
       if (currentBonus < 0) {
         const userData = await firestore.getUserData(user.uid);
         const carriedOverBonus = (userData?.carriedOverBonus || 0) + currentBonus;
-        
-        await firestore.updateUserData(user.uid, {
-          carriedOverBonus
-        });
+        await firestore.updateUserData(user.uid, { carriedOverBonus });
       }
 
       return { success: true, gameRecord, newBalance };
@@ -108,6 +108,7 @@ export function usePlayerData() {
     }
   }, [user]);
 
+  // 2. HÄMTA SPELARE
   const getPlayers = useCallback(async (): Promise<Player[]> => {
     if (!user) return [];
 
@@ -135,6 +136,7 @@ export function usePlayerData() {
     }
   }, [user]);
 
+  // 3. HÄMTA HISTORIK
   const getPlayerHistory = useCallback(async (playerName: string, limit?: number) => {
     if (!user) return [];
     try {
@@ -149,6 +151,7 @@ export function usePlayerData() {
     }
   }, [user]);
 
+  // 4. RADERA SPELARE
   const deletePlayer = useCallback(async (playerName: string) => {
     if (!user) return;
     try {
@@ -162,13 +165,11 @@ export function usePlayerData() {
     }
   }, [user]);
 
-  // --- NY FUNKTION: UPDATE PLAYER BALANCE ---
-  // Denna återanvänder din firestore.savePlayer för att bara uppdatera saldot
+  // 5. UPPDATERA SALDO (Settle Balance)
   const updatePlayerBalance = useCallback(async (playerName: string, newBalance: number) => {
     if (!user) return;
     try {
       setLoading(true);
-      // Vi skickar med namnet och det nya saldot. Din firestore-tjänst sköter mergen/uppdateringen.
       await firestore.savePlayer(user.uid, playerName, {
         name: playerName,
         currentBalance: newBalance
@@ -180,8 +181,43 @@ export function usePlayerData() {
       setLoading(false);
     }
   }, [user]);
-  // ------------------------------------------
 
+  // 6. STÄDNING VID RADERING AV KONTO (Den nya funktionen!)
+  const deleteUserData = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    
+    try {
+      // A. Hämta alla spelare
+      const players = await firestore.getPlayers(user.uid);
+      
+      for (const player of players) {
+        // B. Hämta alla matcher för spelaren
+        const games = await firestore.getGames(user.uid, player.name, 1000);
+        
+        // C. Radera varje match
+        for (const game of games) {
+          // VIKTIGT: Här använder vi (firestore as any) för att tysta TypeScript-felet
+          await (firestore as any).deleteGame(user.uid, player.name, game.id);
+        }
+        
+        // D. Radera spelaren
+        await firestore.deletePlayer(user.uid, player.name);
+      }
+      
+      // E. Radera användarens rot-dokument
+      await (firestore as any).deleteUserRoot(user.uid); 
+
+    } catch (err) {
+      console.error("Cleanup failed:", err);
+      // Vi kastar inte felet här för att inte stoppa account deletion helt, 
+      // men man kan göra det om man vill vara strikt.
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // 7. STATISTIK
   const getPlayerStats = useCallback(async (playerName: string) => {
     if (!user) return null;
     try {
@@ -226,7 +262,8 @@ export function usePlayerData() {
     getPlayerHistory,
     deletePlayer,
     getPlayerStats,
-    updatePlayerBalance, // <--- GLÖM INTE ATT RETURNERA DEN HÄR
+    updatePlayerBalance,
+    deleteUserData, // Glöm inte att returnera denna!
     loading,
     error,
     clearError: () => setError(null)

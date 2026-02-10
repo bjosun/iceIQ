@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, BarChart3, Table, TrendingUp } from 'lucide-react';
+import { BarChart3, Table, TrendingUp } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,7 +15,6 @@ import { Line } from 'react-chartjs-2';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
-// 1. IMPORTERA HOOKEN
 import { usePlayerData } from '../../hooks/usePlayerData'; 
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -32,7 +31,6 @@ ChartJS.register(
   Filler
 );
 
-// 2. DEFINIERA PLAYER TYPEN
 interface Player {
   id: string;
   name: string;
@@ -41,7 +39,6 @@ interface Player {
 interface PlayerHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // 3. TA EMOT SPELARLISTAN FRÅN DASHBOARD
   players: Player[]; 
 }
 
@@ -55,13 +52,10 @@ interface GameRecord {
   bonus: number;
 }
 
-// 4. LÄGG TILL players I PROP-LISTAN HÄR
 export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerHistoryModalProps) {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { subscription } = useSubscription();
-  
-  // 5. HÄMTA FUNKTIONEN FÖR ATT LÄSA DATABASEN
   const { getPlayerHistory } = usePlayerData(); 
 
   const [activeTab, setActiveTab] = useState<TabType>('table');
@@ -69,24 +63,22 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
   const [games, setGames] = useState<GameRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // EFFEKT 1: Välj första spelaren automatiskt när modalen öppnas
+  // Välj första spelaren automatiskt
   useEffect(() => {
     if (isOpen && players.length > 0 && !selectedPlayerName) {
       setSelectedPlayerName(players[0].name);
     }
   }, [isOpen, players]);
 
-  // EFFEKT 2: Hämta riktig data när vald spelare ändras
+  // Hämta data när spelare ändras
   useEffect(() => {
     const fetchGames = async () => {
       if (!selectedPlayerName || !user) return;
 
       setLoading(true);
       try {
-        // Hämta de senaste 50 matcherna från Firebase
         const history = await getPlayerHistory(selectedPlayerName, 50);
         
-        // Mappa datan till rätt format (om det behövs)
         const formattedGames: GameRecord[] = history.map((game: any) => ({
           id: game.id,
           date: game.date,
@@ -109,10 +101,10 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
   }, [selectedPlayerName, isOpen, user, getPlayerHistory]);
 
   const chartData = {
-    labels: games.map(game => game.date).reverse(), // Vänd ordning för grafen
+    labels: games.map(game => game.date).reverse(),
     datasets: [
       {
-        label: t('points'),
+        label: t('points') || 'Points',
         data: games.map(game => game.points).reverse(),
         borderColor: '#22d3ee',
         backgroundColor: 'rgba(34, 211, 238, 0.1)',
@@ -124,6 +116,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -153,7 +146,6 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
     const totalPoints = games.reduce((sum, game) => sum + game.points, 0);
     const avgPoints = totalPoints / totalGames;
     
-    // Säkra reduce om listan är tom
     const bestGame = games.reduce((best, game) => (game.points > best.points ? game : best), games[0]);
     const worstGame = games.reduce((worst, game) => (game.points < worst.points ? game : worst), games[0]);
     
@@ -172,14 +164,14 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('playerHistory')}
+      title={t('playerHistory') || 'Player History'}
       size="xl"
     >
-      <div className="p-6">
+      <div className="p-6 h-[80vh] flex flex-col">
         {/* Player Selector */}
-        <div className="mb-6">
+        <div className="mb-6 flex-shrink-0">
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            {t('selectPlayer')}
+            {t('selectPlayer') || 'Select Player'}
           </label>
           {players.length > 0 ? (
             <select
@@ -194,12 +186,12 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
               ))}
             </select>
           ) : (
-             <p className="text-gray-500 italic">No players found. Add a player first.</p>
+            <p className="text-gray-500 italic">{t('noPlayersFound') || 'No players found.'}</p>
           )}
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-700 mb-6">
+        <div className="border-b border-gray-700 mb-6 flex-shrink-0">
           <nav className="flex space-x-4">
             <button
               onClick={() => setActiveTab('table')}
@@ -211,7 +203,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
             >
               <div className="flex items-center">
                 <Table size={16} className="mr-2" />
-                {t('matches')}
+                {t('matches') || 'Matches'}
               </div>
             </button>
             
@@ -225,7 +217,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
             >
               <div className="flex items-center">
                 <BarChart3 size={16} className="mr-2" />
-                {t('graph')}
+                {t('graph') || 'Graph'}
               </div>
             </button>
             
@@ -239,143 +231,148 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
             >
               <div className="flex items-center">
                 <TrendingUp size={16} className="mr-2" />
-                {t('statsAndTrends')}
+                {t('statsAndTrends') || 'Stats'}
               </div>
             </button>
           </nav>
         </div>
 
-        {/* Content Area */}
-        {loading ? (
-            <div className="text-center py-12 text-gray-400">Loading history...</div>
-        ) : (
-            <div className="max-h-[400px] overflow-y-auto">
-            {activeTab === 'table' && (
+        {/* Content Area (Scrollable) */}
+        <div className="flex-grow overflow-y-auto custom-scrollbar pr-2">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500 mx-auto"></div>
+              <p className="mt-4 text-gray-400">Loading history...</p>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'table' && (
                 <div className="overflow-x-auto">
-                {games.length > 0 ? (
+                  {games.length > 0 ? (
                     <table className="w-full text-sm text-left text-gray-400">
-                        <thead className="text-xs text-gray-300 uppercase bg-gray-700">
+                      <thead className="text-xs text-gray-300 uppercase bg-gray-700 sticky top-0">
                         <tr>
-                            <th className="px-4 py-3">{t('date')}</th>
-                            <th className="px-4 py-3">{t('team')}</th>
-                            <th className="px-4 py-3">{t('points')}</th>
-                            <th className="px-4 py-3">{t('bonus')}</th>
+                          <th className="px-4 py-3 rounded-tl-lg">{t('date') || 'Date'}</th>
+                          <th className="px-4 py-3">{t('team') || 'Team'}</th>
+                          <th className="px-4 py-3">{t('points') || 'Points'}</th>
+                          <th className="px-4 py-3 rounded-tr-lg">{t('bonus') || 'Bonus'}</th>
                         </tr>
-                        </thead>
-                        <tbody>
+                      </thead>
+                      <tbody>
                         {games.map((game) => (
-                            <tr key={game.id} className="border-b border-gray-700 hover:bg-gray-750">
+                          <tr key={game.id} className="border-b border-gray-700 hover:bg-gray-750">
                             <td className="px-4 py-3">{game.date}</td>
                             <td className="px-4 py-3">{game.team}</td>
                             <td className={`px-4 py-3 font-bold ${
-                                game.points > 0 ? 'text-green-400' : 'text-red-400'
+                              game.points > 0 ? 'text-green-400' : 'text-red-400'
                             }`}>
-                                {game.points}
+                              {game.points}
                             </td>
                             <td className={`px-4 py-3 font-bold ${
-                                game.bonus > 0 ? 'text-yellow-400' : 'text-red-400'
+                              game.bonus > 0 ? 'text-yellow-400' : 'text-red-400'
                             }`}>
-                                {game.bonus.toLocaleString()} {language === 'en' ? 'USD' : 'SEK'}
+                              {game.bonus.toLocaleString()} {language === 'en' ? 'USD' : 'SEK'}
                             </td>
-                            </tr>
+                          </tr>
                         ))}
-                        </tbody>
+                      </tbody>
                     </table>
-                ) : (
-                    <div className="text-center py-8 text-gray-500">No matches recorded yet.</div>
-                )}
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">{t('noMatchesRegistered') || 'No matches recorded yet.'}</div>
+                  )}
                 </div>
-            )}
+              )}
 
-            {activeTab === 'chart' && (
-                <div className="p-4">
-                {games.length >= 2 ? (
+              {activeTab === 'chart' && (
+                <div className="h-[300px] md:h-[400px]">
+                  {games.length >= 2 ? (
                     <Line data={chartData} options={chartOptions} />
-                ) : (
-                    <div className="text-center py-12">
-                    <BarChart3 size={48} className="text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400">{t('needMoreMatches')}</p>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-center">
+                      <BarChart3 size={48} className="text-gray-600 mb-4" />
+                      <p className="text-gray-400">{t('needMoreMatches') || 'Need at least 2 matches to show graph.'}</p>
                     </div>
-                )}
+                  )}
                 </div>
-            )}
+              )}
 
-            {activeTab === 'stats' && (
+              {activeTab === 'stats' && (
                 <div>
-                {subscription.plan === 'free' ? (
-                    <Card className="text-center p-8">
-                    <div className="text-4xl mb-4">🔒</div>
-                    <h3 className="text-xl font-bold text-yellow-400 mb-2">
-                        {t('premiumStats')}
-                    </h3>
-                    <p className="text-gray-300 mb-6">
-                        {t('upgradeForStats')}
-                    </p>
-                    <Button variant="premium" fullWidth>
-                        {t('upgradeToPremium')}
-                    </Button>
+                  {subscription.plan === 'free' ? (
+                    <Card className="text-center p-8 border-yellow-500/30 bg-yellow-500/5">
+                      <div className="text-4xl mb-4">🔒</div>
+                      <h3 className="text-xl font-bold text-yellow-400 mb-2">
+                        {t('premiumStats') || 'Premium Stats'}
+                      </h3>
+                      <p className="text-gray-300 mb-6">
+                        {t('upgradeForStats') || 'Upgrade to unlock advanced statistics and trends.'}
+                      </p>
+                      <Button variant="primary" fullWidth>
+                        {t('upgradeToPremium') || 'Upgrade to Premium'}
+                      </Button>
                     </Card>
-                ) : stats ? (
+                  ) : stats ? (
                     <div className="space-y-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Card border={false} className="text-center p-4">
-                        <p className="text-sm text-gray-400 mb-1">{t('matches')}</p>
-                        <p className="text-2xl font-bold text-white">{stats.totalGames}</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <Card border={false} className="text-center p-4 bg-gray-800">
+                          <p className="text-sm text-gray-400 mb-1">{t('matches') || 'Matches'}</p>
+                          <p className="text-2xl font-bold text-white">{stats.totalGames}</p>
                         </Card>
                         
-                        <Card border={false} className="text-center p-4">
-                        <p className="text-sm text-gray-400 mb-1">{t('avgPoints')}</p>
-                        <p className="text-2xl font-bold text-green-400">{stats.avgPoints}</p>
+                        <Card border={false} className="text-center p-4 bg-gray-800">
+                          <p className="text-sm text-gray-400 mb-1">{t('avgPoints') || 'Avg Pts'}</p>
+                          <p className="text-2xl font-bold text-green-400">{stats.avgPoints}</p>
                         </Card>
                         
-                        <Card border={false} className="text-center p-4">
-                        <p className="text-sm text-gray-400 mb-1">{t('bestGame')}</p>
-                        <p className="text-2xl font-bold text-green-400">{stats.bestGame.points}</p>
-                        <p className="text-xs text-gray-500">{stats.bestGame.date}</p>
+                        <Card border={false} className="text-center p-4 bg-gray-800">
+                          <p className="text-sm text-gray-400 mb-1">{t('bestGame') || 'Best'}</p>
+                          <p className="text-2xl font-bold text-green-400">{stats.bestGame.points}</p>
+                          <p className="text-xs text-gray-500">{stats.bestGame.date}</p>
                         </Card>
                         
-                        <Card border={false} className="text-center p-4">
-                        <p className="text-sm text-gray-400 mb-1">{t('worstGame')}</p>
-                        <p className="text-2xl font-bold text-red-400">{stats.worstGame.points}</p>
-                        <p className="text-xs text-gray-500">{stats.worstGame.date}</p>
+                        <Card border={false} className="text-center p-4 bg-gray-800">
+                          <p className="text-sm text-gray-400 mb-1">{t('worstGame') || 'Worst'}</p>
+                          <p className="text-2xl font-bold text-red-400">{stats.worstGame.points}</p>
+                          <p className="text-xs text-gray-500">{stats.worstGame.date}</p>
                         </Card>
-                    </div>
+                      </div>
 
-                    <Card>
+                      <Card>
                         <h4 className="text-lg font-semibold text-cyan-400 mb-4">
-                        {t('pointDevelopment')}
+                          {t('pointDevelopment') || 'Points Accumulation'}
                         </h4>
                         <div className="h-64">
-                        <Line 
+                          <Line 
                             data={{
-                            labels: games.map(g => g.date).reverse(),
-                            datasets: [{
-                                label: 'Cumulative Points',
-                                data: games.map(g => g.points).reverse().reduce((acc, point) => {
-                                const last = acc.length > 0 ? acc[acc.length - 1] : 0;
-                                acc.push(last + point);
-                                return acc;
-                                }, [] as number[]),
+                              labels: games.map(g => g.date).reverse(),
+                              datasets: [{
+                                label: t('cumulativePoints') || 'Total Points',
+                                data: games.map(g => g.points).reverse().reduce((acc: number[], point: number) => {
+                                  const last = acc.length > 0 ? acc[acc.length - 1] : 0;
+                                  acc.push(last + point);
+                                  return acc;
+                                }, []),
                                 borderColor: '#10b981',
                                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
                                 fill: true,
                                 tension: 0.4
-                            }]
+                              }]
                             }}
                             options={chartOptions}
-                        />
+                          />
                         </div>
-                    </Card>
+                      </Card>
                     </div>
-                ) : (
+                  ) : (
                     <div className="text-center py-12">
-                    <p className="text-gray-400">{t('noMatchesRegistered')}</p>
+                      <p className="text-gray-400">{t('noMatchesRegistered') || 'No data available.'}</p>
                     </div>
-                )}
+                  )}
                 </div>
-            )}
-            </div>
-        )}
+              )}
+            </>
+          )}
+        </div>
       </div>
     </Modal>
   );

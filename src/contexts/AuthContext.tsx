@@ -1,4 +1,3 @@
-// TODO: implement AuthContext
 import { createContext, useContext, useEffect, useState } from 'react'
 import { 
   User,
@@ -7,7 +6,8 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  deleteUser // Importera deleteUser
 } from 'firebase/auth'
 import { auth } from '../services/firebase'
 
@@ -18,6 +18,7 @@ interface AuthContextType {
   signup: (email: string, password: string) => Promise<void>
   loginWithGoogle: () => Promise<void>
   logout: () => Promise<void>
+  deleteAccount: (cleanupCallback?: () => Promise<void>) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -72,13 +73,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const deleteAccount = async (cleanupCallback?: () => Promise<void>) => {
+    try {
+      if (auth.currentUser) {
+        
+        // 1. Om vi skickade med en städfunktion, kör den FÖRST
+        if (cleanupCallback) {
+          await cleanupCallback();
+        }
+
+        // 2. När städningen är klar, radera användaren i Auth
+        await deleteUser(auth.currentUser);
+      }
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      
+      // Om felet är att inloggningen är för gammal, kasta vidare felet
+      // så att vi kan visa rätt felmeddelande i Modalen/Toasten
+      if (error.code === 'auth/requires-recent-login') {
+        throw new Error('RECENT_LOGIN_REQUIRED');
+      }
+      throw error;
+    }
+  }
+
   const value = {
     user,
     loading,
     login,
     signup,
     loginWithGoogle,
-    logout
+    logout,
+    deleteAccount // LÄGG TILL HÄR
   }
 
   return (

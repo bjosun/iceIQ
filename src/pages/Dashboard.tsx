@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTemplates } from '../contexts/TemplateContext';
 import toast from 'react-hot-toast';
+
+// Komponenter
 import LoginForm from '../components/auth/LoginForm';
 import SignupForm from '../components/auth/SignupForm';
 import PlayerForm from '../components/dashboard/PlayerForm';
@@ -14,11 +16,25 @@ import PlayerHistoryModal from '../components/modals/PlayerHistoryModal';
 import SubscriptionModal from '../components/modals/SubscriptionModal';
 import TemplateEditorModal from '../components/modals/TemplateEditorModal';
 import PlayerSelectModal from '../components/modals/PlayerSelectModal';
+import ProfileModal from '../components/modals/ProfileModal'; // <--- NY
 import MobileBottomNav from '../components/layout/MobileBottomNav';
 import Card from '../components/ui/Card';
-import { BarChart3, Users, Target, TrendingUp, Zap, Banknote, Trophy } from 'lucide-react';
 
-// Definiera interface för Player
+// Ikoner
+import { 
+  BarChart3, 
+  Users, 
+  Target, 
+  TrendingUp, 
+  Zap, 
+  Banknote, 
+  Trophy,
+  User,
+  ChevronDown,
+  Settings,
+  LogOut 
+} from 'lucide-react';
+
 interface Player {
   id: string;
   name: string;
@@ -26,13 +42,11 @@ interface Player {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  // VIKTIGT: Hämta language här för att kunna använda det i handleSettleBalance
+  const { user, logout } = useAuth(); // Hämta logout här
   const { t, language } = useLanguage(); 
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { currentTemplate, currentTemplateId } = useTemplates();
-  // Se till att updatePlayerBalance finns i din hook (usePlayerData.ts)
   const { getPlayers, getPlayerHistory, saveGame, updatePlayerBalance } = usePlayerData();
 
   // State för modaler och vyer
@@ -40,8 +54,12 @@ export default function Dashboard() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [showPlayerSelect, setShowPlayerSelect] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false); // <--- NY
   const [showSignup, setShowSignup] = useState(false);
   
+  // State för Header Dropdown
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   // State för data
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>('');
@@ -251,12 +269,58 @@ export default function Dashboard() {
     <div className="min-h-screen pb-20 md:pb-0 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-cyan-400 mb-2">
-            Welcome back, {user.displayName || user.email?.split('@')[0]}!
-          </h1>
-          <p className="text-gray-400">Track player performance with real-time analytics</p>
+        {/* Header med User Dropdown */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-cyan-400 mb-2">
+              Welcome back, {user.displayName || user.email?.split('@')[0]}!
+            </h1>
+            <p className="text-gray-400">Track player performance with real-time analytics</p>
+          </div>
+
+          {/* User Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-full py-2 px-4 transition-all"
+            >
+              <div className="bg-cyan-500/20 p-1.5 rounded-full">
+                <User size={18} className="text-cyan-400" />
+              </div>
+              <span className="text-sm font-medium text-white hidden sm:block">
+                {user.email?.split('@')[0]}
+              </span>
+              <ChevronDown size={14} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-1">
+                  <button 
+                    onClick={() => { setShowProfileModal(true); setIsDropdownOpen(false); }}
+                    className="w-full flex items-center px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors"
+                  >
+                    <Settings size={16} className="mr-2 text-cyan-400" />
+                    Mitt Konto
+                  </button>
+                  <div className="h-px bg-gray-700 my-1 mx-2"></div>
+                  <button 
+                    onClick={async () => { await logout(); setIsDropdownOpen(false); }}
+                    className="w-full flex items-center px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                  >
+                    <LogOut size={16} className="mr-2" />
+                    Logga ut
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Click outside closer */}
+            {isDropdownOpen && (
+              <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>
+            )}
+          </div>
         </div>
 
         {/* Stats */}
@@ -378,6 +442,11 @@ export default function Dashboard() {
         onClose={() => setShowPlayerSelect(false)}
         onSelectPlayer={setSelectedPlayerName}
         onAddNewPlayer={() => { setSelectedPlayerName(''); setShowPlayerSelect(false); }}
+      />
+      <ProfileModal 
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        isPremium={false} // Här kopplar du in riktig premium-logik senare
       />
       <MobileBottomNav 
         onHistoryClick={() => setShowHistoryModal(true)}

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Search, Shield, Wallet, Trash2, AlertCircle } from 'lucide-react'; // Lade till ikoner
+import { Users, UserPlus, Search, Shield, Wallet, Trash2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayerData } from '../../hooks/usePlayerData'; 
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import toast from 'react-hot-toast';
 
 interface Player {
   id: string;
@@ -21,18 +22,19 @@ interface PlayerSelectModalProps {
   onClose: () => void;
   onSelectPlayer: (playerName: string) => void;
   onAddNewPlayer: () => void;
+  isPremium?: boolean; // Valfri prop, default false
 }
 
 export default function PlayerSelectModal({
   isOpen,
   onClose,
   onSelectPlayer,
-  onAddNewPlayer
+  onAddNewPlayer,
+  isPremium = false 
 }: PlayerSelectModalProps) {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   
-  // Hämta deletePlayer också från din hook
   const { getPlayers, deletePlayer } = usePlayerData();
 
   const [players, setPlayers] = useState<Player[]>([]);
@@ -59,26 +61,41 @@ export default function PlayerSelectModal({
     }
   };
 
-const handleDeletePlayer = async (e: React.MouseEvent, player: Player) => {
-  e.stopPropagation(); // Förhindrar att spelaren väljs när du klickar på papperskorgen
-  
-  const confirmMessage = language === 'en' 
-    ? `Are you sure you want to delete ${player.name}? All history and balance will be removed.`
-    : `Är du säker på att du vill ta bort ${player.name}? All historik och saldo kommer att raderas.`;
+  const handleDeletePlayer = async (e: React.MouseEvent, player: Player) => {
+    e.stopPropagation(); // Förhindrar att spelaren väljs när man klickar på papperskorgen
+    
+    const confirmMessage = language === 'en' 
+      ? `Are you sure you want to delete ${player.name}? All history and balance will be removed.`
+      : `Är du säker på att du vill ta bort ${player.name}? All historik och saldo kommer att raderas.`;
 
-  if (window.confirm(confirmMessage)) {
-    try {
-      // Ändrat från (user?.uid, player.name) till bara (player.name)
-      await deletePlayer(player.name);
-      
-      // Uppdatera listan lokalt så användaren ser att spelaren försvinner direkt
-      setPlayers(prev => prev.filter(p => p.id !== player.id));
-    } catch (error) {
-      console.error("Kunde inte ta bort spelare:", error);
-      alert(language === 'en' ? "Failed to delete player" : "Kunde inte ta bort spelaren");
+    if (window.confirm(confirmMessage)) {
+      try {
+        await deletePlayer(player.name);
+        setPlayers(prev => prev.filter(p => p.id !== player.id));
+        toast.success(language === 'en' ? "Player deleted" : "Spelare borttagen");
+      } catch (error) {
+        console.error("Kunde inte ta bort spelare:", error);
+        toast.error(language === 'en' ? "Failed to delete player" : "Kunde inte ta bort spelaren");
+      }
     }
-  }
-};
+  };
+
+  // --- NY LOGIK: Hantera "Lägg till ny spelare" ---
+  const handleAddNewClick = () => {
+    // Om man INTE är premium och redan har 1 (eller fler) spelare
+    if (!isPremium && players.length >= 1) {
+      toast.error(language === 'en' 
+        ? "Free plan is limited to 1 player. Upgrade to add more." 
+        : "Gratisplanen är begränsad till 1 spelare. Uppgradera för att lägga till fler.", 
+        { icon: '🔒', duration: 4000 }
+      );
+      return;
+    }
+
+    // Om allt är ok, kör vidare
+    onAddNewPlayer();
+    onClose();
+  };
 
   const filteredPlayers = players.filter(player =>
     player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -117,17 +134,17 @@ const handleDeletePlayer = async (e: React.MouseEvent, player: Player) => {
                     onSelectPlayer(player.name);
                     onClose();
                   }}
-                  className="w-full p-4 bg-gray-800 hover:bg-gray-750 rounded-xl text-left transition-all border border-gray-700 hover:border-cyan-500/50 flex items-center justify-between pr-14"
+                  className="w-full p-4 bg-gray-800 hover:bg-gray-750 rounded-xl text-left transition-all border border-gray-700 hover:border-cyan-500/50 flex items-center justify-between pr-12"
                 >
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-3">
+                    <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-3 shrink-0">
                       <Users size={18} className="text-cyan-400" />
                     </div>
-                    <div>
-                      <h4 className="font-bold text-white group-hover:text-cyan-400 transition-colors">
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-white group-hover:text-cyan-400 transition-colors truncate">
                         {player.name}
                       </h4>
-                      <div className="flex gap-3 mt-0.5">
+                      <div className="flex flex-wrap gap-2 mt-0.5">
                         {player.lastTeam && (
                           <span className="flex items-center text-[10px] text-gray-400">
                             <Shield size={10} className="mr-1" /> {player.lastTeam}
@@ -140,17 +157,17 @@ const handleDeletePlayer = async (e: React.MouseEvent, player: Player) => {
                     </div>
                   </div>
                   
-                  <div className="text-right hidden sm:block">
+                  <div className="text-right hidden sm:block shrink-0 ml-2">
                     <span className="text-[10px] text-gray-500 uppercase tracking-tighter">
                       {player.gameCount || 0} {t('matches') || 'Matches'}
                     </span>
                   </div>
                 </button>
 
-                {/* Radera-knapp */}
+                {/* Radera-knapp - Synlig och klickvänlig */}
                 <button
                   onClick={(e) => handleDeletePlayer(e, player)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                   title="Ta bort spelare"
                 >
                   <Trash2 size={18} />
@@ -167,16 +184,22 @@ const handleDeletePlayer = async (e: React.MouseEvent, player: Player) => {
 
         <div className="mt-6 pt-6 border-t border-gray-700">
           <Button
-            onClick={() => {
-              onAddNewPlayer();
-              onClose();
-            }}
+            onClick={handleAddNewClick} // Använd vår spärr-funktion här
             variant="primary"
             icon={UserPlus}
             fullWidth
           >
             {t('addNewPlayer') || 'Add New Player'}
           </Button>
+          
+          {/* Info-text om gränsen (Dynamisk språkhantering) */}
+          {!isPremium && players.length >= 1 && (
+             <p className="text-xs text-center text-gray-500 mt-2">
+               {language === 'en' 
+                 ? "Free plan: 1 of 1 player used." 
+                 : "Gratisplan: 1 av 1 spelare använd."}
+             </p>
+          )}
         </div>
       </div>
     </Modal>

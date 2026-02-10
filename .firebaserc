@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "squareverse-36179"
+  },
+  "targets": {
+    "squareverse-36179": {
+      "hosting": {
+        "v2": [
+          "iceiq-v2"
+        ]
+      }
+    }
   }
 }
