@@ -16,7 +16,7 @@ import TemplateEditorModal from '../components/modals/TemplateEditorModal';
 import PlayerSelectModal from '../components/modals/PlayerSelectModal';
 import MobileBottomNav from '../components/layout/MobileBottomNav';
 import Card from '../components/ui/Card';
-import { BarChart3, Users, Target, TrendingUp, Zap } from 'lucide-react'; // Zap ikon för bonus
+import { BarChart3, Users, Target, TrendingUp, Zap, Banknote, Trophy } from 'lucide-react';
 
 // Definiera interface för Player
 interface Player {
@@ -27,11 +27,13 @@ interface Player {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  // VIKTIGT: Hämta language här för att kunna använda det i handleSettleBalance
+  const { t, language } = useLanguage(); 
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { currentTemplate, currentTemplateId } = useTemplates();
-  const { getPlayers, getPlayerHistory, saveGame } = usePlayerData();
+  // Se till att updatePlayerBalance finns i din hook (usePlayerData.ts)
+  const { getPlayers, getPlayerHistory, saveGame, updatePlayerBalance } = usePlayerData();
 
   // State för modaler och vyer
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -53,6 +55,9 @@ export default function Dashboard() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [actionCounts, setActionCounts] = useState<Record<string, number>>({});
   const [carriedOverBalance, setCarriedOverBalance] = useState<number>(0); 
+  
+  // Pengar vs Poäng läge
+  const [isMoneyMode, setIsMoneyMode] = useState<boolean>(true);
 
   const [stats, setStats] = useState({
     players: 0,
@@ -60,6 +65,27 @@ export default function Dashboard() {
     avgPoints: 0,
     thisWeek: 0
   });
+
+  // Funktion för att nolla saldot
+  const handleSettleBalance = async () => {
+    if (!selectedPlayerName) return;
+    
+    const confirmMsg = language === 'en' 
+      ? `Are you sure you want to settle the balance for ${selectedPlayerName}? This will set it to 0.`
+      : `Är du säker på att du vill reglera saldot för ${selectedPlayerName}? Det kommer att nollställas.`;
+
+    if (window.confirm(confirmMsg)) {
+      try {
+        await updatePlayerBalance(selectedPlayerName, 0); 
+        setCarriedOverBalance(0);
+        setRefreshTrigger(prev => prev + 1);
+        toast.success(language === 'en' ? "Balance settled!" : "Saldot reglerat!");
+      } catch (e) {
+        toast.error("Kunde inte reglera saldot.");
+        console.error(e);
+      }
+    }
+  };
 
   // --- 1. Ladda Statistik & Spelare ---
   useEffect(() => {
@@ -127,7 +153,7 @@ export default function Dashboard() {
     }
   }, [searchParams, setSearchParams]);
 
-  // --- 4. Live Poängberäkning (Den viktiga delen!) ---
+  // --- 4. Live Poängberäkning ---
   const getLiveTotals = () => {
     let actionsPoints = 0;
     let bonusPoints = 0;
@@ -138,12 +164,9 @@ export default function Dashboard() {
           const keyObj = JSON.parse(key);
           const action = currentTemplate.actions.find(a => a.name.en === keyObj.en);
           if (action) {
-            // Kontrollera om isBonus är sant (satt i TemplateEditor)
             if (action.isBonus) {
-              // Multiplicera med vald bonusFactor (t.ex. 10x)
               bonusPoints += count * action.points * bonusFactor;
             } else {
-              // Vanlig poäng
               actionsPoints += count * action.points;
             }
           }
@@ -260,6 +283,21 @@ export default function Dashboard() {
             </Card>
         </div>
 
+        {/* Inställningar: Pengar/Poäng Toggle */}
+        <div className="flex justify-end mb-6 space-x-4">
+          <button 
+            onClick={() => setIsMoneyMode(!isMoneyMode)}
+            className={`flex items-center px-4 py-2 rounded-full border transition-all ${
+              isMoneyMode ? 'border-yellow-500/50 text-yellow-500 bg-yellow-500/10' : 'border-cyan-500/50 text-cyan-500 bg-cyan-500/10'
+            }`}
+          >
+            {isMoneyMode ? <Banknote size={18} className="mr-2"/> : <Trophy size={18} className="mr-2"/>}
+            <span className="text-sm font-bold">
+              {isMoneyMode ? 'Pengar-läge' : 'Poäng-läge'}
+            </span>
+          </button>
+        </div>
+
         {/* Main Interface */}
         <div className="space-y-6">
           <PlayerForm
@@ -281,7 +319,7 @@ export default function Dashboard() {
             onCountChange={setActionCounts}
           />
           
-          {/* NYTT: Viktning Väljare */}
+          {/* Viktning Väljare */}
           <Card className="flex items-center justify-between p-4 border-cyan-500/20 bg-cyan-500/5">
             <div className="flex items-center">
               <Zap className="text-yellow-400 mr-3" size={24} />
@@ -309,6 +347,8 @@ export default function Dashboard() {
             actionCounts={actionCounts}
             onSaveGame={handleSaveGame}
             onReset={handleReset}
+            isMoneyMode={isMoneyMode} 
+            onSettleBalance={handleSettleBalance}
             totalPoints={totals.actionsPoints}
             totalBonus={totals.bonusPoints}
             totalFinal={totals.total}

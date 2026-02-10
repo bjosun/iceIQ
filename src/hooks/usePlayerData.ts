@@ -18,7 +18,7 @@ interface Player {
   name: string;
   lastGameDate?: string;
   gameCount?: number;
-  currentBalance?: number; // Tillagd för att hålla reda på saldot
+  currentBalance?: number; 
 }
 
 export function usePlayerData() {
@@ -72,29 +72,23 @@ export function usePlayerData() {
         ...(gameData.softSkillCounts && { softSkillCounts: gameData.softSkillCounts })
       };
 
-      // 2. HÄMTA NUVARANDE SPELARDATA (för att få existerande saldo)
+      // 2. HÄMTA NUVARANDE SPELARDATA
       const allPlayers = await firestore.getPlayers(user.uid);
       const currentPlayerData = allPlayers.find((p: any) => p.name === playerName);
       
-      // Hämta gammalt saldo eller starta på 0
       const oldBalance = currentPlayerData?.currentBalance || 0;
-      
-      // Räkna ut det nya saldot (Gammalt saldo + matchens totala poäng)
       const newBalance = oldBalance + totalPoints;
 
       // 3. SPARA TILL FIRESTORE
-      // Spara/Uppdatera spelarobjektet med det nya saldot
       await firestore.savePlayer(user.uid, playerName, {
         name: playerName,
         lastGameDate: gameRecord.date,
-        currentBalance: newBalance, // Här sparas det automatiserade saldot
+        currentBalance: newBalance,
         lastTeam: gameData.team.trim()
       });
 
-      // Spara själva match-loggen
       await firestore.saveGame(user.uid, playerName, gameRecord);
 
-      // Uppdatera användarens globala bonus (om den är negativ, enligt din befintliga logik)
       if (currentBonus < 0) {
         const userData = await firestore.getUserData(user.uid);
         const carriedOverBonus = (userData?.carriedOverBonus || 0) + currentBonus;
@@ -127,7 +121,6 @@ export function usePlayerData() {
           return {
             ...player,
             gameCount: games.length,
-            // currentBalance följer med här automatiskt från savePlayer ovan
             currentBalance: player.currentBalance || 0 
           };
         })
@@ -142,7 +135,6 @@ export function usePlayerData() {
     }
   }, [user]);
 
-  // Resten av funktionerna (getPlayerHistory, deletePlayer, getPlayerStats) förblir oförändrade
   const getPlayerHistory = useCallback(async (playerName: string, limit?: number) => {
     if (!user) return [];
     try {
@@ -169,6 +161,26 @@ export function usePlayerData() {
       setLoading(false);
     }
   }, [user]);
+
+  // --- NY FUNKTION: UPDATE PLAYER BALANCE ---
+  // Denna återanvänder din firestore.savePlayer för att bara uppdatera saldot
+  const updatePlayerBalance = useCallback(async (playerName: string, newBalance: number) => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      // Vi skickar med namnet och det nya saldot. Din firestore-tjänst sköter mergen/uppdateringen.
+      await firestore.savePlayer(user.uid, playerName, {
+        name: playerName,
+        currentBalance: newBalance
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update balance');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+  // ------------------------------------------
 
   const getPlayerStats = useCallback(async (playerName: string) => {
     if (!user) return null;
@@ -214,6 +226,7 @@ export function usePlayerData() {
     getPlayerHistory,
     deletePlayer,
     getPlayerStats,
+    updatePlayerBalance, // <--- GLÖM INTE ATT RETURNERA DEN HÄR
     loading,
     error,
     clearError: () => setError(null)
