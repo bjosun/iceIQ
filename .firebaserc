@@ -5,10 +5,14 @@
   "targets": {
     "squareverse-36179": {
       "hosting": {
+        "prod": [
+          "squareverse-36179"
+        ],
         "v2": [
           "iceiq-v2"
         ]
       }
     }
-  }
+  },
+  "etags": {}
 }

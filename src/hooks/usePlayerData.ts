@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-// Kontrollera att sökvägen stämmer. Om firebase.js ligger i src/ så ska det vara '../firebase'
-// Om den ligger i src/services/ så är '../services/firebase' rätt.
-import { firestore } from '../services/firebase'; 
+// Importera firestore-objektet och din Cloud Function för Stripe
+import { firestore, deleteUserStripeAccount } from '../services/firebase'; 
 
 interface GameRecord {
   id?: string;
@@ -41,10 +40,7 @@ export function usePlayerData() {
     counts: Record<string, number>,
     bonusFactor: number
   ) => {
-    if (!user) {
-      throw new Error('User must be logged in');
-    }
-
+    if (!user) throw new Error('User must be logged in');
     setLoading(true);
     setError(null);
 
@@ -73,14 +69,11 @@ export function usePlayerData() {
         ...(gameData.softSkillCounts && { softSkillCounts: gameData.softSkillCounts })
       };
 
-      // Hämta spelardata för att uppdatera saldo
       const allPlayers = await firestore.getPlayers(user.uid);
       const currentPlayerData = allPlayers.find((p: any) => p.name === playerName);
-      
       const oldBalance = currentPlayerData?.currentBalance || 0;
       const newBalance = oldBalance + totalPoints;
 
-      // Spara spelare
       await firestore.savePlayer(user.uid, playerName, {
         name: playerName,
         lastGameDate: gameRecord.date,
@@ -88,10 +81,8 @@ export function usePlayerData() {
         lastTeam: gameData.team.trim()
       });
 
-      // Spara match
       await firestore.saveGame(user.uid, playerName, gameRecord);
 
-      // Uppdatera global bonus
       if (currentBonus < 0) {
         const userData = await firestore.getUserData(user.uid);
         const carriedOverBonus = (userData?.carriedOverBonus || 0) + currentBonus;
@@ -100,7 +91,6 @@ export function usePlayerData() {
 
       return { success: true, gameRecord, newBalance };
     } catch (err) {
-      console.error("Save game failed:", err);
       setError(err instanceof Error ? err.message : 'Failed to save game');
       throw err;
     } finally {
@@ -111,11 +101,9 @@ export function usePlayerData() {
   // 2. HÄMTA SPELARE
   const getPlayers = useCallback(async (): Promise<Player[]> => {
     if (!user) return [];
-
     try {
       setLoading(true);
       const players = await firestore.getPlayers(user.uid);
-      
       const playersWithStats = await Promise.all(
         players.map(async (player: any) => {
           const games = await firestore.getGames(user.uid, player.name, 1000);
@@ -126,7 +114,6 @@ export function usePlayerData() {
           };
         })
       );
-
       return playersWithStats;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch players');
@@ -141,8 +128,7 @@ export function usePlayerData() {
     if (!user) return [];
     try {
       setLoading(true);
-      const games = await firestore.getGames(user.uid, playerName, limit);
-      return games;
+      return await firestore.getGames(user.uid, playerName, limit);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch player history');
       return [];
@@ -165,7 +151,7 @@ export function usePlayerData() {
     }
   }, [user]);
 
-  // 5. UPPDATERA SALDO (Settle Balance)
+  // 5. UPPDATERA SALDO
   const updatePlayerBalance = useCallback(async (playerName: string, newBalance: number) => {
     if (!user) return;
     try {
@@ -182,36 +168,41 @@ export function usePlayerData() {
     }
   }, [user]);
 
-  // 6. STÄDNING VID RADERING AV KONTO (Den nya funktionen!)
+  // 6. TOTAL STÄDNING (GDPR / RADERA KONTO)
   const deleteUserData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     
     try {
-      // A. Hämta alla spelare
+      // STEG A: Stoppa/Radera Stripe-konto via Cloud Function
+      try {
+        await deleteUserStripeAccount(); 
+      } catch (stripeErr) {
+        console.warn("Stripe cleanup skipped or failed:", stripeErr);
+      }
+
+      // STEG B: Hämta alla spelare för att kunna loopa igenom deras matcher
       const players = await firestore.getPlayers(user.uid);
       
       for (const player of players) {
-        // B. Hämta alla matcher för spelaren
+        // Hämta alla matcher för denna spelare
         const games = await firestore.getGames(user.uid, player.name, 1000);
         
-        // C. Radera varje match
+        // Radera varje match i sub-collection
         for (const game of games) {
-          // VIKTIGT: Här använder vi (firestore as any) för att tysta TypeScript-felet
           await (firestore as any).deleteGame(user.uid, player.name, game.id);
         }
         
-        // D. Radera spelaren
+        // Radera själva spelaren
         await firestore.deletePlayer(user.uid, player.name);
       }
       
-      // E. Radera användarens rot-dokument
+      // STEG C: Radera användarens huvuddokument (med inställningar/mallar)
       await (firestore as any).deleteUserRoot(user.uid); 
 
     } catch (err) {
-      console.error("Cleanup failed:", err);
-      // Vi kastar inte felet här för att inte stoppa account deletion helt, 
-      // men man kan göra det om man vill vara strikt.
+      console.error("Firestore cleanup failed:", err);
+      setError("Failed to clean up data.");
     } finally {
       setLoading(false);
     }
@@ -223,35 +214,25 @@ export function usePlayerData() {
     try {
       const games = (await getPlayerHistory(playerName, 1000)) as GameRecord[];
       if (games.length === 0) return null;
+      
       const totalPoints = games.reduce((sum, game) => sum + (game.points || 0), 0);
       const avgPoints = totalPoints / games.length;
-      const bestGame = games.reduce((best, game) => 
-        (game.points || 0) > (best.points || 0) ? game : best
-      );
-      const worstGame = games.reduce((worst, game) => 
-        (game.points || 0) < (worst.points || 0) ? game : worst
-      );
+      
       const actionCounts: Record<string, number> = {};
       games.forEach(game => {
         Object.entries(game.counts || {}).forEach(([action, count]) => {
-          const countVal = count as number; 
-          actionCounts[action] = (actionCounts[action] || 0) + countVal;
+          actionCounts[action] = (actionCounts[action] || 0) + (count as number);
         });
       });
-      const sortedActions = Object.entries(actionCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10);
+
       return {
         totalGames: games.length,
         totalPoints,
         avgPoints: Number(avgPoints.toFixed(2)),
-        bestGame,
-        worstGame,
         recentGames: games.slice(0, 10),
-        topActions: sortedActions
+        topActions: Object.entries(actionCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
       };
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to calculate stats');
       return null;
     }
   }, [user, getPlayerHistory]);
@@ -263,7 +244,7 @@ export function usePlayerData() {
     deletePlayer,
     getPlayerStats,
     updatePlayerBalance,
-    deleteUserData, // Glöm inte att returnera denna!
+    deleteUserData,
     loading,
     error,
     clearError: () => setError(null)

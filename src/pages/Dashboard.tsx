@@ -4,21 +4,20 @@ import { usePlayerData } from '../hooks/usePlayerData';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTemplates } from '../contexts/TemplateContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import toast from 'react-hot-toast';
 
 // Komponenter
-import LoginForm from '../components/auth/LoginForm';
-import SignupForm from '../components/auth/SignupForm';
 import PlayerForm from '../components/dashboard/PlayerForm';
 import ActionGrid from '../components/dashboard/ActionGrid';
 import SummarySection from '../components/dashboard/SummarySection';
 import PlayerHistoryModal from '../components/modals/PlayerHistoryModal';
-import SubscriptionModal from '../components/modals/SubscriptionModal';
 import TemplateEditorModal from '../components/modals/TemplateEditorModal';
 import PlayerSelectModal from '../components/modals/PlayerSelectModal';
-import ProfileModal from '../components/modals/ProfileModal'; // <--- NY
 import MobileBottomNav from '../components/layout/MobileBottomNav';
 import Card from '../components/ui/Card';
+import LoginForm from '../components/auth/LoginForm';
+import SignupForm from '../components/auth/SignupForm';
 
 // Ikoner
 import { 
@@ -28,11 +27,7 @@ import {
   TrendingUp, 
   Zap, 
   Banknote, 
-  Trophy,
-  User,
-  ChevronDown,
-  Settings,
-  LogOut 
+  Trophy 
 } from 'lucide-react';
 
 interface Player {
@@ -42,39 +37,36 @@ interface Player {
 }
 
 export default function Dashboard() {
-  const { user, logout } = useAuth(); // Hämta logout här
+  const { user } = useAuth();
   const { t, language } = useLanguage(); 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { subscription } = useSubscription(); 
+  const [searchParams] = useSearchParams();
+
+  const isPremium = subscription?.plan === 'premium';
 
   const { currentTemplate, currentTemplateId } = useTemplates();
   const { getPlayers, getPlayerHistory, saveGame, updatePlayerBalance } = usePlayerData();
 
-  // State för modaler och vyer
+  // State för modaler
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [showPlayerSelect, setShowPlayerSelect] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false); // <--- NY
   const [showSignup, setShowSignup] = useState(false);
   
-  // State för Header Dropdown
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   // State för data
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>('');
+  
+  // --- FIX: Lagt till playerEmail state ---
   const [playerEmail, setPlayerEmail] = useState('');
+  
   const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
   const [gameDate, setGameDate] = useState<string>(new Date().toISOString().split('T')[0]);
   
-  // Variabel bonusfaktor (Default 10x)
   const [bonusFactor, setBonusFactor] = useState<number>(10); 
-  
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [actionCounts, setActionCounts] = useState<Record<string, number>>({});
   const [carriedOverBalance, setCarriedOverBalance] = useState<number>(0); 
-  
-  // Pengar vs Poäng läge
   const [isMoneyMode, setIsMoneyMode] = useState<boolean>(true);
 
   const [stats, setStats] = useState({
@@ -84,27 +76,6 @@ export default function Dashboard() {
     thisWeek: 0
   });
 
-  // Funktion för att nolla saldot
-  const handleSettleBalance = async () => {
-    if (!selectedPlayerName) return;
-    
-    const confirmMsg = language === 'en' 
-      ? `Are you sure you want to settle the balance for ${selectedPlayerName}? This will set it to 0.`
-      : `Är du säker på att du vill reglera saldot för ${selectedPlayerName}? Det kommer att nollställas.`;
-
-    if (window.confirm(confirmMsg)) {
-      try {
-        await updatePlayerBalance(selectedPlayerName, 0); 
-        setCarriedOverBalance(0);
-        setRefreshTrigger(prev => prev + 1);
-        toast.success(language === 'en' ? "Balance settled!" : "Saldot reglerat!");
-      } catch (e) {
-        toast.error("Kunde inte reglera saldot.");
-        console.error(e);
-      }
-    }
-  };
-
   // --- 1. Ladda Statistik & Spelare ---
   useEffect(() => {
     let isMounted = true;
@@ -113,13 +84,12 @@ export default function Dashboard() {
       try {
         const fetchedPlayers = await getPlayers();
         if (isMounted) {
-            setPlayers(fetchedPlayers as Player[]);
-            if (fetchedPlayers.length > 0 && !selectedPlayerName) {
-                setSelectedPlayerName(fetchedPlayers[0].name);
-            }
+          setPlayers(fetchedPlayers as Player[]);
+          if (fetchedPlayers.length > 0 && !selectedPlayerName) {
+            setSelectedPlayerName(fetchedPlayers[0].name);
+          }
         }
-        if (!isMounted) return;
-
+        
         const gamesPromises = fetchedPlayers.map(player => getPlayerHistory(player.name, 1000));
         const gamesResults = await Promise.all(gamesPromises);
         const allGames = gamesResults.flat();
@@ -140,7 +110,7 @@ export default function Dashboard() {
     };
     fetchData();
     return () => { isMounted = false; };
-  }, [user, refreshTrigger, getPlayers, getPlayerHistory]); 
+  }, [user, refreshTrigger, getPlayers, getPlayerHistory, selectedPlayerName]); 
 
   // --- 2. Saldo Synkning ---
   useEffect(() => {
@@ -152,112 +122,69 @@ export default function Dashboard() {
       try {
         const playerData = await getPlayers(); 
         const currentPlayer = playerData.find(p => p.name === selectedPlayerName);
-        if (currentPlayer) {
-          setCarriedOverBalance(currentPlayer.currentBalance ?? 0);
-        } else {
-          setCarriedOverBalance(0);
-        }
+        setCarriedOverBalance(currentPlayer?.currentBalance ?? 0);
       } catch (error) { setCarriedOverBalance(0); }
     };
     syncPlayerBalance();
   }, [selectedPlayerName, user, refreshTrigger, getPlayers]);
 
-  // --- 3. URL Hantering ---
-  useEffect(() => {
-    if (searchParams.get('upgrade') === 'true') {
-      setShowSubscriptionModal(true);
-      searchParams.delete('upgrade');
-      setSearchParams(searchParams);
-    }
-  }, [searchParams, setSearchParams]);
-
-  // --- 4. Live Poängberäkning ---
-  const getLiveTotals = () => {
+  const totals = (() => {
     let actionsPoints = 0;
     let bonusPoints = 0;
-
     if (currentTemplate) {
       Object.entries(actionCounts).forEach(([key, count]) => {
         try {
           const keyObj = JSON.parse(key);
           const action = currentTemplate.actions.find(a => a.name.en === keyObj.en);
           if (action) {
-            if (action.isBonus) {
-              bonusPoints += count * action.points * bonusFactor;
-            } else {
-              actionsPoints += count * action.points;
-            }
+            if (action.isBonus) bonusPoints += count * action.points * bonusFactor;
+            else actionsPoints += count * action.points;
           }
-        } catch (e) {
-          actionsPoints += count * 1;
-        }
+        } catch (e) { actionsPoints += count * 1; }
       });
     }
-
-    const total = actionsPoints + bonusPoints + carriedOverBalance;
-
     return {
       actionsPoints,
       bonusPoints: Math.round(bonusPoints),
-      total: Math.round(total)
+      total: Math.round(actionsPoints + bonusPoints + carriedOverBalance)
     };
-  };
+  })();
 
-  const totals = getLiveTotals();
-
-  // --- 5. Spara Match ---
   const handleSaveGame = async () => {
     if (!selectedPlayerName) {
       toast.error(t('selectPlayerFirst') || "Please select a player first");
       return;
     }
-    if (Object.keys(actionCounts).length === 0) {
-      toast.error(t('registerActionsFirst') || "Register some actions first");
-      return;
-    }
-
     try {
-        const gameData = {
-            date: gameDate,      
-            team: teamName || 'My Team',
-            playerEmail: playerEmail,
-            points: totals.total,
-            carriedOverBalance: carriedOverBalance,
-        };
-
-        await saveGame(
-            selectedPlayerName,
-            gameData,
-            currentTemplateId,
-            actionCounts,
-            bonusFactor        
-          );
-
-        if (teamName) localStorage.setItem('lastUsedTeam', teamName);
-
-        // Reset
-        setActionCounts({});
-        setCarriedOverBalance(0);
-        setPlayerEmail('');
-        setRefreshTrigger(prev => prev + 1); 
-        toast.success(t('gameSavedSuccessfully') || 'Matchen har sparats!');
-
-    } catch (error) {
-        console.error("Failed to save game:", error);
-        toast.error(t('saveError') || "Kunde inte spara matchen.");
-    }
-  };
-
-  const handleReset = () => {
-    if (window.confirm(t('resetAllWarning'))) {
+      await saveGame(
+        selectedPlayerName,
+        { date: gameDate, team: teamName || 'My Team', points: totals.total },
+        currentTemplateId,
+        actionCounts,
+        bonusFactor
+      );
+      if (teamName) localStorage.setItem('lastUsedTeam', teamName);
       setActionCounts({});
+      setRefreshTrigger(prev => prev + 1); 
+      toast.success(t('gameSavedSuccessfully') || 'Saved!');
+    } catch (error) { toast.error(t('saveError') || "Error."); }
+  };
+
+  const handleSettleBalance = async () => {
+    if (!selectedPlayerName) return;
+    if (window.confirm(language === 'en' ? `Settle balance for ${selectedPlayerName}?` : `Reglera saldo för ${selectedPlayerName}?`)) {
+      try {
+        await updatePlayerBalance(selectedPlayerName, 0); 
+        setCarriedOverBalance(0);
+        setRefreshTrigger(prev => prev + 1);
+        toast.success("Saldot reglerat!");
+      } catch (e) { toast.error("Kunde inte reglera."); }
     }
   };
 
-  // --- Render ---
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           {showSignup ? <SignupForm onSwitchToLogin={() => setShowSignup(false)} /> : <LoginForm onSwitchToSignup={() => setShowSignup(true)} onForgotPassword={() => {}} />}
         </Card>
@@ -266,89 +193,41 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen pb-20 md:pb-0 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800">
+    <div className="min-h-screen pb-20 md:pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Header med User Dropdown */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-cyan-400 mb-2">
-              Welcome back, {user.displayName || user.email?.split('@')[0]}!
-            </h1>
-            <p className="text-gray-400">Track player performance with real-time analytics</p>
-          </div>
-
-          {/* User Dropdown */}
-          <div className="relative">
-            <button 
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-full py-2 px-4 transition-all"
-            >
-              <div className="bg-cyan-500/20 p-1.5 rounded-full">
-                <User size={18} className="text-cyan-400" />
-              </div>
-              <span className="text-sm font-medium text-white hidden sm:block">
-                {user.email?.split('@')[0]}
-              </span>
-              <ChevronDown size={14} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Dropdown Menu */}
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-1">
-                  <button 
-                    onClick={() => { setShowProfileModal(true); setIsDropdownOpen(false); }}
-                    className="w-full flex items-center px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors"
-                  >
-                    <Settings size={16} className="mr-2 text-cyan-400" />
-                    Mitt Konto
-                  </button>
-                  <div className="h-px bg-gray-700 my-1 mx-2"></div>
-                  <button 
-                    onClick={async () => { await logout(); setIsDropdownOpen(false); }}
-                    className="w-full flex items-center px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
-                  >
-                    <LogOut size={16} className="mr-2" />
-                    Logga ut
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            {/* Click outside closer */}
-            {isDropdownOpen && (
-              <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>
-            )}
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white">
+            {language === 'sv' ? 'Välkommen tillbaka,' : 'Welcome back,'} {user.displayName || user.email?.split('@')[0]}
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">{t('dashboardSubtitle') || 'Track your scouting progress'}</p>
         </div>
 
-        {/* Stats */}
+        {/* Stats Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <Card className="text-center p-4">
-                <Users className="text-cyan-400 mx-auto mb-2" size={20} />
-                <p className="text-2xl font-bold text-white">{stats.players}</p>
-                <p className="text-xs text-gray-400">Players</p>
-            </Card>
-            <Card className="text-center p-4">
-                <BarChart3 className="text-green-400 mx-auto mb-2" size={20} />
-                <p className="text-2xl font-bold text-white">{stats.matches}</p>
-                <p className="text-xs text-gray-400">Matches</p>
-            </Card>
-            <Card className="text-center p-4">
-                <Target className="text-yellow-400 mx-auto mb-2" size={20} />
-                <p className="text-2xl font-bold text-white">{stats.avgPoints}</p>
-                <p className="text-xs text-gray-400">Avg Points</p>
-            </Card>
-            <Card className="text-center p-4">
-                <TrendingUp className="text-red-400 mx-auto mb-2" size={20} />
-                <p className="text-2xl font-bold text-white">{stats.thisWeek}</p>
-                <p className="text-xs text-gray-400">This Week</p>
-            </Card>
+          <Card className="text-center p-4">
+            <Users className="text-cyan-400 mx-auto mb-2" size={20} />
+            <p className="text-2xl font-bold text-white">{stats.players}</p>
+            <p className="text-xs text-gray-400">Players</p>
+          </Card>
+          <Card className="text-center p-4">
+            <BarChart3 className="text-green-400 mx-auto mb-2" size={20} />
+            <p className="text-2xl font-bold text-white">{stats.matches}</p>
+            <p className="text-xs text-gray-400">Matches</p>
+          </Card>
+          <Card className="text-center p-4">
+            <Target className="text-yellow-400 mx-auto mb-2" size={20} />
+            <p className="text-2xl font-bold text-white">{stats.avgPoints}</p>
+            <p className="text-xs text-gray-400">Avg Points</p>
+          </Card>
+          <Card className="text-center p-4">
+            <TrendingUp className="text-red-400 mx-auto mb-2" size={20} />
+            <p className="text-2xl font-bold text-white">{stats.thisWeek}</p>
+            <p className="text-xs text-gray-400">This Week</p>
+          </Card>
         </div>
 
-        {/* Inställningar: Pengar/Poäng Toggle */}
-        <div className="flex justify-end mb-6 space-x-4">
+        <div className="flex justify-end mb-6">
           <button 
             onClick={() => setIsMoneyMode(!isMoneyMode)}
             className={`flex items-center px-4 py-2 rounded-full border transition-all ${
@@ -356,17 +235,15 @@ export default function Dashboard() {
             }`}
           >
             {isMoneyMode ? <Banknote size={18} className="mr-2"/> : <Trophy size={18} className="mr-2"/>}
-            <span className="text-sm font-bold">
-              {isMoneyMode ? 'Pengar-läge' : 'Poäng-läge'}
+            <span className="text-xs font-bold uppercase tracking-wider">
+              {isMoneyMode ? 'Money Mode' : 'Points Mode'}
             </span>
           </button>
         </div>
 
-        {/* Main Interface */}
         <div className="space-y-6">
+          {/* --- FIX: Skickar nu med playerEmail och onPlayerEmailChange --- */}
           <PlayerForm
-            onShowHistory={() => setShowHistoryModal(true)}
-            onEditTemplate={() => setShowTemplateEditor(true)}
             selectedPlayerName={selectedPlayerName}
             onPlayerNameChange={setSelectedPlayerName} 
             teamName={teamName}
@@ -374,43 +251,35 @@ export default function Dashboard() {
             gameDate={gameDate}
             onGameDateChange={setGameDate}
             onOpenPlayerSelect={() => setShowPlayerSelect(true)}
+            onShowHistory={() => setShowHistoryModal(true)}
+            onEditTemplate={() => setShowTemplateEditor(true)}
             playerEmail={playerEmail}
             onPlayerEmailChange={setPlayerEmail}
           />
           
-          <ActionGrid 
-            actionCounts={actionCounts}
-            onCountChange={setActionCounts}
-          />
+          <ActionGrid actionCounts={actionCounts} onCountChange={setActionCounts} />
           
-          {/* Viktning Väljare */}
           <Card className="flex items-center justify-between p-4 border-cyan-500/20 bg-cyan-500/5">
             <div className="flex items-center">
               <Zap className="text-yellow-400 mr-3" size={24} />
               <div>
                 <p className="text-sm font-bold text-white">Bonus Weighting</p>
-                <p className="text-xs text-gray-400">Multiplier for actions marked as 'Bonus'</p>
+                <p className="text-xs text-gray-400">Multiplier for bonus actions</p>
               </div>
             </div>
             <select 
               value={bonusFactor}
               onChange={(e) => setBonusFactor(Number(e.target.value))}
-              className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-cyan-400 font-bold outline-none focus:ring-2 focus:ring-cyan-500"
+              className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-cyan-400 font-bold outline-none"
             >
-              <option value={0.5}>0.5x</option>
-              <option value={1}>1x</option>
-              <option value={2}>2x</option>
-              <option value={5}>5x</option>
-              <option value={10}>10x</option>
-              <option value={50}>50x</option>
-              <option value={100}>100x</option>
+              {[0.5, 1, 2, 5, 10, 50, 100].map(v => <option key={v} value={v}>{v}x</option>)}
             </select>
           </Card>
           
           <SummarySection
             actionCounts={actionCounts}
             onSaveGame={handleSaveGame}
-            onReset={handleReset}
+            onReset={() => window.confirm(t('resetAllWarning')) && setActionCounts({})}
             isMoneyMode={isMoneyMode} 
             onSettleBalance={handleSettleBalance}
             totalPoints={totals.actionsPoints}
@@ -423,34 +292,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Modals */}
-      <PlayerHistoryModal
-        isOpen={showHistoryModal}
-        onClose={() => setShowHistoryModal(false)}
-        players={players} 
-      />
-      <SubscriptionModal
-        isOpen={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-      />
-      <TemplateEditorModal
-        isOpen={showTemplateEditor}
-        onClose={() => setShowTemplateEditor(false)}
-      />
-      <PlayerSelectModal
-        isOpen={showPlayerSelect}
-        onClose={() => setShowPlayerSelect(false)}
-        onSelectPlayer={setSelectedPlayerName}
-        onAddNewPlayer={() => { setSelectedPlayerName(''); setShowPlayerSelect(false); }}
-      />
-      <ProfileModal 
-        isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        isPremium={false} // Här kopplar du in riktig premium-logik senare
-      />
+      <PlayerHistoryModal isOpen={showHistoryModal} onClose={() => setShowHistoryModal(false)} players={players} />
+      <TemplateEditorModal isOpen={showTemplateEditor} onClose={() => setShowTemplateEditor(false)} />
+      <PlayerSelectModal isOpen={showPlayerSelect} onClose={() => setShowPlayerSelect(false)} onSelectPlayer={setSelectedPlayerName} onAddNewPlayer={() => { setSelectedPlayerName(''); setShowPlayerSelect(false); }} isPremium={isPremium} />
+      
       <MobileBottomNav 
         onHistoryClick={() => setShowHistoryModal(true)}
-        onPremiumClick={() => setShowSubscriptionModal(true)}
+        onPremiumClick={() => {/* Styrs nu via Layout */}}
         onRecordGame={handleSaveGame}
       />
     </div>

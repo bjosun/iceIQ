@@ -1,12 +1,18 @@
-// TODO: add translations
 export const translations = {
   en: {
+    // App & Nav
     appTitle: "Ice IQ",
     appSubtitle: "Cloud-synced with player history and graphs.",
     players: "Players",
     matches: "Matches",
     manageSubscription: "Manage Subscription",
     logout: "Log Out",
+    login: "Log in",
+    register: "Register",
+    upgrade: "Upgrade",
+    myAccount: "My Account",
+    
+    // Auth
     loginToContinue: "Log in to Continue",
     continueWithGoogle: "Continue with Google",
     or: "or",
@@ -15,11 +21,69 @@ export const translations = {
     loginWithEmail: "Log in with Email",
     forgotPassword: "Forgot password?",
     noAccountPrompt: "Don't have an account?",
-    register: "Register",
     createAccount: "Create Account",
     confirmPassword: "Confirm Password",
     alreadyRegistered: "Already registered?",
-    login: "Log in",
+
+    // Hero Section
+    hero: {
+      title: "Hockey Analytics",
+      subtitle: "Made Simple",
+      description: "Professional scouting tools for coaches, players, and supportive parents. Track performance, visualize progress, and make data-driven decisions."
+    },
+
+    // Common Actions
+    common: {
+      getStarted: "Get Started Free",
+      viewPlans: "View Plans",
+      recommended: "Recommended",
+      upgradeNow: "Upgrade Now",
+      startFreeTrial: "Start Free Trial"
+    },
+
+    // Features Section
+    features: {
+      mainTitle: "Everything You Need for Player Development",
+      mainDesc: "From grassroots to professional level, we've got you covered.",
+      analytics: {
+        title: "Advanced Analytics",
+        desc: "Track player performance with detailed statistics and visualizations."
+      },
+      cloud: {
+        title: "Cloud Sync",
+        desc: "Access your data anywhere, on any device. Always backed up."
+      },
+      teams: {
+        title: "Team Management",
+        desc: "Manage multiple players and teams with ease."
+      },
+      security: {
+        title: "Data Security",
+        desc: "Your data is encrypted and secure. We never share your information."
+      }
+    },
+
+    // Pricing Section
+    pricing: {
+      title: "Simple, Transparent Pricing",
+      desc: "Choose the plan that fits your needs. No hidden fees."
+    },
+
+    // Plans
+    plans: {
+      free: {
+        name: "Free",
+        period: "forever"
+      }
+    },
+
+    // CTA Section
+    cta: {
+      title: "Ready to Transform Your Coaching?",
+      desc: "Join hundreds of coaches already using Ice IQ to improve performance."
+    },
+
+    // Player & Match Logic
     playerName: "Player's Name",
     select: "Select",
     team: "Team",
@@ -36,15 +100,16 @@ export const translations = {
     saveMatchAndReset: "Save Match & Reset",
     resetAll: "Reset Current Match",
     freeTierLimitPlayer: "Free tier: Max 1 player can be saved.",
-    upgrade: "Upgrade",
     selectPlayer: "Select Player",
     playerHistory: "Player History",
     graph: "Graph",
     statsAndTrends: "Stats & Trends",
+
+    // Subscription Modal & Billing
     selectYourPlan: "Select Your Plan",
     currentPlan: "Current Plan",
     cancelSubscription: "Cancel Subscription",
-    free: "Free",
+    free_label: "Free",
     perMonth: "per month",
     freeFeature1: "Basic scoring system",
     freeFeature2Player: "Save 1 player",
@@ -57,6 +122,21 @@ export const translations = {
     premiumFeature4: "Customizable templates",
     chooseMonthlySimple: "Choose Monthly",
     chooseYearlySimple: "Choose Yearly (Save over 2 months)",
+    recommended_label: "Recommended",
+    upgradeToPremium: "Upgrade to Premium",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    savePercent: "Save ~15%",
+    paymentSuccess: "Payment successful! Your subscription is now active.",
+    paymentCancelled: "Payment was cancelled.",
+    manageBilling: "Manage Billing",
+    processingPayment: "Processing payment...",
+    totalBalance: "Total Balance",
+    markAsSettled: "Mark as settled",
+    settleBalanceConfirm: "Do you want to reset the balance? Only do this if payment/settlement has occurred.",
+    upgradeCTA: "🔒 Upgrade to Premium",
+
+    // Stats
     premiumStats: "Advanced Statistics",
     upgradeForStats: "Upgrade to Premium to unlock detailed statistics and trend analysis.",
     needMoreMatches: "Need at least two matches to show a graph.",
@@ -67,40 +147,30 @@ export const translations = {
     pointDevelopment: "Point Development",
     mostCommonPositive: "Most Common Positive Actions",
     mostCommonNegative: "Most Common Negative Actions",
-    recommended: "Recommended",
-    deleteAccount: "Delete Account",
-    deleteAccountWarning: "This will permanently delete your account and all associated data. This action cannot be undone.",
-    upgradeToPremium: "Upgrade to Premium",
-    paymentSuccess: "Payment successful! Your subscription is now active.",
-    paymentCancelled: "Payment was cancelled.",
-    manageBilling: "Manage Billing",
-    processingPayment: "Processing payment...",
-    editTemplate: "Edit Template",
-    addAction: "Add Action",
-    actionNameSv: "Action Name (Swedish)",
-    actionNameEn: "Action Name (English)",
-    points: "Points",
-    type: "Type",
-    positive: "Positive",
-    negative: "Negative",
-    saveTemplate: "Save Template",
-    action: "Action",
-    supportContact: "Support & Feedback",
-    myAccount: "My Account",
-    termsLink: "Terms of Service",
-    privacyLink: "Privacy Policy",
-    markAsSettled: "Mark as settled",
-    settleBalanceConfirm: "Do you want to reset the balance? Only do this if payment/settlement has occurred.",
-    totalBalance: "Total Balance",
-    upgradeCTA: "🔒 Upgrade to Premium"
+
+    // Navigation
+    nav: {
+      dashboard: "Dashboard",
+      players: "Players",
+      upgrade: "Upgrade",
+      login: "Login",
+      logout: "Logout"
+    }
   },
   sv: {
+    // App & Nav
     appTitle: "Ice IQ",
     appSubtitle: "Moln-synkroniserad med spelarhistorik och grafer.",
     players: "Spelare",
     matches: "Matcher",
     manageSubscription: "Hantera Prenumeration",
     logout: "Logga ut",
+    login: "Logga in",
+    register: "Registrera dig",
+    upgrade: "Uppgradera",
+    myAccount: "Mitt Konto",
+
+    // Auth
     loginToContinue: "Logga in för att fortsätta",
     continueWithGoogle: "Fortsätt med Google",
     or: "eller",
@@ -109,11 +179,69 @@ export const translations = {
     loginWithEmail: "Logga in med e-post",
     forgotPassword: "Glömt lösenord?",
     noAccountPrompt: "Har du inget konto?",
-    register: "Registrera dig",
     createAccount: "Skapa konto",
     confirmPassword: "Bekräfta lösenord",
     alreadyRegistered: "Redan registrerad?",
-    login: "Logga in",
+
+    // Hero Section
+    hero: {
+      title: "Hockey Analytics",
+      subtitle: "Gjord enkelt",
+      description: "Professionella scoutingverktyg för tränare, spelare och stöttande föräldrar. Följ prestationer, visualisera framsteg och ta datadrivna beslut."
+    },
+
+    // Common Actions
+    common: {
+      getStarted: "Börja gratis",
+      viewPlans: "Se priser",
+      recommended: "Rekommenderas",
+      upgradeNow: "Uppgradera nu",
+      startFreeTrial: "Starta gratisperiod"
+    },
+
+    // Features Section
+    features: {
+      mainTitle: "Allt du behöver för spelarutveckling",
+      mainDesc: "Från gräsrot till professionell nivå, vi har verktygen för dig.",
+      analytics: {
+        title: "Avancerad Analys",
+        desc: "Följ spelarprestationer med detaljerad statistik och visualiseringar."
+      },
+      cloud: {
+        title: "Molnsynk",
+        desc: "Kom åt din data överallt, på valfri enhet. Alltid säkerhetskopierat."
+      },
+      teams: {
+        title: "Laghantering",
+        desc: "Hantera flera spelare och lag med enkelhet."
+      },
+      security: {
+        title: "Datasäkerhet",
+        desc: "Din data är krypterad och säker. Vi delar aldrig din information."
+      }
+    },
+
+    // Pricing Section
+    pricing: {
+      title: "Enkel och tydlig prissättning",
+      desc: "Välj den plan som passar dina behov. Inga dolda avgifter."
+    },
+
+    // Plans
+    plans: {
+      free: {
+        name: "Gratis",
+        period: "för alltid"
+      }
+    },
+
+    // CTA Section
+    cta: {
+      title: "Redo att transformera din coaching?",
+      desc: "Anslut dig till hundratals tränare som redan använder Ice IQ för att förbättra resultat."
+    },
+
+    // Player & Match Logic
     playerName: "Spelarens Namn",
     select: "Välj",
     team: "Lag",
@@ -130,15 +258,16 @@ export const translations = {
     saveMatchAndReset: "Spara Match & Nollställ",
     resetAll: "Nollställ nuvarande match",
     freeTierLimitPlayer: "Gratisversionen: Max 1 spelare kan sparas.",
-    upgrade: "Uppgradera",
     selectPlayer: "Välj Spelare",
     playerHistory: "Spelarhistorik",
     graph: "Graf",
     statsAndTrends: "Statistik & Trend",
+
+    // Subscription Modal & Billing
     selectYourPlan: "Välj din Plan",
     currentPlan: "Nuvarande Plan",
     cancelSubscription: "Avbryt Prenumeration",
-    free: "Gratis",
+    free_label: "Gratis",
     perMonth: "per månad",
     freeFeature1: "Grundläggande poängsystem",
     freeFeature2Player: "Spara 1 spelare",
@@ -151,6 +280,21 @@ export const translations = {
     premiumFeature4: "Anpassningsbara mallar",
     chooseMonthlySimple: "Välj Månadsvis",
     chooseYearlySimple: "Välj Årsvis (Spara över 2 månader)",
+    recommended_label: "Rekommenderas",
+    upgradeToPremium: "Uppgradera till Premium",
+    monthly: "Månadsvis",
+    yearly: "Årsvis",
+    savePercent: "Spara ~15%",
+    paymentSuccess: "Betalning lyckades! Din prenumeration är nu aktiv.",
+    paymentCancelled: "Betalningen avbröts.",
+    manageBilling: "Hantera fakturering",
+    processingPayment: "Bearbetar betalning...",
+    totalBalance: "Totalt Saldo",
+    markAsSettled: "Markera som reglerat",
+    settleBalanceConfirm: "Vill du nollställa saldot? Markera detta endast om betalning/reglering har skett.",
+    upgradeCTA: "🔒 Uppgradera till Premium",
+
+    // Stats (Dessa lades till här nu för att matcha 'en')
     premiumStats: "Avancerad Statistik",
     upgradeForStats: "Uppgradera till Premium för att låsa upp detaljerad statistik och trendanalys.",
     needMoreMatches: "Behöver minst två matcher för att visa en graf.",
@@ -161,32 +305,15 @@ export const translations = {
     pointDevelopment: "Poängutveckling",
     mostCommonPositive: "Vanligaste Positiva Aktioner",
     mostCommonNegative: "Vanligaste Negativa Aktioner",
-    recommended: "Rekommenderas",
-    deleteAccount: "Radera Konto",
-    deleteAccountWarning: "Detta kommer att radera ditt konto och all tillhörande data permanent. Denna åtgärd kan inte ångras.",
-    upgradeToPremium: "Uppgradera till Premium",
-    paymentSuccess: "Betalning lyckades! Din prenumeration är nu aktiv.",
-    paymentCancelled: "Betalningen avbröts.",
-    manageBilling: "Hantera fakturering",
-    processingPayment: "Bearbetar betalning...",
-    editTemplate: "Redigera mall",
-    addAction: "Lägg till aktion",
-    actionNameSv: "Aktionsnamn (Svenska)",
-    actionNameEn: "Aktionsnamn (Engelska)",
-    points: "Poäng",
-    type: "Typ",
-    positive: "Positiv",
-    negative: "Negativ",
-    saveTemplate: "Spara mall",
-    action: "Aktion",
-    supportContact: "Support & Feedback",
-    myAccount: "Mitt Konto",
-    termsLink: "Användarvillkor",
-    privacyLink: "Integritetspolicy",
-    markAsSettled: "Markera som reglerat",
-    settleBalanceConfirm: "Vill du nollställa saldot? Markera detta endast om betalning/reglering har skett.",
-    totalBalance: "Totalt Saldo",
-    upgradeCTA: "🔒 Uppgradera till Premium"
+
+    // Navigation
+    nav: {
+      dashboard: "Dashboard",
+      players: "Spelare",
+      upgrade: "Uppgradera",
+      login: "Logga in",
+      logout: "Logga ut"
+    }
   }
 };
 

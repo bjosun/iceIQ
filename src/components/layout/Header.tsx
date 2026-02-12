@@ -3,27 +3,39 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import logo from '../../assets/images/iceiq-logo.png'; // Import av loggan
+import UserDropdown from './UserDropdown'; 
+import logo from '../../assets/images/iceiq-logo.png'; 
 import { 
   Menu, 
   User, 
-  LogOut, 
   Crown, 
   Settings, 
   Globe,
-  ChevronDown
+  ChevronDown,
+  LogOut,
+  X
 } from 'lucide-react';
 
-export default function Header() {
+interface HeaderProps {
+  onOpenProfile: () => void;
+  onOpenSubscription: () => void;
+}
+
+export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProps) {
   const { user, logout } = useAuth();
   const { subscription } = useSubscription();
   const { language, setLanguage, t } = useLanguage();
+  
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  const isPremium = subscription.plan === 'premium';
 
   const handleLogout = async () => {
     try {
       await logout();
+      setShowMobileMenu(false);
+      setShowUserMenu(false);
     } catch (error) {
       console.error('Failed to log out:', error);
     }
@@ -34,240 +46,176 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
+    <header className="bg-gray-900/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
-          {/* --- LOGO START (Uppdaterad design) --- */}
-          <Link to="/" className="flex items-center gap-3 group">
-            {/* Logga-bild med hover-effekt */}
+          {/* --- LOGOTYP --- */}
+          <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
             <div className="relative w-10 h-10 transition-transform transform group-hover:scale-110">
               <img 
                 src={logo} 
                 alt="Ice IQ Logo" 
-                className="w-full h-full object-contain rounded-full shadow-lg shadow-cyan-500/20" 
+                className="w-full h-full object-contain rounded-full shadow-lg shadow-cyan-500/20 border border-white/10" 
               />
             </div>
-            
-            {/* Text-del: ICE IQ + Scouting V2 */}
             <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight text-white leading-none">
+              <span className="text-xl font-black tracking-tighter text-white leading-none italic">
                 ICE <span className="text-cyan-400">IQ</span>
+                {isPremium && <span className="text-yellow-500 ml-1 text-sm not-italic font-black uppercase">PRO</span>}
               </span>
-              <span className="text-[0.6rem] uppercase tracking-wider text-gray-400 font-medium">
+              <span className="text-[0.6rem] uppercase tracking-widest text-gray-500 font-bold">
                 Scouting V2
               </span>
             </div>
           </Link>
-          {/* --- LOGO SLUT --- */}
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* Language Toggle */}
+          {/* --- DESKTOP NAV & ACTIONS --- */}
+          <div className="hidden md:flex items-center space-x-6">
+            {/* Länkar (Valfritt om du vill ha dem här också) */}
+            {user && (
+              <nav className="flex items-center space-x-4 mr-4 border-r border-gray-800 pr-6">
+                <Link to="/dashboard" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                  {t('nav.dashboard') || 'Dashboard'}
+                </Link>
+                <Link to="/players" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                  {t('nav.players') || 'Players'}
+                </Link>
+              </nav>
+            )}
+
+            {/* Språkväljare Toggle */}
             <button
               onClick={toggleLanguage}
-              className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
-              title={`Switch to ${language === 'en' ? 'Swedish' : 'English'}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 transition-all text-xs font-bold"
+              title={language === 'en' ? 'Byt till Svenska' : 'Switch to English'}
             >
-              <Globe size={20} className="text-gray-300" />
+              <Globe size={14} />
+              <span>{language.toUpperCase()}</span>
             </button>
 
             {user ? (
-              <>
-                {/* Premium Badge */}
-                {subscription.plan === 'premium' ? (
-                  <div className="flex items-center bg-gradient-to-r from-yellow-500 to-yellow-600 text-black px-3 py-1 rounded-full text-sm font-bold">
-                    <Crown size={16} className="mr-1" />
+              <div className="flex items-center space-x-4">
+                {/* Premium Status */}
+                {isPremium ? (
+                  <div className="flex items-center bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full text-[10px] font-black border border-yellow-500/20">
+                    <Crown size={12} className="mr-1.5" />
                     PREMIUM
                   </div>
                 ) : (
-                  <Link
-                    to="/dashboard?upgrade=true"
-                    className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-black px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                  <button
+                    onClick={onOpenSubscription}
+                    className="flex items-center bg-gradient-to-r from-yellow-500 to-yellow-600 text-black px-3 py-1.5 rounded-lg text-[10px] font-black hover:opacity-90 transition-opacity uppercase"
                   >
-                    {t('upgradeToPremium')}
-                  </Link>
+                    <Crown size={12} className="mr-1.5" />
+                    {t('nav.upgrade') || 'Upgrade'}
+                  </button>
                 )}
 
-                {/* User Menu */}
+                {/* Användarmeny Dropdown */}
                 <div className="relative">
-                  <button
+                  <button 
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors"
+                    className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-800 transition-colors border border-transparent hover:border-white/10"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-full flex items-center justify-center border border-white/20 shadow-inner">
                       <User size={16} className="text-gray-900" />
                     </div>
-                    <div className="hidden lg:block text-left">
-                      <p className="text-sm font-medium text-white">
-                        {user.displayName || user.email?.split('@')[0] || 'User'}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {subscription.plan === 'premium' ? 'Premium' : 'Free'} Plan
-                      </p>
-                    </div>
-                    <ChevronDown size={16} className="text-gray-400" />
+                    <ChevronDown size={14} className={`text-gray-500 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {/* Dropdown Menu */}
-                  {showUserMenu && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowUserMenu(false)}
-                      />
-                      <div className="absolute right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50">
-                        <div className="p-4 border-b border-gray-700">
-                          <p className="font-semibold text-white">{t('myAccount')}</p>
-                          <p className="text-sm text-gray-400 truncate">{user.email}</p>
-                        </div>
-                        
-                        <Link
-                          to="/dashboard"
-                          className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          <Settings size={18} className="mr-3" />
-                          Dashboard
-                        </Link>
-
-                        {subscription.plan === 'premium' ? (
-                          <button
-                            onClick={() => {
-                              // Handle manage subscription
-                              setShowUserMenu(false);
-                            }}
-                            className="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700"
-                          >
-                            <Crown size={18} className="mr-3" />
-                            {t('manageSubscription')}
-                          </button>
-                        ) : (
-                          <Link
-                            to="/dashboard?upgrade=true"
-                            className="flex items-center px-4 py-3 text-yellow-400 hover:bg-gray-700"
-                            onClick={() => setShowUserMenu(false)}
-                          >
-                            <Crown size={18} className="mr-3" />
-                            {t('upgradeToPremium')}
-                          </Link>
-                        )}
-
-                        <div className="border-t border-gray-700">
-                          <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center px-4 py-3 text-red-400 hover:bg-gray-700"
-                          >
-                            <LogOut size={18} className="mr-3" />
-                            {t('logout')}
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <Link
-                  to="/dashboard"
-                  className="px-4 py-2 text-cyan-400 hover:text-cyan-300 font-medium"
-                >
-                  {t('login')}
-                </Link>
-                <Link
-                  to="/dashboard?signup=true"
-                  className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium"
-                >
-                  {t('register')}
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            <Menu size={24} className="text-gray-300" />
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {showMobileMenu && (
-          <div className="md:hidden border-t border-gray-700 py-4">
-            {!user ? (
-              <div className="space-y-2">
-                <Link
-                  to="/dashboard"
-                  className="block px-4 py-3 text-cyan-400 hover:bg-gray-700 rounded-lg"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  {t('login')}
-                </Link>
-                <Link
-                  to="/dashboard?signup=true"
-                  className="block px-4 py-3 bg-cyan-600 text-white rounded-lg font-medium text-center"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  {t('register')}
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="px-4 py-3">
-                  <p className="font-medium text-white">
-                    {user.displayName || user.email?.split('@')[0] || 'User'}
-                  </p>
-                  <p className="text-sm text-gray-400">{user.email}</p>
-                </div>
-                
-                <Link
-                  to="/dashboard"
-                  className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <Settings size={18} className="mr-3" />
-                  Dashboard
-                </Link>
-
-                {subscription.plan === 'premium' ? (
-                  <button
-                    onClick={() => {
-                      // Handle manage subscription
-                      setShowMobileMenu(false);
+                  <UserDropdown 
+                    isOpen={showUserMenu}
+                    onClose={() => setShowUserMenu(false)}
+                    onLogout={handleLogout}
+                    onUpgrade={onOpenSubscription}
+                    onManageSubscription={() => {
+                        setShowUserMenu(false);
+                        onOpenProfile();
                     }}
-                    className="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg"
-                  >
-                    <Crown size={18} className="mr-3" />
-                    {t('manageSubscription')}
-                  </button>
-                ) : (
-                  <Link
-                    to="/dashboard?upgrade=true"
-                    className="flex items-center px-4 py-3 text-yellow-400 hover:bg-gray-700 rounded-lg"
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    <Crown size={18} className="mr-3" />
-                    {t('upgradeToPremium')}
-                  </Link>
-                )}
-
-                <div className="border-t border-gray-700 pt-2">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center px-4 py-3 text-red-400 hover:bg-gray-700 rounded-lg"
-                  >
-                    <LogOut size={18} className="mr-3" />
-                    {t('logout')}
-                  </button>
+                  />
                 </div>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link to="/login" className="text-sm font-bold text-gray-400 hover:text-white transition-colors">
+                  {t('nav.login') || 'Login'}
+                </Link>
+                <Link to="/register">
+                  <button className="bg-cyan-600 px-5 py-2 rounded-xl text-sm font-black text-white hover:bg-cyan-500 transition-all shadow-lg shadow-cyan-600/20 italic uppercase tracking-tighter">
+                    {t('register') || 'Join Now'}
+                  </button>
+                </Link>
               </div>
             )}
           </div>
-        )}
+
+          {/* --- MOBIL MENY-KNAPP --- */}
+          <div className="md:hidden flex items-center gap-3">
+             <button
+              onClick={toggleLanguage}
+              className="text-gray-500 text-xs font-bold uppercase"
+            >
+              {language}
+            </button>
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="p-2 rounded-lg text-gray-400 hover:text-white"
+            >
+              {showMobileMenu ? <X size={26} /> : <Menu size={26} />}
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* --- MOBIL MENY INNEHÅLL --- */}
+      {showMobileMenu && (
+        <div className="md:hidden bg-gray-900 border-b border-white/10 py-6 px-4 space-y-4 animate-in slide-in-from-top-4 duration-300">
+          {user ? (
+            <div className="grid grid-cols-1 gap-2">
+              <Link 
+                to="/dashboard" 
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-xl"
+              >
+                {t('nav.dashboard') || 'Dashboard'}
+              </Link>
+              <Link 
+                to="/players" 
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-xl"
+              >
+                {t('nav.players') || 'Players'}
+              </Link>
+              <button
+                onClick={() => { setShowMobileMenu(false); onOpenProfile(); }}
+                className="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-xl"
+              >
+                <Settings size={18} className="mr-3 text-cyan-400" />
+                {t('myAccount') || 'My Account'}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl"
+              >
+                <LogOut size={18} className="mr-3" />
+                {t('nav.logout') || 'Log Out'}
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              <Link to="/login" className="text-center py-3 text-gray-300 font-bold" onClick={() => setShowMobileMenu(false)}>
+                {t('nav.login') || 'Login'}
+              </Link>
+              <Link to="/register" onClick={() => setShowMobileMenu(false)}>
+                <button className="w-full bg-cyan-600 py-3 rounded-xl text-white font-black italic uppercase tracking-tighter">
+                   {t('register') || 'Register'}
+                </button>
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 }

@@ -17,48 +17,51 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguage] = useState<Language>('en');
 
-  // Initialize language from browser or localStorage
+  // 1. Initiera språk vid start
   useEffect(() => {
     const savedLang = localStorage.getItem('iceiq-language') as Language;
     const browserLang = navigator.language.toLowerCase();
     
     if (savedLang && (savedLang === 'en' || savedLang === 'sv')) {
       setLanguage(savedLang);
+      document.documentElement.lang = savedLang;
     } else if (browserLang.startsWith('sv')) {
       setLanguage('sv');
+      document.documentElement.lang = 'sv';
     } else {
       setLanguage('en');
+      document.documentElement.lang = 'en';
     }
   }, []);
 
-  // Save language preference
+  // 2. Funktion för att byta språk
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
     localStorage.setItem('iceiq-language', lang);
     document.documentElement.lang = lang;
   };
 
-  // Translation function
+  // 3. Översättningsfunktion (fixad loop-variabel)
   const t = (key: string): string => {
     const translation = translations[language];
     if (!translation) return key;
     
-    // Check nested keys (e.g., "actions.positive")
     const keys = key.split('.');
-    let value: any = translation;
+    let current: any = translation; // Döp om från 'value' till 'current'
     
     for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+      if (current && typeof current === 'object' && k in current) {
+        current = current[k];
       } else {
-        return key; // Key not found
+        return key; 
       }
     }
     
-    return typeof value === 'string' ? value : key;
+    return typeof current === 'string' ? current : key;
   };
 
-  const value = {
+  // 4. Context value (objektet som skickas ut)
+  const providerValue: LanguageContextType = {
     language,
     setLanguage: handleSetLanguage,
     t,
@@ -66,7 +69,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   };
 
   return (
-    <LanguageContext.Provider value={value}>
+    <LanguageContext.Provider value={providerValue}>
       {children}
     </LanguageContext.Provider>
   );

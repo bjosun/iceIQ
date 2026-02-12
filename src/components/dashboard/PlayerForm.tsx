@@ -1,29 +1,36 @@
 import React from 'react';
-import { Calendar, Users, FileText, Search, Edit, Mail } from 'lucide-react';
+import { 
+  Calendar, 
+  Shield, 
+  User, 
+  History, 
+  LayoutTemplate, 
+  ChevronRight,
+  Mail,
+  Edit
+} from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTemplates } from '../../contexts/TemplateContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
 import Card from '../ui/Card';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
 
 interface PlayerFormProps {
-  onShowHistory: () => void;
-  onEditTemplate: () => void;
   selectedPlayerName: string;
   onPlayerNameChange: (name: string) => void;
   teamName: string;
   onTeamNameChange: (name: string) => void;
-  playerEmail: string; // Ny prop
-  onPlayerEmailChange: (email: string) => void; // Ny prop
+  playerEmail: string;
+  onPlayerEmailChange: (email: string) => void;
   gameDate: string;
   onGameDateChange: (date: string) => void;
   onOpenPlayerSelect: () => void;
+  onShowHistory: () => void;
+  onEditTemplate: () => void;
 }
 
-export default function PlayerForm({ 
-  onShowHistory, 
-  onEditTemplate,
+export default function PlayerForm({
   selectedPlayerName,
   onPlayerNameChange,
   teamName,
@@ -32,9 +39,10 @@ export default function PlayerForm({
   onPlayerEmailChange,
   gameDate,
   onGameDateChange,
-  onOpenPlayerSelect
+  onOpenPlayerSelect,
+  onShowHistory,
+  onEditTemplate
 }: PlayerFormProps) {
-  
   const { t, language } = useLanguage();
   const { subscription } = useSubscription();
   const { templates, currentTemplateId, setCurrentTemplate } = useTemplates();
@@ -45,121 +53,113 @@ export default function PlayerForm({
   }));
 
   return (
-    <Card elevated className="mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* 1. Player Name */}
+    <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-6">
+      <div className="space-y-4">
+        
+        {/* --- SEKTION 1: SPELARE --- */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            {t('playerName')}
+            {t('selectPlayer') || "Player"}
           </label>
-          <div className="flex">
+          <div className="relative group">
+            {/* Osynlig klick-yta över inputen för att öppna modalen */}
+            <div 
+              onClick={onOpenPlayerSelect}
+              className="absolute inset-0 z-10 cursor-pointer"
+            ></div>
             <Input
               value={selectedPlayerName}
-              onChange={(e) => onPlayerNameChange(e.target.value)}
-              placeholder="Enter name"
-              className="rounded-r-none"
+              readOnly
+              placeholder={t('selectPlayer') || "Select Player"}
+              icon={User}
+              className="cursor-pointer group-hover:border-cyan-500/50 transition-colors bg-gray-900/50"
+              rightIcon={ChevronRight}
             />
-            <Button
-              variant="secondary"
-              className="rounded-l-none border-l-0 px-3"
-              onClick={onOpenPlayerSelect}
-            >
-              <Search size={18} />
-            </Button>
           </div>
         </div>
 
-        {/* 2. Team Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            {t('team')}
-          </label>
-          <Input
-            value={teamName}
-            onChange={(e) => onTeamNameChange(e.target.value)}
-            placeholder="Team name"
-            icon={Users}
-          />
-        </div>
+        {/* --- SEKTION 2: DETALJER (Lag, Email, Datum) --- */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">{t('team') || "Team"}</label>
+            <Input
+              value={teamName}
+              onChange={(e) => onTeamNameChange(e.target.value)}
+              placeholder="Team Name"
+              icon={Shield}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">{t('playerEmail') || "Email"}</label>
+            <Input
+              type="email"
+              value={playerEmail}
+              onChange={(e) => onPlayerEmailChange(e.target.value)}
+              placeholder="Optional"
+              icon={Mail}
+            />
+          </div>
 
-        {/* 3. Player Email (Framtidssäkring) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            {t('playerEmail') || 'Player Email'}
-          </label>
-          <Input
-            type="email"
-            value={playerEmail}
-            onChange={(e) => onPlayerEmailChange(e.target.value)}
-            placeholder="Email for login"
-            icon={Mail}
-          />
-        </div>
-
-        {/* 4. Game Date */}
-        <div className="w-full min-w-0"> 
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            {t('gameDate')}
-          </label>
-          <Input
-            type="date"
-            value={gameDate}
-            onChange={(e) => onGameDateChange(e.target.value)}
-            icon={Calendar}
-            className="w-full"
-          />
-        </div>
-
-        {/* 5. Template Selector */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            {t('template')}
-          </label>
-          <div className="flex space-x-2">
-            <select
-              value={currentTemplateId}
-              onChange={(e) => setCurrentTemplate(e.target.value)}
-              className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            >
-              {templateOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {subscription.plan === 'premium' && (
-              <Button
-                variant="secondary"
-                onClick={onEditTemplate}
-                className="px-3"
-              >
-                <Edit size={18} />
-              </Button>
-            )}
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">{t('gameDate') || "Date"}</label>
+            <Input
+              type="date"
+              value={gameDate}
+              onChange={(e) => onGameDateChange(e.target.value)}
+              icon={Calendar}
+              className="w-full"
+            />
           </div>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-        <Button
-          variant="secondary"
-          onClick={onShowHistory}
-          icon={FileText}
-          className="sm:w-auto w-full"
-        >
-          {t('showPlayerHistory')}
-        </Button>
+        {/* --- SEKTION 3: MALL & HISTORIK --- */}
+        <div className="pt-4 border-t border-gray-700/50 flex flex-col md:flex-row gap-4 items-end">
+          
+          {/* Mall-väljare */}
+          <div className="flex-1 w-full">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              {t('template') || "Game Template"}
+            </label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <LayoutTemplate className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <select
+                  value={currentTemplateId}
+                  onChange={(e) => setCurrentTemplate(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-cyan-500 appearance-none"
+                >
+                  {templateOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              {subscription.plan === 'premium' && (
+                <button
+                  onClick={onEditTemplate}
+                  className="p-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-yellow-500/50 rounded-xl transition-all text-gray-400 hover:text-yellow-400"
+                  title={t('editTemplate')}
+                >
+                  <Edit size={20} />
+                </button>
+              )}
+            </div>
+          </div>
 
-        {subscription.plan === 'free' && (
+          {/* Historik-knapp */}
           <Button
-            variant="premium"
-            onClick={() => {}}
-            className="sm:ml-auto sm:w-auto w-full"
+            variant="secondary"
+            onClick={onShowHistory}
+            icon={History}
+            className="w-full md:w-auto"
           >
-            {t('upgradeToPremium')}
+            {t('showPlayerHistory') || "History"}
           </Button>
-        )}
+        </div>
+
       </div>
     </Card>
   );

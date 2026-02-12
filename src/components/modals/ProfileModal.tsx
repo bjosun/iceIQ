@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { LogOut, CreditCard, Trash2, Shield, Mail, User } from 'lucide-react';
+import { LogOut, CreditCard, Trash2, Shield, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { usePlayerData } from '../../hooks/usePlayerData'; // För att rensa data
+import { createStripePortalSession } from '../../services/firebase'; // Från din städade firebase.ts
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -10,12 +12,14 @@ import toast from 'react-hot-toast';
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  isPremium: boolean; // Vi skickar med om de är premium eller ej
+  isPremium: boolean;
 }
 
 export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModalProps) {
-  const { user, logout, deleteAccount } = useAuth(); // Antar att deleteAccount finns i AuthContext, annars lägger vi till det
-  const { t } = useLanguage();
+  const { user, logout, deleteAccount } = useAuth();
+  const { deleteUserData: clearFirestoreData } = usePlayerData(); // Rename för tydlighet
+  const { t, language } = useLanguage();
+  
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
@@ -25,40 +29,50 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
     try {
       await logout();
       onClose();
-      toast.success(t('loggedOut') || "Utloggad!");
+      toast.success(language === 'en' ? "Logged out!" : "Utloggad!");
     } catch (error) {
-      toast.error("Kunde inte logga ut.");
+      toast.error("Error logging out.");
     }
   };
 
-  // 2. Hantera Prenumeration (Avsluta/Hantera)
-  const handleManageSubscription = () => {
-    // Här ska du egentligen omdirigera till Stripe Customer Portal
-    // Eller anropa en Cloud Function som säger upp prenumerationen
-    if (isPremium) {
-      // Exempel: window.location.href = "DIN_STRIPE_PORTAL_LÄNK";
-      toast("Funktion för att hantera Stripe kommer här.", { icon: '💳' });
-      // Om du vill bygga en enkel "Avsluta"-knapp i Firebase:
-      // await cancelSubscription(); 
-    } else {
-      toast.error("Du har ingen aktiv prenumeration.");
+  // 2. Hantera Prenumeration via Stripe Portal
+  const handleManageSubscription = async () => {
+    setLoading(true);
+    try {
+      const result = await createStripePortalSession();
+      // Typ-säkra resultatet från Cloud Function
+      const data = result.data as { url: string };
+      
+      if (data && data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error("Portal error:", error);
+      toast.error(language === 'en' ? "Could not open billing portal." : "Kunde inte öppna prenumerationshanteraren.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 3. Hantera Borttagning av konto
+  // 3. Hantera Borttagning av konto (Total städning)
   const handleDeleteAccount = async () => {
     if (deleteInput !== 'DELETE') return;
     
     setLoading(true);
     try {
-      // Här måste vi anropa en funktion som raderar all data i Firestore FÖRST
-      // Sen raderar vi användaren i Auth.
+      // STEG 1: Radera all data i Firestore (Spelare, matcher, användarrot)
+      await clearFirestoreData(); 
+      
+      // STEG 2: Radera användaren i Auth (Detta triggar även din Stripe-radering via Cloud Function)
       await deleteAccount(); 
-      toast.success("Ditt konto och all data har raderats.");
+      
+      toast.success(language === 'en' ? "Account deleted." : "Ditt konto har raderats.");
       onClose();
     } catch (error) {
-      console.error(error);
-      toast.error("Kunde inte radera kontot. Logga in igen och försök igen."); // Firebase kräver färsk inloggning för detta
+      console.error("Delete error:", error);
+      toast.error(language === 'en' 
+        ? "Please log in again and try immediately to confirm account deletion." 
+        : "Du måste logga ut och in igen för att bekräfta raderingen av kontot.");
     } finally {
       setLoading(false);
     }
@@ -70,32 +84,37 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
         
         {/* Användarinfo */}
         <div className="flex items-center space-x-4 p-4 bg-gray-800 rounded-xl border border-gray-700">
-          <div className="bg-gray-700 p-3 rounded-full">
+          <div className="bg-gray-700 p-3 rounded-full shrink-0">
             <User className="text-cyan-400" size={24} />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-sm text-gray-400">Inloggad som</p>
-            <p className="text-white font-medium">{user?.email}</p>
-            <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${isPremium ? 'bg-yellow-500/20 text-yellow-400' : 'bg-gray-600 text-gray-300'}`}>
+            <p className="text-white font-medium truncate">{user?.email}</p>
+            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mt-1 inline-block ${isPremium ? 'bg-yellow-500/20 text-yellow-400' : 'bg-gray-700 text-gray-400'}`}>
               {isPremium ? 'Premium Plan' : 'Free Plan'}
             </span>
           </div>
         </div>
 
         {/* Prenumerationshantering */}
-        <Card>
+        <Card className="bg-gray-800/50">
           <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
-            <CreditCard className="mr-2 text-cyan-400" size={20}/> Prenumeration
+            <CreditCard className="mr-2 text-cyan-400" size={20}/> 
+            {language === 'en' ? "Subscription" : "Prenumeration"}
           </h3>
           <p className="text-sm text-gray-400 mb-4">
             {isPremium 
-              ? "Du är Premium-medlem. Du kan avsluta din prenumeration när som helst. Ditt konto kommer finnas kvar, men begränsas till 1 spelare." 
-              : "Du använder gratisversionen."}
+              ? (language === 'en' 
+                  ? "You are a Premium member. Manage your subscription or cancel anytime below." 
+                  : "Du är Premium-medlem. Du kan hantera eller avsluta din prenumeration här.")
+              : (language === 'en'
+                  ? "You are using the free version."
+                  : "Du använder gratisversionen.")}
           </p>
           
           {isPremium && (
-            <Button variant="secondary" onClick={handleManageSubscription} fullWidth>
-              Hantera / Avsluta Prenumeration
+            <Button variant="secondary" onClick={handleManageSubscription} loading={loading} fullWidth>
+              {language === 'en' ? "Manage / Cancel Subscription" : "Hantera / Avsluta Prenumeration"}
             </Button>
           )}
         </Card>
@@ -105,31 +124,32 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
           {t('logout') || "Logga ut"}
         </Button>
 
-        {/* Danger Zone (Ta bort konto) */}
-        <div className="pt-6 border-t border-gray-700">
+        {/* Danger Zone */}
+        <div className="pt-6 border-t border-gray-700/50">
           {!showDeleteConfirm ? (
             <button 
               onClick={() => setShowDeleteConfirm(true)}
-              className="w-full text-red-500 hover:text-red-400 text-sm font-medium flex items-center justify-center py-2"
+              className="w-full text-red-500 hover:text-red-400 text-sm font-medium flex items-center justify-center py-2 transition-colors"
             >
               <Trash2 size={16} className="mr-2" />
               {t('deleteAccount') || "Radera konto och all data"}
             </button>
           ) : (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 animate-in fade-in slide-in-from-top-2">
+            <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4 animate-in fade-in slide-in-from-top-2">
               <h4 className="text-red-400 font-bold mb-2 flex items-center">
                 <Shield size={18} className="mr-2"/> Varning!
               </h4>
               <p className="text-xs text-gray-300 mb-4">
-                Detta raderar permanent all din historik, spelare och inställningar. Det går inte att ångra.
-                Skriv <strong>DELETE</strong> för att bekräfta.
+                {language === 'en' 
+                  ? "This will permanently delete all history, players, and settings. Type DELETE to confirm."
+                  : "Detta raderar permanent all historik, spelare och inställningar. Skriv DELETE för att bekräfta."}
               </p>
               <input 
                 type="text" 
                 value={deleteInput}
                 onChange={(e) => setDeleteInput(e.target.value)}
-                placeholder="Type DELETE"
-                className="w-full bg-gray-900 border border-red-500/50 rounded-lg px-3 py-2 text-white mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="DELETE"
+                className="w-full bg-gray-900 border border-red-500/30 rounded-lg px-3 py-2 text-white mb-3 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
               />
               <div className="flex space-x-3">
                 <Button 
@@ -137,20 +157,19 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
                   onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }}
                   fullWidth
                 >
-                  Avbryt
+                  {language === 'en' ? "Cancel" : "Avbryt"}
                 </Button>
                 <button
                   onClick={handleDeleteAccount}
                   disabled={deleteInput !== 'DELETE' || loading}
-                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center text-sm"
                 >
-                  {loading ? 'Raderar...' : 'Radera Allt'}
+                  {loading ? '...' : (language === 'en' ? "Delete All" : "Radera Allt")}
                 </button>
               </div>
             </div>
           )}
         </div>
-
       </div>
     </Modal>
   );

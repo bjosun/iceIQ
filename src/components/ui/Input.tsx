@@ -5,7 +5,8 @@ import { LucideIcon } from 'lucide-react';
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  icon?: LucideIcon;
+  icon?: LucideIcon;       // Vänster ikon
+  rightIcon?: LucideIcon;  // NY: Höger ikon
   helperText?: string;
   fullWidth?: boolean;
 }
@@ -16,6 +17,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       label,
       error,
       icon: Icon,
+      rightIcon: RightIcon, // Döper om för att använda som komponent
       helperText,
       fullWidth = true,
       className,
@@ -38,8 +40,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
 
         <div className="relative">
+          {/* Vänster Ikon */}
           {Icon && (
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
               <Icon size={20} className="text-gray-400" />
             </div>
           )}
@@ -52,16 +55,24 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               'focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent',
               'disabled:opacity-50 disabled:cursor-not-allowed',
               'placeholder:text-gray-500',
-              'min-w-0', // VIKTIGT: Tillåter fältet att krympa under sin naturliga storlek
-              'box-border', // Säkerställer att padding inte ökar totalbredden
-              'appearance-none', // Tar bort webbläsarspecifik styling som kan spöka
-              Icon && 'pl-10',
+              'min-w-0', 
+              'box-border', 
+              'appearance-none', 
+              Icon && 'pl-10',       // Padding för vänster ikon
+              RightIcon && 'pr-10',  // Padding för höger ikon
               error && 'border-red-500 focus:ring-red-500',
               fullWidth && 'w-full',
               className
             )}
             {...props}
           />
+
+          {/* Höger Ikon (NY) */}
+          {RightIcon && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <RightIcon size={20} className="text-gray-400" />
+            </div>
+          )}
         </div>
 
         {(error || helperText) && (

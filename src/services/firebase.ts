@@ -31,27 +31,24 @@ export const db = getFirestore(app);
 export const functions = getFunctions(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Database paths helper
+// --- HELPERS ---
 export const getAppId = () => 'default-app-id';
 
-// User document reference
 export const getUserDocRef = (userId: string) => 
   doc(db, "artifacts", getAppId(), "users", userId);
 
-// Player collection reference
 export const getPlayersCollectionRef = (userId: string) =>
   collection(db, "artifacts", getAppId(), "users", userId, "players");
 
-// Games collection reference for a player
 export const getGamesCollectionRef = (userId: string, playerName: string) =>
   collection(db, "artifacts", getAppId(), "users", userId, "players", playerName, "games");
 
-// Cloud Functions
+// --- CLOUD FUNCTIONS ---
 export const createStripeCheckoutSession = httpsCallable(functions, 'createStripeCheckoutSession');
 export const createStripePortalSession = httpsCallable(functions, 'createStripePortalSession');
-export const deleteUserData = httpsCallable(functions, 'deleteUserData');
+export const deleteUserStripeAccount = httpsCallable(functions, 'deleteUserStripeAccount');
 
-// Database operations
+// --- FIRESTORE OPERATIONS ---
 export const firestore = {
   // User operations
   async getUserData(userId: string) {
@@ -62,10 +59,6 @@ export const firestore = {
   async updateUserData(userId: string, data: any) {
     await setDoc(getUserDocRef(userId), data, { merge: true });
   },
-
-  // OBS: updateSubscription är borttagen härifrån. 
-  // Frontend ska bara LÄSA status, aldrig SKRIVA den. 
-  // Det sköter din Cloud Function (Webhook).
 
   // Player operations
   async getPlayers(userId: string) {
@@ -85,16 +78,7 @@ export const firestore = {
 
   // Game operations
   async saveGame(userId: string, playerName: string, gameData: any) {
-    const gamesRef = collection(
-      db, 
-      "artifacts", 
-      getAppId(), 
-      "users", 
-      userId, 
-      "players", 
-      playerName, 
-      "games"
-    );
+    const gamesRef = getGamesCollectionRef(userId, playerName);
     const gameRef = doc(gamesRef);
     await setDoc(gameRef, {
       ...gameData,
@@ -103,12 +87,15 @@ export const firestore = {
     });
   },
 
+  async deleteGame(userId: string, playerName: string, gameId: string) {
+    const gameRef = doc(db, "artifacts", getAppId(), "users", userId, "players", playerName, "games", gameId);
+    await deleteDoc(gameRef);
+  },
+
   async getGames(userId: string, playerName: string, limitCount?: number) {
     const gamesRef = getGamesCollectionRef(userId, playerName);
     let q = query(gamesRef, orderBy("date", "desc"));
-    
     if (limitCount) q = query(q, limit(limitCount));
-    
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
   },
@@ -116,12 +103,9 @@ export const firestore = {
   // Template operations
   async saveTemplate(userId: string, templateKey: string, templateData: any) {
     const userRef = getUserDocRef(userId);
-    // Vi hämtar datan först för att inte skriva över gamla mallar
     const userData = await getDoc(userRef);
     const currentTemplates = userData.exists() ? userData.data()?.customTemplates || {} : {};
     
-    // SÄKRARE METOD: Använd setDoc med merge istället för updateDoc
-    // Detta skapar dokumentet om det inte finns.
     await setDoc(userRef, {
       customTemplates: {
         ...currentTemplates,
@@ -134,19 +118,21 @@ export const firestore = {
   async deleteTemplate(userId: string, templateKey: string) {
     const userRef = getUserDocRef(userId);
     const userData = await getDoc(userRef);
-    
-    // Om användaren inte finns, finns inga mallar att ta bort
     if (!userData.exists()) return;
 
     const currentTemplates = userData.data()?.customTemplates || {};
-    
     delete currentTemplates[templateKey];
     
-    // Här kan vi använda updateDoc eftersom vi vet att dokumentet finns (vi kollade nyss)
     await updateDoc(userRef, {
       customTemplates: currentTemplates,
       lastUpdated: new Date().toISOString()
     });
+  },
+
+  // Cleanup operations
+  async deleteUserRoot(userId: string) {
+    const userDocRef = getUserDocRef(userId);
+    await deleteDoc(userDocRef);
   },
 
   // Stats operations
