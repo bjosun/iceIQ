@@ -1,12 +1,14 @@
-// TODO: implement SubscriptionContext
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { firestore } from '../services/firebase';
 import { stripeService, checkPaymentStatus, cleanPaymentUrl } from '../services/stripe';
 
-interface Subscription {
-  plan: 'free' | 'premium';
-  status: 'active' | 'inactive' | 'cancelled';
+// Definiera planen separat så vi kan använda den i andra filer
+export type SubscriptionPlan = 'free' | 'premium' | 'elite';
+
+export interface Subscription {
+  plan: SubscriptionPlan;
+  status: 'active' | 'inactive' | 'cancelled' | 'past_due';
   interval?: 'monthly' | 'yearly';
   subscriptionEnd?: string;
 }
@@ -14,7 +16,10 @@ interface Subscription {
 interface SubscriptionContextType {
   subscription: Subscription;
   loading: boolean;
-  upgradeToPremium: (interval: 'monthly' | 'yearly') => Promise<void>;
+  isPremium: boolean; // Helper: True om man har Premium ELLER Elite
+  isElite: boolean;   // Helper: True endast om man har Elite
+  // Uppdaterad funktion: Tar nu emot vilken plan man vill köpa
+  upgradeSubscription: (plan: 'premium' | 'elite', interval: 'monthly' | 'yearly') => Promise<void>;
   manageSubscription: () => Promise<void>;
   checkUserSubscription: () => Promise<void>;
 }
@@ -29,10 +34,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   });
   const [loading, setLoading] = useState(true);
 
-  // Check payment status on mount
+  // Check payment status on mount (t.ex. efter redirect från Stripe)
   useEffect(() => {
     const paymentStatus = checkPaymentStatus();
     if (paymentStatus) {
+      // Du kanske vill byta ut alert mot en snygg toast här
       alert(paymentStatus.message);
       cleanPaymentUrl();
     }
@@ -56,18 +62,16 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const userData = await firestore.getUserData(user.uid);
       
       if (userData) {
-        // Vi bara läser datat. Om det är utgånget så är det 
-        // Cloud Functionens jobb att se till att 'plan' är 'free'.
+        // Hämta plan, fallback till 'free' om fältet saknas
+        const plan = (userData.subscriptionPlan as SubscriptionPlan) || 'free';
+        
         setSubscription({
-          plan: userData.subscriptionPlan || 'free',
+          plan: plan,
           status: userData.subscriptionStatus || 'active',
           interval: userData.subscriptionInterval,
           subscriptionEnd: userData.subscriptionEnd
         });
       } else {
-        // Här kan du fortfarande skapa ett grund-dokument för en helt ny användare
-        // så länge dina säkerhetsregler (Firestore Rules) tillåter det,
-        // men abonnemangsstatusen bör sättas via backend/webhooks.
         setSubscription({ plan: 'free', status: 'active' });
       }
     } catch (error) {
@@ -77,28 +81,31 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
   };
 
-  const upgradeToPremium = async (interval: 'monthly' | 'yearly') => {
+  const upgradeSubscription = async (plan: 'premium' | 'elite', interval: 'monthly' | 'yearly') => {
     if (!user) {
-      alert('Please log in to upgrade');
+      alert('Please log in to upgrade'); // Byt gärna till toast.error
       return;
     }
 
     try {
-      // Get current language (you'll need to add language context)
-      const language = 'en'; // Replace with actual language
+      // Hämta aktuellt språk om du har det sparat någonstans
+      const language = 'en'; 
       
-      const { id: sessionId } = await stripeService.createCheckoutSession(interval, language);
+      // OBS: Du måste uppdatera din stripeService.createCheckoutSession 
+      // för att ta emot 'plan'-argumentet och välja rätt Price ID (Premium vs Elite)
+      const { id: sessionId } = await stripeService.createCheckoutSession(plan, interval, language);
+      
       await stripeService.redirectToCheckout(sessionId);
       
     } catch (error) {
-      console.error('Error upgrading to premium:', error);
+      console.error('Error upgrading subscription:', error);
       alert('Unable to process payment. Please try again.');
     }
   };
 
   const manageSubscription = async () => {
     if (subscription.plan === 'free') {
-      return; // Open subscription modal instead
+      return; 
     }
 
     try {
@@ -109,10 +116,17 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  // Logik för helpers
+  const isElite = subscription.plan === 'elite';
+  // En Elite-användare har också tillgång till Premium-features
+  const isPremium = subscription.plan === 'premium' || subscription.plan === 'elite';
+
   const value = {
     subscription,
     loading,
-    upgradeToPremium,
+    isPremium,
+    isElite,
+    upgradeSubscription, // Bytte namn från upgradeToPremium för att vara tydligare
     manageSubscription,
     checkUserSubscription
   };

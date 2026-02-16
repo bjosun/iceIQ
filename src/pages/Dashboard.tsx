@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom'; // <-- Uppdaterad import
 import { usePlayerData } from '../hooks/usePlayerData';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -8,9 +8,11 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import toast from 'react-hot-toast';
 
 // Komponenter
+import SubscriptionModal from '../components/modals/SubscriptionModal';
 import PlayerForm from '../components/dashboard/PlayerForm';
 import ActionGrid from '../components/dashboard/ActionGrid';
 import SummarySection from '../components/dashboard/SummarySection';
+import AiCoach from '../components/ai/AiCoach'; // <-- NY KOMPONENT
 import PlayerHistoryModal from '../components/modals/PlayerHistoryModal';
 import TemplateEditorModal from '../components/modals/TemplateEditorModal';
 import PlayerSelectModal from '../components/modals/PlayerSelectModal';
@@ -40,9 +42,12 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { t, language } = useLanguage(); 
   const { subscription } = useSubscription(); 
+  const navigate = useNavigate(); // <-- Hook för navigering
   const [searchParams] = useSearchParams();
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
-  const isPremium = subscription?.plan === 'premium';
+  // Inkludera även 'elite' om du har den planen nu
+  const isPremium = subscription?.plan === 'premium' || subscription?.plan === 'elite';
 
   const { currentTemplate, currentTemplateId } = useTemplates();
   const { getPlayers, getPlayerHistory, saveGame, updatePlayerBalance } = usePlayerData();
@@ -57,7 +62,7 @@ export default function Dashboard() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>('');
   
-  // --- FIX: Lagt till playerEmail state ---
+  // State för playerEmail
   const [playerEmail, setPlayerEmail] = useState('');
   
   const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
@@ -68,6 +73,7 @@ export default function Dashboard() {
   const [actionCounts, setActionCounts] = useState<Record<string, number>>({});
   const [carriedOverBalance, setCarriedOverBalance] = useState<number>(0); 
   const [isMoneyMode, setIsMoneyMode] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [stats, setStats] = useState({
     players: 0,
@@ -75,6 +81,14 @@ export default function Dashboard() {
     avgPoints: 0,
     thisWeek: 0
   });
+
+  useEffect(() => {
+    if (!isMoneyMode) {
+      setBonusFactor(1); // Tvinga 1x (1-till-1) i Poäng-läge
+    } else {
+      setBonusFactor(10); // Återställ till standard (t.ex. 10x) i Penga-läge
+    }
+  }, [isMoneyMode]);
 
   // --- 1. Ladda Statistik & Spelare ---
   useEffect(() => {
@@ -151,23 +165,52 @@ export default function Dashboard() {
   })();
 
   const handleSaveGame = async () => {
+    // 1. Stoppa om vi redan sparar (förhindra dubbelklick)
+    if (isSaving) return;
+
+    // 2. Validera att spelare är vald
     if (!selectedPlayerName) {
       toast.error(t('selectPlayerFirst') || "Please select a player first");
       return;
     }
+
+    // 3. Validera att det faktiskt finns något att spara (så man inte sparar tomma matcher)
+    if (Object.keys(actionCounts).length === 0) {
+      toast.error(language === 'sv' ? "Ingen statistik registrerad än." : "No stats recorded yet.");
+      return;
+    }
+
+    // 4. Lås knappen och starta processen
+    setIsSaving(true);
+
     try {
       await saveGame(
         selectedPlayerName,
-        { date: gameDate, team: teamName || 'My Team', points: totals.total },
+        { 
+            date: gameDate, 
+            team: teamName || 'My Team', 
+            points: totals.total // Sparar totalpoängen
+        },
         currentTemplateId,
         actionCounts,
         bonusFactor
       );
+
+      // Spara lagnamn för nästa gång
       if (teamName) localStorage.setItem('lastUsedTeam', teamName);
+
+      // Rensa formuläret och uppdatera UI
       setActionCounts({});
       setRefreshTrigger(prev => prev + 1); 
       toast.success(t('gameSavedSuccessfully') || 'Saved!');
-    } catch (error) { toast.error(t('saveError') || "Error."); }
+
+    } catch (error) { 
+      console.error("Save error:", error);
+      toast.error(t('saveError') || "Error saving game."); 
+    } finally {
+      // 5. Lås upp knappen igen (med en liten fördröjning för känsla)
+      setTimeout(() => setIsSaving(false), 500);
+    }
   };
 
   const handleSettleBalance = async () => {
@@ -180,6 +223,16 @@ export default function Dashboard() {
         toast.success("Saldot reglerat!");
       } catch (e) { toast.error("Kunde inte reglera."); }
     }
+  };
+
+  // --- 3. Förbered data för AI Coachen ---
+  const currentSessionStats = {
+    player: selectedPlayerName,
+    team: teamName,
+    date: gameDate,
+    stats: actionCounts, // Rådata på vad som hänt i matchen
+    totals: totals, // Poängställning
+    templateName: currentTemplate?.name
   };
 
   if (!user) {
@@ -242,7 +295,7 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-6">
-          {/* --- FIX: Skickar nu med playerEmail och onPlayerEmailChange --- */}
+          {/* Player Form */}
           <PlayerForm
             selectedPlayerName={selectedPlayerName}
             onPlayerNameChange={setSelectedPlayerName} 
@@ -257,24 +310,39 @@ export default function Dashboard() {
             onPlayerEmailChange={setPlayerEmail}
           />
           
+          {/* Action Grid */}
           <ActionGrid actionCounts={actionCounts} onCountChange={setActionCounts} />
           
-          <Card className="flex items-center justify-between p-4 border-cyan-500/20 bg-cyan-500/5">
-            <div className="flex items-center">
-              <Zap className="text-yellow-400 mr-3" size={24} />
-              <div>
-                <p className="text-sm font-bold text-white">Bonus Weighting</p>
-                <p className="text-xs text-gray-400">Multiplier for bonus actions</p>
+          {/* Bonus Weighting - VISAS BARA I MONEY MODE NU */}
+          {isMoneyMode && (
+            <Card className="flex items-center justify-between p-4 border-cyan-500/20 bg-cyan-500/5 animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center">
+                <Zap className="text-yellow-400 mr-3" size={24} />
+                <div>
+                  <p className="text-sm font-bold text-white">Bonus Weighting</p>
+                  <p className="text-xs text-gray-400">Multiplier for bonus actions</p>
+                </div>
               </div>
+              <select 
+                value={bonusFactor}
+                onChange={(e) => setBonusFactor(Number(e.target.value))}
+                className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-cyan-400 font-bold outline-none"
+              >
+                {[0.5, 1, 2, 5, 10, 50, 100].map(v => <option key={v} value={v}>{v}x</option>)}
+              </select>
+            </Card>
+          )}
+
+          {/* --- AI COACH INTEGRATION --- */}
+          {/* Visas endast om en spelare är vald */}
+          {selectedPlayerName && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+               <AiCoach 
+                 playerStats={currentSessionStats} 
+                 onUpgrade={() => setShowSubscriptionModal(true)} // Eller vart din betalsida ligger
+               />
             </div>
-            <select 
-              value={bonusFactor}
-              onChange={(e) => setBonusFactor(Number(e.target.value))}
-              className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-cyan-400 font-bold outline-none"
-            >
-              {[0.5, 1, 2, 5, 10, 50, 100].map(v => <option key={v} value={v}>{v}x</option>)}
-            </select>
-          </Card>
+          )}
           
           <SummarySection
             actionCounts={actionCounts}
@@ -288,6 +356,7 @@ export default function Dashboard() {
             carriedOverBalance={carriedOverBalance}
             onBalanceChange={setCarriedOverBalance}
             bonusFactor={bonusFactor}
+            isSaving={isSaving}
           />
         </div>
       </div>
@@ -295,10 +364,14 @@ export default function Dashboard() {
       <PlayerHistoryModal isOpen={showHistoryModal} onClose={() => setShowHistoryModal(false)} players={players} />
       <TemplateEditorModal isOpen={showTemplateEditor} onClose={() => setShowTemplateEditor(false)} />
       <PlayerSelectModal isOpen={showPlayerSelect} onClose={() => setShowPlayerSelect(false)} onSelectPlayer={setSelectedPlayerName} onAddNewPlayer={() => { setSelectedPlayerName(''); setShowPlayerSelect(false); }} isPremium={isPremium} />
+      <SubscriptionModal 
+        isOpen={showSubscriptionModal} 
+        onClose={() => setShowSubscriptionModal(false)} 
+      />
       
       <MobileBottomNav 
         onHistoryClick={() => setShowHistoryModal(true)}
-        onPremiumClick={() => {/* Styrs nu via Layout */}}
+        onPremiumClick={() => setShowSubscriptionModal(true)}
         onRecordGame={handleSaveGame}
       />
     </div>

@@ -9,7 +9,8 @@ import {
   MousePointer2, 
   Check,
   Trophy,
-  Banknote
+  Banknote,
+  Loader2 // <-- 1. Importera Loader2
 } from 'lucide-react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -25,8 +26,9 @@ interface SummarySectionProps {
   carriedOverBalance: number;
   onBalanceChange: (value: number) => void;
   bonusFactor: number;
-  isMoneyMode: boolean;       // Ny prop för läge
-  onSettleBalance: () => void; // Ny prop för att nolla saldo
+  isMoneyMode: boolean;
+  onSettleBalance: () => void;
+  isSaving?: boolean;
 }
 
 export default function SummarySection({
@@ -40,14 +42,18 @@ export default function SummarySection({
   onBalanceChange,
   bonusFactor,
   isMoneyMode,
-  onSettleBalance
+  onSettleBalance,
+  isSaving = false
 }: SummarySectionProps) {
   const { t, language } = useLanguage();
 
   // 1. Räkna ut totalt antal registrerade klick/händelser
   const totalActionsRegistered = Object.values(actionCounts).reduce((a, b) => a + b, 0);
 
-  // 2. Bestäm valuta och etiketter baserat på läge (Pengar eller Poäng)
+  // 2. Kolla om det finns data att spara
+  const hasData = totalActionsRegistered > 0;
+
+  // 3. Bestäm valuta och etiketter
   const currencySymbol = isMoneyMode 
     ? (language === 'en' ? 'USD' : 'SEK') 
     : 'Pts';
@@ -97,7 +103,7 @@ export default function SummarySection({
           </p>
         </Card>
 
-        {/* 2. Bonus Points - Visar viktningen */}
+        {/* 2. Bonus Points */}
         <Card border={false} className="text-center p-4 bg-gray-800/40">
           <div className="flex items-center justify-center mb-1">
              <Calculator size={14} className="text-cyan-400 mr-1"/>
@@ -108,7 +114,7 @@ export default function SummarySection({
           <p className="text-2xl font-bold text-cyan-400">+{totalBonus}</p>
         </Card>
 
-        {/* 3. Överfört Saldo (Med Settle-knapp) */}
+        {/* 3. Överfört Saldo */}
         <Card border={false} className={`text-center p-4 bg-gray-800/40 border relative group ${isMoneyMode ? 'border-yellow-500/20' : 'border-purple-500/20'}`}>
           <div className="flex items-center justify-center mb-2">
             <TrendingUp className={isMoneyMode ? "text-yellow-500 mr-2" : "text-purple-400 mr-2"} size={20} />
@@ -121,7 +127,6 @@ export default function SummarySection({
               {carriedOverBalance} <span className="text-xs font-normal opacity-70">{currencySymbol}</span>
             </div>
             
-            {/* Reglera-knapp (visas bara om saldo finns) */}
             {carriedOverBalance !== 0 && (
               <button
                 onClick={onSettleBalance}
@@ -134,7 +139,7 @@ export default function SummarySection({
           </div>
         </Card>
 
-        {/* 4. Slutsumma (Total) */}
+        {/* 4. Slutsumma */}
         <Card border={false} className="text-center p-4 bg-cyan-500/10 border border-cyan-500/20">
           <div className="flex items-center justify-center mb-2">
             {isMoneyMode ? (
@@ -152,27 +157,33 @@ export default function SummarySection({
         </Card>
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - HÄR ÄR ÄNDRINGARNA */}
       <div className="flex flex-col sm:flex-row gap-4">
         <Button
           variant="secondary"
           onClick={onReset}
           className="flex-1 py-4 text-lg"
           icon={RotateCcw}
+          // Inaktivera om vi sparar eller om det inte finns data
+          disabled={isSaving || !hasData}
         >
           {t('resetAll')}
         </Button>
+        
         <Button
           variant="primary"
           onClick={onSaveGame}
           className="flex-1 py-4 text-lg shadow-lg shadow-cyan-500/20"
-          icon={Save}
+          // Visa Loader2 om vi sparar, annars Save
+          icon={isSaving ? Loader2 : Save}
+          // Inaktivera om vi sparar eller om det inte finns data
+          disabled={isSaving || !hasData}
         >
-          {t('saveMatch')}
+          {isSaving ? 'Saving...' : t('saveMatch')}
         </Button>
       </div>
 
-      {/* Upgrade CTA (Optional visual fluff) */}
+      {/* Upgrade CTA */}
       <div className="mt-6 text-center">
         <p className="text-xs text-gray-500">
            {t('proTip') || 'Pro Tip'}: {t('checkHistory') || 'Check history to see trends.'}

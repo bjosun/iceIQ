@@ -1,9 +1,10 @@
 /// <reference types="vite/client" />
 import { loadStripe } from '@stripe/stripe-js';
+// Vi importerar funktionerna direkt här för att få rätt typer
+import { functions } from './firebase'; // Se till att sökvägen stämmer till din firebase config
+import { httpsCallable } from 'firebase/functions';
 
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-//console.log("Laddar Stripe med nyckel:", STRIPE_PUBLISHABLE_KEY);
-// Initialize Stripe
 let stripePromise: Promise<any> | null = null;
 
 export const getStripe = () => {
@@ -13,15 +14,19 @@ export const getStripe = () => {
   return stripePromise;
 };
 
-// Payment functions
 export const stripeService = {
-  async createCheckoutSession(interval: 'monthly' | 'yearly', language: string) {
+  // UPPDATERAD: Tar nu emot 'plan' som första argument
+  async createCheckoutSession(plan: 'premium' | 'elite', interval: 'monthly' | 'yearly', language: string) {
     try {
-      const { createStripeCheckoutSession } = await import('./firebase');
+      // Anropa Cloud Function direkt här
+      const createStripeCheckoutSession = httpsCallable(functions, 'createStripeCheckoutSession');
+      
       const result = await createStripeCheckoutSession({ 
+        plan,      // Skicka med 'premium' eller 'elite'
         interval, 
         lang: language 
       });
+      
       // Vi berättar för TS att vi förväntar oss ett ID tillbaka
       return result.data as { id: string };
     } catch (error) {
@@ -32,9 +37,8 @@ export const stripeService = {
 
   async createPortalSession() {
     try {
-      const { createStripePortalSession } = await import('./firebase');
+      const createStripePortalSession = httpsCallable(functions, 'createStripePortalSession');
       const result = await createStripePortalSession();
-      // HÄR LÖSER VI FELET: Vi berättar att datan innehåller en URL
       return result.data as { url: string };
     } catch (error) {
       console.error('Error creating portal session:', error);
@@ -60,7 +64,6 @@ export const stripeService = {
   async manageBilling() {
     try {
       const result = await this.createPortalSession();
-      // Nu vet TypeScript att result har en .url property
       window.location.href = result.url;
     } catch (error) {
       console.error('Error managing billing:', error);
@@ -73,6 +76,14 @@ export const stripeService = {
 export const checkPaymentStatus = () => {
   const params = new URLSearchParams(window.location.search);
   
+  if (params.get('session_id')) { // Ofta skickar Stripe tillbaka session_id
+    return { 
+      success: true, 
+      message: 'Payment successful! Your subscription is now active.' 
+    };
+  }
+  
+  // Behåll dina gamla checks också för säkerhets skull
   if (params.get('payment_success')) {
     return { 
       success: true, 
@@ -92,7 +103,11 @@ export const checkPaymentStatus = () => {
 
 // Clean URL after payment
 export const cleanPaymentUrl = () => {
-  if (window.location.search.includes('payment_')) {
-    window.history.replaceState({}, document.title, window.location.pathname);
+  const url = new URL(window.location.href);
+  if (url.searchParams.has('session_id') || url.searchParams.has('payment_success') || url.searchParams.has('payment_cancelled')) {
+    url.searchParams.delete('session_id');
+    url.searchParams.delete('payment_success');
+    url.searchParams.delete('payment_cancelled');
+    window.history.replaceState({}, document.title, url.pathname);
   }
 };

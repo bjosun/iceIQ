@@ -19,7 +19,8 @@ const PROJECT_ID = "squareverse-36179"; // <-- Dinu projekt-ID
 // --- PRIS IDn ---
 const monthlyPriceId = "price_1SG0PzG6k6tU2YpwlL1sRjxo"; 
 const yearlyPriceId = "price_1SG0R0G6k6tU2Ypw8v1wALpq"; 
-
+const eliteMonthlyPriceId = "price_1T0OCgG6k6tU2YpwHLrOYeHV"; 
+const eliteYearlyPriceId = "price_1T0ODTG6k6tU2YpwZUMoaXzE";
 // --- INITIERA VERTEX AI (GEMINI) ---
 const vertex_ai = new VertexAI({
   project: PROJECT_ID,
@@ -109,30 +110,40 @@ exports.askCoach = functions.https.onCall(async (data, context) => {
   // 4. Välj modell
   // Elite = Pro (Smartare), Premium = Flash (Snabbare)
   const modelName = plan === 'elite' 
-    ? 'gemini-1.5-pro-preview-0409' 
-    : 'gemini-1.5-flash-preview-0514';
-
+    ? 'gemini-2.5-pro' 
+    : 'gemini-2.5-flash';
+  console.log(`Använder modell: ${modelName} för användare: ${userId}`);
   const generativeModel = vertex_ai.preview.getGenerativeModel({
     model: modelName,
     generationConfig: {
-      maxOutputTokens: 1000,
+      maxOutputTokens: 4096,
       temperature: 0.7,
     },
   });
 
   // 5. Prompten
   const systemPrompt = `
-    Du är en erfaren ishockeytränare som heter "Ice IQ Coach". 
-    Din uppgift är att analysera spelarstatistik och ge konkreta, konstruktiva råd.
-    
-    Här är spelarens statistik:
-    ${JSON.stringify(playerStats)}
-    
-    ${question ? `Spelarens specifika fråga: "${question}"` : 'Ge en analys av styrkor och svagheter.'}
+    Du är "Ice IQ Coach", en elitinriktad ishockeytränare och mentor.
+      Din uppgift är att maximera spelarens prestation på och utanför isen.
 
-    Svara kortfattat, proffsigt och på Svenska. Använd emojis 🏒.
-    ${plan === 'elite' ? 'Gör en djupgående taktisk analys.' : 'Håll det enkelt och motiverande.'}
-  `;
+      Dina tillåtna ämnen är:
+      1. Ishockey (taktik, teknik, spelförståelse, regler).
+      2. Fysträning och rehabilitering för hockeyspelare.
+      3. Mental träning, tävlingspsykologi och ledarskap.
+      4. Kost, vätska, sömn och återhämtning för atleter.
+
+      Analysera följande statistik för spelaren:
+      ${JSON.stringify(playerStats)}
+      
+      Spelarens fråga: "${question || 'Ge en analys av min insats.'}"
+
+      VIKTIGA INSTRUKTIONER (GUARDRAILS):
+      - Om frågan INTE handlar om ovanstående ämnen (t.ex. politik, läxläsning, filmtips eller allmänkunskap): Svara vänligt men bestämt: "Som din hockeycoach fokuserar jag bara på din prestation, träning och hälsa. 🏒"
+      - Ge aldrig råd som är medicinskt farliga eller uppmanar till fusk/doping.
+      - Håll fokus på spelarens utveckling.
+      - Svara på Svenska.
+      - Använd emojis sparsamt men effektfullt 🥅.
+    `;
 
   try {
     const req = {
@@ -175,7 +186,7 @@ exports.createStripeCheckoutSession = functions
   .https.onCall(async (data, context) => {
     if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
 
-    const { interval } = data;
+    const { interval, plan } = data;
     const priceId = interval === "yearly" ? yearlyPriceId : monthlyPriceId;
     const userId = context.auth.uid;
     const userEmail = context.auth.token.email;
@@ -183,7 +194,13 @@ exports.createStripeCheckoutSession = functions
     try {
       const stripeInstance = getStripe();
       const customerId = await getOrCreateCustomer(userId, userEmail);
-
+      let priceId;
+      if (plan === 'elite') {
+        priceId = interval === "yearly" ? eliteYearlyPriceId : eliteMonthlyPriceId;
+       } else {
+        // Default till Premium
+        priceId = interval === "yearly" ? premiumYearlyPriceId : premiumMonthlyPriceId;
+      }
       const session = await stripeInstance.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "subscription",
@@ -192,6 +209,9 @@ exports.createStripeCheckoutSession = functions
         client_reference_id: userId,
         customer: customerId,
         line_items: [{ price: priceId, quantity: 1 }],
+        metadata: {
+            planType: plan || 'premium'
+        }
       });
 
       return { id: session.id };

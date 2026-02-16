@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Crown, Sparkles, Shield, Cloud, Users, BarChart3 } from 'lucide-react';
+import { Check, Crown, Sparkles, Shield, Cloud, Users, BarChart3, BrainCircuit } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -15,14 +15,16 @@ interface SubscriptionModalProps {
 export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModalProps) {
   const { t, language } = useLanguage();
   
-  // 1. Hämta även manageSubscription här
-  const { subscription, upgradeToPremium, manageSubscription } = useSubscription();
+  // Hämta de nya funktionerna från context
+  const { subscription, upgradeSubscription, manageSubscription } = useSubscription();
   
   const { user } = useAuth();
+  
+  // State för val
+  const [selectedPlan, setSelectedPlan] = useState<'premium' | 'elite'>('premium');
   const [selectedInterval, setSelectedInterval] = useState<'monthly' | 'yearly'>('monthly');
   const [processing, setProcessing] = useState(false);
 
-  // 2. Smartare hanterare som väljer rätt funktion
   const handleAction = async () => {
     if (!user) {
       alert('Please log in first');
@@ -31,16 +33,15 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
 
     setProcessing(true);
     try {
-      if (subscription.plan === 'premium') {
-        // Om man redan är premium -> Öppna portalen
+      // Om man redan har den valda planen -> Hantera (öppna portal)
+      if (subscription.plan === selectedPlan) {
         if (manageSubscription) {
             await manageSubscription();
-        } else {
-            console.error("Manage subscription function missing in context");
         }
       } else {
-        // Annars -> Starta köp
-        await upgradeToPremium(selectedInterval);
+        // Annars -> Köp (Uppgradera/Nedgradera)
+        // Här skickar vi med både plan och interval
+        await upgradeSubscription(selectedPlan, selectedInterval);
       }
     } catch (error) {
       console.error('Action failed:', error);
@@ -49,186 +50,163 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
     }
   };
 
-  const plans = {
-    free: {
-      name: t('free'),
-      price: '0',
-      period: t('perMonth'),
-      features: [
-        { icon: Check, text: t('freeFeature1'), included: true },
-        { icon: Check, text: t('freeFeature2Player'), included: true },
-        { icon: Check, text: t('freeFeature3'), included: true },
-        { icon: Shield, text: t('premiumFeature1'), included: false },
-        { icon: BarChart3, text: t('premiumFeature2'), included: false },
-      ]
-    },
+  // Data för planerna
+  const plansData = {
     premium: {
       name: 'Premium',
-      // 3. Lade till valutasymboler här
-      price: language === 'en' ? '$2.90' : '29 kr',
-      period: t('perMonth'),
-      yearlyPrice: language === 'en' ? '$29' : '299 kr',
-      yearlyPeriod: language === 'en' ? '/year' : '/år',
+      priceMonthly: language === 'en' ? '29 SEK' : '29 kr',
+      priceYearly: language === 'en' ? '299 SEK' : '299 kr',
       features: [
-        { icon: Check, text: t('premiumFeaturePlus'), included: true },
-        { icon: Users, text: t('premiumFeature3'), included: true },
-        { icon: Cloud, text: t('premiumFeature1'), included: true },
-        { icon: BarChart3, text: t('premiumFeature2'), included: true },
-        { icon: Shield, text: t('premiumFeature4'), included: true },
+        { icon: Check, text: t('premiumFeaturePlus') || "Everything in Free", included: true },
+        { icon: Users, text: t('premiumFeature3') || "Unlimited players", included: true },
+        { icon: Cloud, text: t('premiumFeature1') || "Cloud sync", included: true },
+        { icon: BarChart3, text: t('premiumFeature2') || "Advanced stats", included: true },
+        { icon: Sparkles, text: "15 AI Coach Credits / month", included: true }, // NYTT
+      ]
+    },
+    elite: {
+      name: 'Elite',
+      priceMonthly: language === 'en' ? '89 SEK' : '89 kr',
+      priceYearly: language === 'en' ? '899 SEK' : '899 kr',
+      features: [
+        { icon: Check, text: "Everything in Premium", included: true },
+        { icon: BrainCircuit, text: "Smarter AI (Gemini Pro)", included: true },
+        { icon: Sparkles, text: "50 AI Coach Credits / month", included: true },
+        { icon: Shield, text: "Priority Support", included: true },
       ]
     }
   };
+
+  const currentPlanData = plansData[selectedPlan];
+  const price = selectedInterval === 'monthly' ? currentPlanData.priceMonthly : currentPlanData.priceYearly;
+  const period = selectedInterval === 'monthly' ? (language === 'en' ? '/mo' : '/mån') : (language === 'en' ? '/yr' : '/år');
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('selectYourPlan')}
+      title={t('selectYourPlan') || "Select Your Plan"}
       size="lg"
     >
       <div className="p-6">
-        {/* Current Plan Status */}
+        {/* Header / Current Plan Status */}
         {user && (
-          <Card className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-1">
-                  {t('currentPlan')}
-                </h3>
-                <p className="text-gray-400">
-                  {subscription.plan === 'premium' ? 'Premium Plan' : 'Free Plan'}
-                </p>
-              </div>
-              {subscription.plan === 'premium' && (
-                <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                  ACTIVE
-                </div>
-              )}
+          <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl mb-6 border border-gray-700">
+            <div>
+              <p className="text-gray-400 text-xs uppercase font-bold tracking-wider">Current Plan</p>
+              <h3 className="text-white font-bold capitalize">
+                {subscription.plan} Plan
+              </h3>
             </div>
-          </Card>
+            {subscription.plan !== 'free' && (
+              <div className="bg-green-500/20 text-green-400 text-xs font-bold px-3 py-1 rounded-full border border-green-500/30">
+                ACTIVE
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Plans Comparison */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Free Plan */}
-          <Card>
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-white mb-2">
-                {plans.free.name}
-              </h3>
-              <div className="flex items-baseline mb-1">
-                <span className="text-3xl font-bold text-white">
-                  {plans.free.price}
-                </span>
-                <span className="text-gray-400 ml-2">{plans.free.period}</span>
-              </div>
-              <p className="text-gray-400 text-sm">
-                Perfect for getting started
-              </p>
-            </div>
-
-            <ul className="space-y-3 mb-6">
-              {plans.free.features.map((feature, index) => (
-                <li key={index} className="flex items-center">
-                  <feature.icon 
-                    size={18} 
-                    className={`mr-3 ${feature.included ? 'text-green-400' : 'text-gray-600'}`}
-                  />
-                  <span className={feature.included ? 'text-gray-300' : 'text-gray-600'}>
-                    {feature.text}
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            <Button
-              variant={subscription.plan === 'free' ? 'primary' : 'secondary'}
-              disabled={subscription.plan === 'free'}
-              fullWidth
-              // Här inaktiverar vi knappen om man redan har Free, 
-              // annars kanske man vill ha en "Downgrade"-logik (Customer Portal)
-              onClick={manageSubscription} 
-            >
-              {subscription.plan === 'free' ? 'Current Plan' : 'Downgrade'}
-            </Button>
-          </Card>
-
-          {/* Premium Plan */}
-          <Card className="relative border-2 border-yellow-500">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <span className="bg-yellow-500 text-black px-4 py-1 rounded-full text-sm font-bold flex items-center shadow-lg">
-                <Crown size={14} className="mr-1" />
-                {t('recommended')}
-              </span>
-            </div>
-
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-white mb-2">
-                {plans.premium.name}
-              </h3>
-              <div className="flex items-baseline mb-1">
-                <span className="text-3xl font-bold text-yellow-400">
-                  {selectedInterval === 'monthly' ? plans.premium.price : plans.premium.yearlyPrice}
-                </span>
-                <span className="text-gray-400 ml-2">
-                  {selectedInterval === 'monthly' ? plans.premium.period : plans.premium.yearlyPeriod}
-                </span>
-              </div>
-              <p className="text-cyan-400 text-sm">
-                {selectedInterval === 'yearly' ? t('chooseYearlySimple') : t('chooseMonthlySimple')}
-              </p>
-            </div>
-
-            {/* Interval Selector */}
-            <div className="flex mb-6 bg-gray-800 rounded-xl p-1">
-              <button
-                onClick={() => setSelectedInterval('monthly')}
-                className={`flex-1 py-2 rounded-lg font-semibold transition-colors text-sm ${
-                  selectedInterval === 'monthly'
-                    ? 'bg-cyan-600 text-white shadow-md'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setSelectedInterval('yearly')}
-                className={`flex-1 py-2 rounded-lg font-semibold transition-colors text-sm ${
-                  selectedInterval === 'yearly'
-                    ? 'bg-cyan-600 text-white shadow-md'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Yearly (-20%)
-              </button>
-            </div>
-
-            <ul className="space-y-3 mb-6">
-              {plans.premium.features.map((feature, index) => (
-                <li key={index} className="flex items-center">
-                  <feature.icon size={18} className="text-green-400 mr-3" />
-                  <span className="text-white">{feature.text}</span>
-                </li>
-              ))}
-            </ul>
-
-            <Button
-              variant="premium"
-              loading={processing}
-              onClick={handleAction} // 4. Använder nya funktionen
-              icon={Sparkles}
-              fullWidth
-            >
-              {subscription.plan === 'premium' ? 'Manage Subscription' : 'Upgrade to Premium'}
-            </Button>
-          </Card>
+        {/* PLAN SELECTOR (Tabs) */}
+        <div className="flex bg-gray-900 rounded-xl p-1 mb-6 border border-gray-700">
+          <button
+            onClick={() => setSelectedPlan('premium')}
+            className={`flex-1 py-3 rounded-lg font-bold transition-all text-sm flex items-center justify-center gap-2 ${
+              selectedPlan === 'premium'
+                ? 'bg-gray-700 text-white shadow-md border border-gray-600'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Crown size={16} className={selectedPlan === 'premium' ? "text-yellow-400" : ""} />
+            Premium
+          </button>
+          <button
+            onClick={() => setSelectedPlan('elite')}
+            className={`flex-1 py-3 rounded-lg font-bold transition-all text-sm flex items-center justify-center gap-2 ${
+              selectedPlan === 'elite'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md border border-indigo-400'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Sparkles size={16} className={selectedPlan === 'elite' ? "text-cyan-200" : ""} />
+            Elite (AI)
+          </button>
         </div>
 
+        {/* MAIN CARD */}
+        <Card className={`relative border-2 transition-colors ${selectedPlan === 'elite' ? 'border-indigo-500 bg-indigo-900/10' : 'border-yellow-500'}`}>
+          
+          {/* Recommended Badge */}
+          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <span className={`px-4 py-1 rounded-full text-xs font-bold flex items-center shadow-lg uppercase tracking-wider ${
+                selectedPlan === 'elite' ? 'bg-indigo-500 text-white' : 'bg-yellow-500 text-black'
+            }`}>
+              {selectedPlan === 'elite' ? <Sparkles size={12} className="mr-1"/> : <Crown size={12} className="mr-1"/>}
+              {t('recommended') || "Recommended"}
+            </span>
+          </div>
+
+          <div className="mb-8 mt-2 text-center">
+            <h3 className="text-2xl font-bold text-white mb-2">
+              {currentPlanData.name}
+            </h3>
+            <div className="flex items-baseline justify-center mb-2">
+              <span className={`text-4xl font-black ${selectedPlan === 'elite' ? 'text-indigo-400' : 'text-yellow-400'}`}>
+                {price}
+              </span>
+              <span className="text-gray-400 ml-1 font-medium">{period}</span>
+            </div>
+            
+            {/* Interval Toggle inside card */}
+            <div className="flex justify-center gap-4 text-sm mt-4">
+               <button 
+                 onClick={() => setSelectedInterval('monthly')}
+                 className={`px-3 py-1 rounded-full border transition-colors ${selectedInterval === 'monthly' ? 'bg-white/10 border-white/30 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+               >
+                 Monthly
+               </button>
+               <button 
+                 onClick={() => setSelectedInterval('yearly')}
+                 className={`px-3 py-1 rounded-full border transition-colors flex items-center gap-1 ${selectedInterval === 'yearly' ? 'bg-white/10 border-white/30 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+               >
+                 Yearly <span className="text-[10px] bg-green-500 text-black px-1 rounded font-bold">-15%</span>
+               </button>
+            </div>
+          </div>
+
+          <ul className="space-y-4 mb-8 max-w-sm mx-auto">
+            {currentPlanData.features.map((feature, index) => (
+              <li key={index} className="flex items-center">
+                <div className={`p-1 rounded-full mr-3 ${feature.included ? (selectedPlan === 'elite' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-yellow-500/20 text-yellow-400') : 'bg-gray-700 text-gray-500'}`}>
+                  <feature.icon size={14} />
+                </div>
+                <span className={feature.included ? 'text-gray-200' : 'text-gray-500'}>
+                  {feature.text}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <Button
+            variant={selectedPlan === 'elite' ? 'primary' : 'premium'} // Du kan behöva justera varianten om 'premium' inte finns i din Button-komponent
+            className={selectedPlan === 'elite' ? 'bg-indigo-600 hover:bg-indigo-500 border-indigo-500' : ''}
+            loading={processing}
+            onClick={handleAction}
+            icon={selectedPlan === 'elite' ? Sparkles : Crown}
+            fullWidth
+            size="lg"
+          >
+            {subscription.plan === selectedPlan 
+              ? 'Manage Subscription' 
+              : `Upgrade to ${currentPlanData.name}`
+            }
+          </Button>
+        </Card>
+
         {/* Guarantee */}
-        <div className="mt-8 text-center">
-          <div className="inline-flex items-center text-gray-400 text-sm">
-            <Shield size={16} className="mr-2" />
-            30-day money-back guarantee • Cancel anytime
+        <div className="mt-6 text-center">
+          <div className="inline-flex items-center text-gray-500 text-xs">
+            <Shield size={12} className="mr-1.5" />
+            Secure payment via Stripe • Cancel anytime
           </div>
         </div>
       </div>

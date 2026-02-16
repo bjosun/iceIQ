@@ -138,10 +138,10 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
               </div>
             ) : (
               <div className="flex items-center space-x-4">
-                <Link to="/login" className="text-sm font-bold text-gray-400 hover:text-white transition-colors">
+                <Link to="/dashboard" className="text-sm font-bold text-gray-400 hover:text-white transition-colors">
                   {t('nav.login') || 'Login'}
                 </Link>
-                <Link to="/register">
+                <Link to="/dashboard">
                   <button className="bg-cyan-600 px-5 py-2 rounded-xl text-sm font-black text-white hover:bg-cyan-500 transition-all shadow-lg shadow-cyan-600/20 italic uppercase tracking-tighter">
                     {t('register') || 'Join Now'}
                   </button>

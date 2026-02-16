@@ -82,7 +82,18 @@ export const translations = {
       title: "Ready to Transform Your Coaching?",
       desc: "Join hundreds of coaches already using Ice IQ to improve performance."
     },
-
+    // AI Coach
+    ai: {
+      upsellDesc: "Get personalized tactical feedback and training tips powered by Gemini AI.",
+      unlock: "Unlock AI Coach",
+      credits: "credits left",
+      readyDesc: "I can analyze this player's stats to identify trends, strengths, and areas for improvement.",
+      analyzeBtn: "Analyze Stats (1 Credit)",
+      analyzing: "Coach is thinking...",
+      outOfCredits: "You're out of AI credits for this month.",
+      error: "Coach is offline. Please try again later.",
+      newAnalysis: "New Analysis"
+    },
     // Player & Match Logic
     playerName: "Player's Name",
     select: "Select",
@@ -104,7 +115,12 @@ export const translations = {
     playerHistory: "Player History",
     graph: "Graph",
     statsAndTrends: "Stats & Trends",
-
+    // Dashboard specific
+    dashboardSubtitle: "Track your scouting progress",
+    selectPlayerFirst: "Please select a player first",
+    gameSavedSuccessfully: "Game saved successfully!",
+    saveError: "Could not save game.",
+    resetAllWarning: "Are you sure you want to reset all stats for this match?",
     // Subscription Modal & Billing
     selectYourPlan: "Select Your Plan",
     currentPlan: "Current Plan",
@@ -293,7 +309,24 @@ export const translations = {
     markAsSettled: "Markera som reglerat",
     settleBalanceConfirm: "Vill du nollställa saldot? Markera detta endast om betalning/reglering har skett.",
     upgradeCTA: "🔒 Uppgradera till Premium",
-
+    // Dashboard specific
+    dashboardSubtitle: "Följ din scouting-utveckling",
+    selectPlayerFirst: "Välj en spelare först",
+    gameSavedSuccessfully: "Matchen sparades!",
+    saveError: "Kunde inte spara matchen.",
+    resetAllWarning: "Är du säker på att du vill nollställa all statistik för denna match?",
+    // AI Coach
+    ai: {
+      upsellDesc: "Få personlig taktisk feedback och träningstips drivet av Gemini AI.",
+      unlock: "Lås upp AI-Coachen",
+      credits: "krediter kvar",
+      readyDesc: "Jag kan analysera denna spelares statistik för att hitta trender, styrkor och förbättringsområden.",
+      analyzeBtn: "Analysera Statistik (1 Kredit)",
+      analyzing: "Coachen tänker...",
+      outOfCredits: "Du har slut på AI-krediter för denna månad.",
+      error: "Coachen är inte tillgänglig just nu. Försök igen senare.",
+      newAnalysis: "Ny Analys"
+    },
     // Stats (Dessa lades till här nu för att matcha 'en')
     premiumStats: "Avancerad Statistik",
     upgradeForStats: "Uppgradera till Premium för att låsa upp detaljerad statistik och trendanalys.",
@@ -305,7 +338,7 @@ export const translations = {
     pointDevelopment: "Poängutveckling",
     mostCommonPositive: "Vanligaste Positiva Aktioner",
     mostCommonNegative: "Vanligaste Negativa Aktioner",
-
+   
     // Navigation
     nav: {
       dashboard: "Dashboard",
