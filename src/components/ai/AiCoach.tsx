@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../../services/firebase'; // OBS! Kolla så denna sökväg stämmer till din firebase-fil
+import { useAuth } from '../../contexts/AuthContext';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../services/firebase'; 
-import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { Sparkles, Send, Lock, BrainCircuit, Loader2, RefreshCw } from 'lucide-react';
@@ -33,6 +35,28 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
 
   const credits = (user as any)?.aiCredits !== undefined ? (user as any).aiCredits : 5; 
   const isLocked = !isPremium; 
+  const [displayCredits, setDisplayCredits] = useState(credits);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Eftersom du använder en speciell sökväg i databasen:
+    const userRef = doc(db, 'artifacts', 'default-app-id', 'users', user.uid);
+    
+    // onSnapshot lyssnar på ändringar i realtid!
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        // Uppdatera skärmen direkt när databasen ändras (manuellt eller av AI:n)
+        if (userData.aiCredits !== undefined) {
+          setDisplayCredits(userData.aiCredits);
+        }
+      }
+    });
+
+    // Städa upp lyssnaren när vi stänger komponenten
+    return () => unsubscribe();
+  }, [user]);
 
   // Scrolla ner automatiskt
   useEffect(() => {
@@ -42,32 +66,52 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   }, [messages, loading]);
 
   const handleAskCoach = async (specificQuestion?: string) => {
-    if (credits <= 0) return;
+    // 1. Avbryt om slut på krediter (Använd displayCredits här nu)
+    if (displayCredits <= 0) return;
 
     setLoading(true);
     setError('');
     
+    // 2. Om användaren ställde en specifik fråga, visa den i chatten direkt
     if (specificQuestion) {
       setMessages(prev => [...prev, { role: 'user', text: specificQuestion }]);
     }
 
+    console.group("🤖 Sending to AI Coach");
+    console.log("Language:", language);
+    console.log("Current Session Stats:", playerStats.stats);
+    console.log("History Length:", playerStats.history?.length || 0);
+    console.log("History Data:", playerStats.history);
+    console.log("Totals:", playerStats.totals);
+    console.groupEnd();
+
     try {
       const askCoach = httpsCallable(functions, 'askCoach');
+      
       const result: any = await askCoach({ 
-        playerStats,
-        question: specificQuestion || "" 
+        playerStats: playerStats,
+        question: specificQuestion || "",
+        lang: language 
       });
       
       if (result.data.success) {
+        // Lägg till AI:ns svar i chatten
         setMessages(prev => [...prev, { role: 'ai', text: result.data.analysis }]);
         setInputQuestion(''); 
+        
+        // --- HÄR ÄR MAGIN ---
+        // Vi uppdaterar UI:t med den nya siffran vi fick tillbaka från servern!
+        setDisplayCredits(result.data.creditsLeft);
       }
+      
     } catch (err: any) {
-      console.error(err);
+      console.error("❌ AI Error:", err);
+      
       if (err.message.includes('permission-denied')) {
         onUpgrade(); 
       } else if (err.message.includes('resource-exhausted')) {
         setError(t('ai.outOfCredits') || 'Out of credits for this month.');
+        setDisplayCredits(0); // Tvinga till 0 om servern säger stopp
       } else {
         setError(t('ai.error') || 'Coach is offline. Try again later.');
       }
@@ -128,7 +172,8 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
         <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full border border-white/5">
           <Sparkles className="text-yellow-400" size={12} />
           <span className="text-xs font-medium text-gray-300">
-            {credits} {t('ai.credits') || "credits left"}
+            {/* ANVÄNDER displayCredits OCH SPRÅK */}
+            {displayCredits} {language === 'sv' ? 'krediter kvar' : 'credits left'}
           </span>
         </div>
       </div>
@@ -139,19 +184,24 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
         {messages.length === 0 && !loading && (
           <div className="text-center py-8">
             <p className="text-gray-300 text-sm mb-6 max-w-md mx-auto leading-relaxed">
-              {t('ai.readyDesc') || "I can analyze your latest match stats and provide tactical advice."}
+              {language === 'sv' 
+                ? "Jag kan analysera dina senaste matcher och ge taktiska råd." 
+                : "I can analyze your latest match stats and provide tactical advice."}
             </p>
             <button
               onClick={() => handleAskCoach()}
-              disabled={loading || credits <= 0}
+              // LÅS KNAPPEN OM displayCredits ÄR 0
+              disabled={loading || displayCredits <= 0}
               className={`relative group flex items-center justify-center gap-2 mx-auto px-8 py-3 rounded-xl font-bold text-white transition-all ${
-                loading || credits <= 0 
+                loading || displayCredits <= 0 
                   ? 'bg-gray-700 cursor-not-allowed opacity-70' 
                   : 'bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50'
               }`}
             >
               <Sparkles size={18} className="group-hover:animate-pulse" />
-              <span>{t('ai.analyzeBtn') || "Analyze Stats (1 Credit)"}</span>
+              <span>
+                {language === 'sv' ? "Analysera (1 kredit)" : "Analyze Stats (1 Credit)"}
+              </span>
             </button>
           </div>
         )}
@@ -174,7 +224,9 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
           <div className="flex justify-start">
              <div className="bg-black/30 border border-white/10 text-gray-200 rounded-2xl rounded-bl-none p-4 flex items-center gap-3">
                 <Loader2 size={16} className="animate-spin text-indigo-400" />
-                <span className="text-xs text-gray-400 italic">{t('ai.analyzing') || "Coach is thinking..."}</span>
+                <span className="text-xs text-gray-400 italic">
+                  {language === 'sv' ? "Coachen tänker..." : "Coach is thinking..."}
+                </span>
              </div>
           </div>
         )}
@@ -195,14 +247,14 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
                type="text"
                value={inputQuestion}
                onChange={(e) => setInputQuestion(e.target.value)}
-               // Nu fungerar language här nere!
                placeholder={language === 'sv' ? "Ställ en följdfråga..." : "Ask a follow-up question..."}
                className="flex-1 bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                onKeyDown={(e) => e.key === 'Enter' && inputQuestion.trim() && handleAskCoach(inputQuestion)}
              />
              <button
                onClick={() => handleAskCoach(inputQuestion)}
-               disabled={!inputQuestion.trim() || loading || credits <= 0}
+               // LÅS ÄVEN HÄR OM displayCredits ÄR 0
+               disabled={!inputQuestion.trim() || loading || displayCredits <= 0}
                className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
              >
                <Send size={18} />
