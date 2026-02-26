@@ -97,8 +97,8 @@ exports.askCoach = functions
   // Hantera krediter
   let credits = userData.aiCredits;
   if (credits === undefined && isSubscribed) {
-      credits = 10;
-      await userRef.update({ aiCredits: 10 });
+      credits = 50;
+      await userRef.update({ aiCredits: 50 });
   } else if (credits === undefined) {
       credits = 0;
   }
@@ -126,7 +126,7 @@ exports.askCoach = functions
   const generativeModel = vertex_ai.getGenerativeModel({
     model: modelName,
     generationConfig: {
-      maxOutputTokens: 4096,
+      maxOutputTokens: 800,
       temperature: 0.4,
     },
   });
@@ -161,6 +161,7 @@ exports.askCoach = functions
       1. SPRÅK: Svara på språkkoden "${userLanguage}". Om frågan ställs på ett annat språk, svara på samma språk som frågan.
       2. TON: Professionell, coachande, peppande och konstruktiv. Du är rak men rättvis. Använd emojis sparsamt 🏒.
       3. GUARDRAILS: Om frågan inte rör ishockey, träning eller hälsa, svara vänligt: "Jag fokuserar endast på din hockeyutveckling."
+      4. FORMAT: Ge utförliga och insiktsfulla svar, men håll det lättläst. Använd max 2-3 korta stycken eller tydliga punktlistor. En riktig coach går rakt på sak utan onödigt babbel.
     `;
 
   try {
@@ -318,7 +319,8 @@ exports.stripeWebhook = functions
           
           const planType = data.metadata?.planType || "premium";
           
-          const creditAmount = planType === 'elite' ? 50 : 15;
+          // --- HÄR ÄR DINA NYA VÄRDEN: 50 och 500 ---
+          const creditAmount = planType === 'elite' ? 500 : 50;
 
           await usersRef.doc(userId).set({
             stripeCustomerId: customerId,
@@ -330,6 +332,32 @@ exports.stripeWebhook = functions
             aiCredits: creditAmount 
           }, { merge: true });
           console.log(`✅ ${planType} activated for ${userId} with ${creditAmount} AI credits`);
+        }
+      }
+
+      // --- NYTT: FYLL PÅ KREDITER NÄR PRENUMERATIONEN FÖRNYAS NÄSTA MÅNAD ---
+      if (event.type === "invoice.payment_succeeded") {
+        const customerId = data.customer;
+        const subscriptionId = data.subscription;
+        
+        // Vi vill bara agera på fakturor som tillhör en prenumeration (inte engångsköp)
+        if (subscriptionId) {
+            const subscription = await stripeInstance.subscriptions.retrieve(subscriptionId);
+            const priceId = subscription.items.data[0].price.id;
+            
+            // Kolla om det är Elite eller Premium baserat på Pris-ID
+            const isElite = priceId === eliteMonthlyPriceId || priceId === eliteYearlyPriceId;
+            const creditAmount = isElite ? 500 : 50;
+
+            const snapshot = await usersRef.where("stripeCustomerId", "==", customerId).get();
+            if (!snapshot.empty) {
+                await snapshot.docs[0].ref.update({ 
+                    subscriptionStatus: "active",
+                    aiCredits: creditAmount,
+                    subscriptionEnd: new Date(subscription.current_period_end * 1000).toISOString()
+                });
+                console.log(`🔄 Renewed! Refilled ${creditAmount} credits for customer ${customerId}`);
+            }
         }
       }
 
@@ -359,4 +387,36 @@ exports.stripeWebhook = functions
       console.error("Webhook processing failed:", err);
       res.status(500).send("Server Error");
     }
+  });
+// ==========================================
+//  AUTOMATISK PÅFYLLNING (CRON JOB)
+// ==========================================
+exports.refillFreeCreditsMonthly = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 300 })
+  .pubsub.schedule('0 0 1 * *') // Körs kl 00:00 den 1:a varje månad
+  .timeZone('Europe/Stockholm')
+  .onRun(async (context) => {
+    const usersRef = getUsersCollection();
+    
+    // Hämta alla användare som har 'free' plan
+    const snapshot = await usersRef.where('subscriptionPlan', '==', 'free').get();
+    
+    if (snapshot.empty) {
+      console.log('Inga gratisanvändare att återställa denna månad.');
+      return null;
+    }
+
+    // Använd en Firebase "Batch" för att uppdatera hundratals konton blixtsnabbt
+    const batch = db.batch();
+    let count = 0;
+
+    snapshot.forEach((doc) => {
+      // Sätter deras krediter till 3 (sparar eventuella gamla krediter? Nej, vi "nollställer" till max 3 så de inte kan spara ihop 100 gratis)
+      batch.update(doc.ref, { aiCredits: 3 });
+      count++;
+    });
+
+    await batch.commit();
+    console.log(`✅ Månadsuppdatering klar: Gav 3 AI-krediter till ${count} gratisanvändare.`);
+    return null;
   });

@@ -21,8 +21,8 @@ interface PlayerSelectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectPlayer: (playerName: string) => void;
-  onAddNewPlayer: () => void;
-  isPremium?: boolean; // Valfri prop, default false
+  onAddNewPlayer: (playerName: string) => void; // <--- Nu förväntar den sig ett namn!
+  isPremium?: boolean; 
 }
 
 export default function PlayerSelectModal({
@@ -62,7 +62,7 @@ export default function PlayerSelectModal({
   };
 
   const handleDeletePlayer = async (e: React.MouseEvent, player: Player) => {
-    e.stopPropagation(); // Förhindrar att spelaren väljs när man klickar på papperskorgen
+    e.stopPropagation(); 
     
     const confirmMessage = language === 'en' 
       ? `Are you sure you want to delete ${player.name}? All history and balance will be removed.`
@@ -80,9 +80,16 @@ export default function PlayerSelectModal({
     }
   };
 
-  // --- NY LOGIK: Hantera "Lägg till ny spelare" ---
   const handleAddNewClick = () => {
-    // Om man INTE är premium och redan har 1 (eller fler) spelare
+    const newName = searchTerm.trim();
+    
+    // 1. Kolla så att man skrivit ett namn
+    if (!newName) {
+      toast.error(language === 'en' ? "Please enter a name first" : "Skriv in ett namn först");
+      return;
+    }
+
+    // 2. Kolla premium-spärren
     if (!isPremium && players.length >= 1) {
       toast.error(language === 'en' 
         ? "Free plan is limited to 1 player. Upgrade to add more." 
@@ -92,9 +99,9 @@ export default function PlayerSelectModal({
       return;
     }
 
-    // Om allt är ok, kör vidare
-    onAddNewPlayer();
-    onClose();
+    // 3. Skicka namnet upp till Dashboard
+    onAddNewPlayer(newName);
+    setSearchTerm(''); 
   };
 
   const filteredPlayers = players.filter(player =>
@@ -164,7 +171,6 @@ export default function PlayerSelectModal({
                   </div>
                 </button>
 
-                {/* Radera-knapp - Synlig och klickvänlig */}
                 <button
                   onClick={(e) => handleDeletePlayer(e, player)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
@@ -184,7 +190,7 @@ export default function PlayerSelectModal({
 
         <div className="mt-6 pt-6 border-t border-gray-700">
           <Button
-            onClick={handleAddNewClick} // Använd vår spärr-funktion här
+            onClick={handleAddNewClick} 
             variant="primary"
             icon={UserPlus}
             fullWidth
@@ -192,7 +198,6 @@ export default function PlayerSelectModal({
             {t('addNewPlayer') || 'Add New Player'}
           </Button>
           
-          {/* Info-text om gränsen (Dynamisk språkhantering) */}
           {!isPremium && players.length >= 1 && (
              <p className="text-xs text-center text-gray-500 mt-2">
                {language === 'en' 

@@ -34,8 +34,8 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const credits = (user as any)?.aiCredits !== undefined ? (user as any).aiCredits : 5; 
-  const isLocked = !isPremium; 
-  const [displayCredits, setDisplayCredits] = useState(credits);
+  const [displayCredits, setDisplayCredits] = useState(credits); // <--- Skapa variabeln först!
+  const isLocked = !isPremium && displayCredits <= 0; // <--- Använd den sen!
 
   useEffect(() => {
     if (!user) return;
@@ -139,7 +139,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
             Ice IQ Coach <span className="text-[10px] bg-cyan-500 text-black px-1.5 py-0.5 rounded font-black">AI</span>
           </h3>
           <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">
-            {t('ai.upsellDesc') || "Get personalized tactical feedback powered by Gemini AI."}
+            {t('ai.upsellDesc') || "Get 50 new AI analyses every month by upgrading to Premium."}
           </p>
           <button 
             onClick={onUpgrade}

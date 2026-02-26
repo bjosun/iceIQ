@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTemplates } from '../contexts/TemplateContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import toast from 'react-hot-toast';
-
+import { useLocation } from 'react-router-dom';
 // Komponenter
 import SubscriptionModal from '../components/modals/SubscriptionModal';
 import PlayerForm from '../components/dashboard/PlayerForm';
@@ -41,7 +41,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { t, language } = useLanguage(); 
   const { subscription } = useSubscription(); 
-  
+  const location = useLocation();
   // State för UI
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const isPremium = subscription?.plan === 'premium' || subscription?.plan === 'elite';
@@ -54,7 +54,7 @@ export default function Dashboard() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [showPlayerSelect, setShowPlayerSelect] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
+  const [showSignup, setShowSignup] = useState(location.state?.isSignup || false);
   
   // State för spelare och match
   const [players, setPlayers] = useState<Player[]>([]);
@@ -72,6 +72,7 @@ export default function Dashboard() {
   const [isMoneyMode, setIsMoneyMode] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState(false);
 
+
   // State för dashboard-statistik
   const [stats, setStats] = useState({
     players: 0,
@@ -79,6 +80,12 @@ export default function Dashboard() {
     avgPoints: 0,
     thisWeek: 0
   });
+
+  useEffect(() => {
+    if (location.state?.isSignup !== undefined) {
+      setShowSignup(location.state.isSignup);
+    }
+    }, [location.state]); 
 
   // --- EFFEKT: Hantera Bonus Factor baserat på läge ---
   useEffect(() => {
@@ -460,7 +467,27 @@ export default function Dashboard() {
       {/* Modals */}
       <PlayerHistoryModal isOpen={showHistoryModal} onClose={() => setShowHistoryModal(false)} players={players} />
       <TemplateEditorModal isOpen={showTemplateEditor} onClose={() => setShowTemplateEditor(false)} />
-      <PlayerSelectModal isOpen={showPlayerSelect} onClose={() => setShowPlayerSelect(false)} onSelectPlayer={setSelectedPlayerName} onAddNewPlayer={() => { setSelectedPlayerName(''); setShowPlayerSelect(false); }} isPremium={isPremium} />
+      <PlayerSelectModal 
+        isOpen={showPlayerSelect} 
+        onClose={() => setShowPlayerSelect(false)} 
+        onSelectPlayer={setSelectedPlayerName} 
+        onAddNewPlayer={async (newName) => { 
+          // 1. Skapa spelaren i databasen DIREKT med 0 i saldo
+          try {
+            await updatePlayerBalance(newName, 0); 
+            // 2. Välj spelaren i rutan
+            setSelectedPlayerName(newName); 
+            // 3. Tvinga dashboarden att ladda om spelarlistan
+            setRefreshTrigger(prev => prev + 1); 
+            // 4. Stäng modalen
+            setShowPlayerSelect(false);
+            toast.success(language === 'sv' ? `${newName} har lagts till!` : `${newName} added!`);
+          } catch (error) {
+            toast.error(language === 'sv' ? "Kunde inte spara spelaren" : "Could not save player");
+          }
+        }} 
+        isPremium={isPremium} 
+      />
       <SubscriptionModal 
         isOpen={showSubscriptionModal} 
         onClose={() => setShowSubscriptionModal(false)} 

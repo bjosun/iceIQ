@@ -31,12 +31,12 @@ export default function Home() {
     premium: {
       price: isYearly ? '299' : '29',
       period: isYearly ? (language === 'sv' ? 'SEK/år' : 'SEK/year') : (language === 'sv' ? 'SEK/mån' : 'SEK/month'),
-      credits: 15
+      credits: 50
     },
     elite: {
       price: isYearly ? '899' : '89',
       period: isYearly ? (language === 'sv' ? 'SEK/år' : 'SEK/year') : (language === 'sv' ? 'SEK/mån' : 'SEK/month'),
-      credits: 50
+      credits: 500
     }
   };
 
@@ -99,8 +99,8 @@ export default function Home() {
 
           <p className="text-xl sm:text-2xl text-gray-300 mb-10 leading-relaxed max-w-3xl mx-auto animate-fade-in-up delay-200">
             {language === 'sv' 
-              ? "Samla statistik, analysera trender och få taktisk feedback från vår AI-coach." 
-              : "Track stats, analyze trends, and get tactical feedback from our AI coach."}
+              ? "Ice IQ är det ultimata verktyget för att analysera din utveckling och höja din Hockey IQ. Spåra statistik och låt AI-coachen ta ditt spel till nästa nivå." 
+              : "Ice IQ is the ultimate tool to analyze your progress and boost your Hockey IQ. Track stats and let our AI coach take your game to the next level."}
           </p>
 
           {/* Knappar */}
@@ -217,13 +217,18 @@ export default function Home() {
                 <span className="text-gray-400 ml-2">SEK</span>
               </div>
               <ul className="space-y-4 mb-8 flex-grow">
-                {["Basic scoring", "Save 1 player", "Simple history", "No AI Access"].map((f, i) => (
+                {[
+                  "Basic scoring", 
+                  "Save 1 player", 
+                  "Simple history", 
+                  language === 'sv' ? "3 Gratis AI-krediter" : "3 Free AI Credits" // <--- ÄNDRAD!
+                ].map((f, i) => (
                   <li key={i} className="flex items-center text-gray-300 text-sm">
-                    {f.includes("No") 
-                        ? <span className="w-4 h-4 mr-3 flex items-center justify-center text-gray-600">✕</span> 
+                    {f.includes("AI") 
+                        ? <Sparkles className="text-cyan-400 mr-3 shrink-0" size={18} /> 
                         : <CheckCircle className="text-gray-500 mr-3 shrink-0" size={18} />
                     } 
-                    {f}
+                    <span className={f.includes("AI") ? "text-white font-bold" : ""}>{f}</span>
                   </li>
                 ))}
               </ul>

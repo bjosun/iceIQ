@@ -61,7 +61,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
         { icon: Users, text: t('premiumFeature3') || "Unlimited players", included: true },
         { icon: Cloud, text: t('premiumFeature1') || "Cloud sync", included: true },
         { icon: BarChart3, text: t('premiumFeature2') || "Advanced stats", included: true },
-        { icon: Sparkles, text: "15 AI Coach Credits / month", included: true }, // NYTT
+        { icon: Sparkles, text: language === 'sv' ? "50 AI Coach Krediter / mån" : "50 AI Coach Credits / month", included: true },
       ]
     },
     elite: {
@@ -69,10 +69,10 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
       priceMonthly: language === 'en' ? '89 SEK' : '89 kr',
       priceYearly: language === 'en' ? '899 SEK' : '899 kr',
       features: [
-        { icon: Check, text: "Everything in Premium", included: true },
-        { icon: BrainCircuit, text: "Smarter AI (Gemini Pro)", included: true },
-        { icon: Sparkles, text: "50 AI Coach Credits / month", included: true },
-        { icon: Shield, text: "Priority Support", included: true },
+        { icon: Check, text: language === 'sv' ? "Allt i Premium" : "Everything in Premium", included: true },
+        { icon: BrainCircuit, text: language === 'sv' ? "Smartare AI (Gemini Pro)" : "Smarter AI (Gemini Pro)", included: true },
+        { icon: Sparkles, text: language === 'sv' ? "500 AI Coach Krediter / mån" : "500 AI Coach Credits / month", included: true },
+        { icon: Shield, text: language === 'sv' ? "Prioriterad Support" : "Priority Support", included: true },
       ]
     }
   };
@@ -93,7 +93,9 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
         {user && (
           <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl mb-6 border border-gray-700">
             <div>
-              <p className="text-gray-400 text-xs uppercase font-bold tracking-wider">Current Plan</p>
+              <p className="text-gray-400 text-xs uppercase font-bold tracking-wider">
+                {language === 'sv' ? 'Din nuvarande plan' : 'Current Plan'}
+              </p>
               <h3 className="text-white font-bold capitalize">
                 {subscription.plan} Plan
               </h3>
@@ -135,15 +137,15 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
         {/* MAIN CARD */}
         <Card className={`relative border-2 transition-colors ${selectedPlan === 'elite' ? 'border-indigo-500 bg-indigo-900/10' : 'border-yellow-500'}`}>
           
-          {/* Recommended Badge */}
-          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-            <span className={`px-4 py-1 rounded-full text-xs font-bold flex items-center shadow-lg uppercase tracking-wider ${
-                selectedPlan === 'elite' ? 'bg-indigo-500 text-white' : 'bg-yellow-500 text-black'
-            }`}>
-              {selectedPlan === 'elite' ? <Sparkles size={12} className="mr-1"/> : <Crown size={12} className="mr-1"/>}
-              {t('recommended') || "Recommended"}
-            </span>
-          </div>
+          {/* Recommended Badge (Endast för Premium) */}
+          {selectedPlan === 'premium' && (
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <span className="px-4 py-1 rounded-full text-xs font-bold flex items-center shadow-lg uppercase tracking-wider bg-yellow-500 text-black">
+                <Crown size={12} className="mr-1"/>
+                {t('recommended') || "Recommended"}
+              </span>
+            </div>
+          )}
 
           <div className="mb-8 mt-2 text-center">
             <h3 className="text-2xl font-bold text-white mb-2">
@@ -162,13 +164,13 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                  onClick={() => setSelectedInterval('monthly')}
                  className={`px-3 py-1 rounded-full border transition-colors ${selectedInterval === 'monthly' ? 'bg-white/10 border-white/30 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
                >
-                 Monthly
+                 {language === 'sv' ? 'Månadsvis' : 'Monthly'}
                </button>
                <button 
                  onClick={() => setSelectedInterval('yearly')}
                  className={`px-3 py-1 rounded-full border transition-colors flex items-center gap-1 ${selectedInterval === 'yearly' ? 'bg-white/10 border-white/30 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
                >
-                 Yearly <span className="text-[10px] bg-green-500 text-black px-1 rounded font-bold">-15%</span>
+                 {language === 'sv' ? 'Årsvis' : 'Yearly'} <span className="text-[10px] bg-green-500 text-black px-1 rounded font-bold">-15%</span>
                </button>
             </div>
           </div>
@@ -187,8 +189,12 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
           </ul>
 
           <Button
-            variant={selectedPlan === 'elite' ? 'primary' : 'premium'} // Du kan behöva justera varianten om 'premium' inte finns i din Button-komponent
-            className={selectedPlan === 'elite' ? 'bg-indigo-600 hover:bg-indigo-500 border-indigo-500' : ''}
+            variant="primary" // Standard-variant så vi inte får fel
+            className={
+              selectedPlan === 'elite' 
+                ? 'bg-indigo-600 hover:bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
+                : 'bg-yellow-500 hover:bg-yellow-400 border-yellow-500 text-black shadow-lg shadow-yellow-500/20'
+            }
             loading={processing}
             onClick={handleAction}
             icon={selectedPlan === 'elite' ? Sparkles : Crown}
@@ -196,8 +202,8 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             size="lg"
           >
             {subscription.plan === selectedPlan 
-              ? 'Manage Subscription' 
-              : `Upgrade to ${currentPlanData.name}`
+              ? (language === 'sv' ? 'Hantera Prenumeration' : 'Manage Subscription') 
+              : (language === 'sv' ? `Uppgradera till ${currentPlanData.name}` : `Upgrade to ${currentPlanData.name}`)
             }
           </Button>
         </Card>
@@ -206,7 +212,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
         <div className="mt-6 text-center">
           <div className="inline-flex items-center text-gray-500 text-xs">
             <Shield size={12} className="mr-1.5" />
-            Secure payment via Stripe • Cancel anytime
+            {language === 'sv' ? 'Säker betalning via Stripe • Avbryt när du vill' : 'Secure payment via Stripe • Cancel anytime'}
           </div>
         </div>
       </div>

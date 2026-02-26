@@ -7,9 +7,10 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  deleteUser // Importera deleteUser
+  deleteUser
 } from 'firebase/auth'
-import { auth } from '../services/firebase'
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore' // LÄGG TILL DESSA
+import { auth, db } from '../services/firebase' // SE TILL ATT db ÄR IMPORTERAD HÄR
 
 interface AuthContextType {
   user: User | null
@@ -26,15 +27,57 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const saveNewUserToDatabase = async (user: User) => {
+    try {
+      const userRef = doc(db, 'artifacts', 'default-app-id', 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        // 1. HELT NY ANVÄNDARE (eller föräldralös)
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || '',
+          createdAt: new Date().toISOString(),
+          subscriptionPlan: 'free',
+          subscriptionStatus: 'inactive',
+          aiCredits: 3,
+          hasReceivedWelcomeCredits: true, // <-- Ny flagga så vi vet att de fått sin gåva
+          role: 'manager' 
+        });
+        console.log("Ny användare! Databasdokument skapat med 3 krediter.");
+      } else {
+        // 2. EXISTERANDE ANVÄNDARE
+        const data = userDoc.data();
+        
+        // Om de saknar aiCredits helt, eller om de har 0 men aldrig fått "välkomstgåvan"
+        if (data.aiCredits === undefined || (data.aiCredits === 0 && !data.hasReceivedWelcomeCredits)) {
+          await updateDoc(userRef, {
+            aiCredits: 3,
+            hasReceivedWelcomeCredits: true
+          });
+          console.log("Uppdaterade ett gammalt testkonto med 3 välkomstkrediter!");
+        }
+      }
+    } catch (error) {
+      console.error("Kunde inte spara/uppdatera användare i databasen:", error);
+    }
+  };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user)
-      setLoading(false)
-    })
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        // Om någon loggar in (eller redan är inloggad), kolla/skapa databasen direkt!
+        await saveNewUserToDatabase(currentUser);
+      }
+      setUser(currentUser);
+      setLoading(false);
+    });
 
-    return unsubscribe
-  }, [])
+    return unsubscribe;
+  }, []);
+
+ 
 
   const login = async (email: string, password: string) => {
     try {
@@ -47,7 +90,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signup = async (email: string, password: string) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password)
+      // 1. Skapa kontot
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      
+      // 2. Spara användaren i databasen
+      await saveNewUserToDatabase(userCredential.user);
+
     } catch (error) {
       console.error('Signup error:', error)
       throw error
@@ -57,7 +105,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider()
-      await signInWithPopup(auth, provider)
+      // 1. Logga in med Google
+      const result = await signInWithPopup(auth, provider)
+      
+      // 2. Spara användaren i databasen (ifall det är första gången)
+      await saveNewUserToDatabase(result.user);
+
     } catch (error) {
       console.error('Google login error:', error)
       throw error
@@ -88,8 +141,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('Delete account error:', error);
       
-      // Om felet är att inloggningen är för gammal, kasta vidare felet
-      // så att vi kan visa rätt felmeddelande i Modalen/Toasten
       if (error.code === 'auth/requires-recent-login') {
         throw new Error('RECENT_LOGIN_REQUIRED');
       }
@@ -104,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signup,
     loginWithGoogle,
     logout,
-    deleteAccount // LÄGG TILL HÄR
+    deleteAccount
   }
 
   return (
