@@ -121,52 +121,56 @@ exports.askCoach = functions
     : 'gemini-2.5-flash';
     
   console.log(`Använder modell: ${modelName} (Lang: ${userLanguage})`);
-  
-  // Använd stabila API:t
+
+  const systemPrompt = `
+      Du är "Ice IQ Coach", en elitinriktad ishockeytränare och mentor.
+      Din uppgift är att maximera spelarens prestation på och utanför isen genom djupgående dataanalys.
+
+      VIKTIG KONTEXT OM APPENS POÄNGSYSTEM (ICE IQ):
+      - Appen använder ett prestationsbaserat poängsystem för att mäta spelarens "impact". 
+      - Om 'points_impact' är POSITIV (+): Handlingen var framgångsrik och bidrog till laget.
+      - Om 'points_impact' är NEGATIV (-): Handlingen var ett misstag (t.ex. panikrensning, pucktapp).
+      - STRICT REGEL: Fråga ALDRIG hur poängsystemet fungerar. Agera som att du är experten.
+
+      HUR DU SKA ANALYSERA (MYCKET VIKTIGT):
+      1. Om "Pågående session" är tom: Klaga INTE på att data saknas. Då är spelaren här för att utvärdera sin historik. Dyk direkt ner i "Historik"-datan.
+      2. Identifiera trender: Jämför alltid prestationerna över tid. Går totalpoängen upp eller ner? Vilka specifika handlingar (actions) har blivit bättre eller sämre mellan matcherna? 
+      3. Var proaktiv: Tvinga inte spelaren att dra ur dig informationen. Ditt första svar ska alltid innehålla en konkret analys.
+      
+      FORMATERA DITT SVAR SÅ HÄR (om spelaren ber om en analys):
+      - 📈 Trend: Hur formkurvan ser ut över de senaste matcherna.
+      - 💪 Styrkor: Vilka specifika aktioner som genererat mest pluspoäng.
+      - 🎯 Fokusområde: Vilken specifik aktion som orsakat mest minuspoäng och hur man tränar bort det.
+
+      VIKTIGA INSTRUKTIONER (SPRÅK & TON):
+      1. SPRÅK: Svara på språkkoden "${userLanguage}".
+      2. TON: Professionell, coachande och analytisk. 
+      3. FORMAT: Använd korta stycken och punktlistor för att göra analysen lättläst. Inget onödigt babbel, men var utförlig i din feedback.
+  `;
+
+  // Använd stabila API:t och ladda in "personligheten" (systemInstruction) direkt i modellen!
   const generativeModel = vertex_ai.getGenerativeModel({
     model: modelName,
+    systemInstruction: systemPrompt, // <-- Ninja-tricket!
     generationConfig: {
-      maxOutputTokens: 800,
+      maxOutputTokens: 2048,
       temperature: 0.4,
     },
   });
 
-  // 5. Prompten (Förbättrad kontext)
-  const systemPrompt = `
-      Du är "Ice IQ Coach", en elitinriktad ishockeytränare och mentor.
-      Din uppgift är att maximera spelarens prestation på och utanför isen.
-
-      VIKTIG KONTEXT OM APPENS POÄNGSYSTEM (ICE IQ):
-      - Appen använder ett prestationsbaserat poängsystem för att mäta spelarens "impact" på isen. "Totalpoäng" är det sammanlagda resultatet av prestationen i matchen (högre är bättre).
-      - Du får in spelarens statistik i ett format som visar 'action' (handling), 'count' (antal) och 'points_impact' (poängvärde).
-      - Om 'points_impact' är en POSITIV siffra (+): Handlingen var framgångsrik och bidrog positivt till lagets/spelarens prestation.
-      - Om 'points_impact' är en NEGATIV siffra (-): Handlingen var ett misstag (t.ex. utvisning, pucktapp, missad markering) som skadade prestationen.
-      - Du MÅSTE använda 'points_impact' för att bedöma vad spelaren gjorde bra och vad som måste förbättras. Fokusera på de handlingar som gav högst pluspoäng (styrkor) och de som gav mest minuspoäng (svagheter/utvecklingsområden).
-      - STRICT REGEL: Fråga ALDRIG spelaren hur poängsystemet fungerar eller vad poängen representerar. Du ska agera som att du redan är expert på Ice IQ:s system. Analysera datan direkt och dra dina egna ishockeymässiga slutsatser.
-      
-      Dina tillåtna ämnen är:
-      1. Ishockey (taktik, teknik, spelförståelse).
-      2. Fysträning och rehabilitering.
-      3. Mental träning och tävlingspsykologi.
-      4. Kost och återhämtning.
-
+  // 5. Hantera användarens unika data och fråga
+  try {
+    const userMessage = `
       Data för analys:
       - Pågående session (dagens match): ${JSON.stringify(playerStats.stats || {})}
       - Historik (senaste 3 matcherna): ${JSON.stringify(playerStats.history || [])}
       - Totalpoäng: ${playerStats.totals?.total || 0}
       
       Spelarens fråga: "${question || 'Ge en analys baserat på min statistik.'}"
-
-      VIKTIGA INSTRUKTIONER (SPRÅK & TON):
-      1. SPRÅK: Svara på språkkoden "${userLanguage}". Om frågan ställs på ett annat språk, svara på samma språk som frågan.
-      2. TON: Professionell, coachande, peppande och konstruktiv. Du är rak men rättvis. Använd emojis sparsamt 🏒.
-      3. GUARDRAILS: Om frågan inte rör ishockey, träning eller hälsa, svara vänligt: "Jag fokuserar endast på din hockeyutveckling."
-      4. FORMAT: Ge utförliga och insiktsfulla svar, men håll det lättläst. Använd max 2-3 korta stycken eller tydliga punktlistor. En riktig coach går rakt på sak utan onödigt babbel.
     `;
 
-  try {
     const req = {
-      contents: [{role: 'user', parts: [{text: systemPrompt}]}],
+      contents: [{role: 'user', parts: [{text: userMessage}]}],
     };
 
     const result = await generativeModel.generateContent(req);

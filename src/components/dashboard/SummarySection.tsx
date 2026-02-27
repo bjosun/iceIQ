@@ -20,29 +20,31 @@ interface SummarySectionProps {
   actionCounts: Record<string, number>;
   onSaveGame: () => Promise<void>;
   onReset: () => void;
-  totalPoints: number;
-  totalBonus: number;
-  totalFinal: number;
-  carriedOverBalance: number;
-  onBalanceChange: (value: number) => void;
-  bonusFactor: number;
-  isMoneyMode: boolean;
-  onSettleBalance: () => void;
+  totalPoints?: number;
+  totalBonus?: number;
+  totalFinal?: number;
+  carriedOverBalance?: number;
+  onBalanceChange?: (value: number) => void;
+  bonusFactor?: number;
+  isMoneyMode?: boolean;
+  onSettleBalance?: () => void;
   isSaving?: boolean;
+  carriedOverBonus?: number;
 }
 
 export default function SummarySection({
   actionCounts,
   onSaveGame,
   onReset,
-  totalPoints,
-  totalBonus,
-  totalFinal,
-  carriedOverBalance,
-  onBalanceChange,
-  bonusFactor,
-  isMoneyMode,
-  onSettleBalance,
+  totalPoints = 0,
+  totalBonus = 0,
+  totalFinal = 0,
+  carriedOverBalance = 0,
+  onBalanceChange = () => {},
+  bonusFactor = 1,
+  isMoneyMode = false,
+  onSettleBalance = () => {},
+  carriedOverBonus = 0,
   isSaving = false
 }: SummarySectionProps) {
   const { t, language } = useLanguage();

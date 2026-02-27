@@ -34,6 +34,7 @@ export function usePlayerData() {
       date: string; 
       team: string; 
       points?: number; 
+      earned?: number;
       softSkillCounts?: Record<string, number> 
     },
     template: string,

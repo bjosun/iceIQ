@@ -20,7 +20,7 @@ export default function MatchTracker() {
     setCarriedOverBonus(500); 
   }, []);
 
-  const handleSaveGame = () => {
+  const handleSaveGame = async () => {
     console.log("Saving game data:", actionCounts);
     // Din spara-logik här
     alert("Match saved!"); 
@@ -32,6 +32,7 @@ export default function MatchTracker() {
       setActionCounts({});
     }
   };
+  
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">

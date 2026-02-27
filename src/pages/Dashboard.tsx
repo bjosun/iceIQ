@@ -98,6 +98,7 @@ export default function Dashboard() {
 
   // --- 1. Ladda Statistik & Spelare & Historik ---
   // --- 1. Ladda Statistik & Spelare & Historik ---
+ // --- 1. Ladda Statistik & Spelare & Historik ---
   useEffect(() => {
     let isMounted = true;
     
@@ -125,7 +126,7 @@ export default function Dashboard() {
 
         const gamesResults = await Promise.all(gamesPromises);
         const allGames = gamesResults.flat();
-        
+        console.log("HELA MATCHEN FRÅN DB:", allGames[0]); 
         // Räkna ut snitt (Dashboard Stats)
         const avgPoints = allGames.length > 0 
           ? (allGames.reduce((sum, g) => sum + (g.points || 0), 0) / allGames.length).toFixed(1) 
@@ -142,20 +143,43 @@ export default function Dashboard() {
             thisWeek: allGames.filter(g => new Date(g.date) >= oneWeekAgo).length
           });
 
-          // --- HÄR ÄR DEN NYA FIXEN FÖR AI-HISTORIKEN ---
+          // --- FIXEN FÖR AI-HISTORIKEN (Nu bygger vi läsbar data för coachen) ---
           if (currentPlayerName) {
             const history = allGames
               .filter(g => g.playerName === currentPlayerName) 
               .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) 
-              .slice(0, 3) // Sänkt till 3 matcher för att undvika 429-krasch (för stor prompt)
-              .map(g => ({
-                 // Vi "bantar" datan: Skicka BARA det AI:n behöver veta!
-                 date: g.date,
-                 points: g.points,
-                 actions: g.actions
-              }));
+              .slice(0, 3) // Begränsa till 3 matcher
+              .map(g => {
+                 // Plocka ut det sparade statsobjektet (oftast heter det g.actionCounts i databasen)
+                 const rawStats = g.counts || {};  
+                 
+                 let readableActions: string[] = [];
+                 
+                 try {
+                     Object.entries(rawStats).forEach(([key, count]) => {
+                         // Om nyckeln råkar vara stringifierad JSON (som i appen)
+                         if (key.includes('{') && key.includes('}')) {
+                             const parsedKey = JSON.parse(key);
+                             // Vi skickar in det engelska namnet för enklare hantering
+                             readableActions.push(`${parsedKey.en}: ${count}`);
+                         } else {
+                             // Annars skickar vi nyckeln direkt
+                             readableActions.push(`${key}: ${count}`);
+                         }
+                     });
+                 } catch (e) {
+                     console.error("Kunde inte tolka statistik för AI", e);
+                 }
 
-            console.log(`Bantad historik för AI (${currentPlayerName}):`, history); // Kolla konsolen (F12)
+                 return {
+                   date: g.date,
+                   points: g.points,
+                   // Vi skickar iväg den rena sträng-listan. Är den tom, får AI:n veta det.
+                   actions: readableActions.length > 0 ? readableActions : ["Ingen detaljerad data sparad"]
+                 };
+              });
+
+            console.log(`Bantad historik för AI (${currentPlayerName}):`, history); // Kolla konsolen!
             setPlayerHistory(history);
           }
         }
@@ -256,7 +280,8 @@ export default function Dashboard() {
         { 
             date: gameDate, 
             team: teamName || 'My Team', 
-            points: totals.matchTotal // Vi sparar vad MATCHEN var värd (inte totala saldot)
+            points: totals.actionsPoints, // Vi sparar vad MATCHEN var värd (inte totala saldot)
+            earned: totals.matchTotal
         },
         currentTemplateId,
         actionCounts,
