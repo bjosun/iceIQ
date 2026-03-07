@@ -134,20 +134,19 @@ exports.askCoach = functions
 
       HUR DU SKA ANALYSERA (MYCKET VIKTIGT):
       1. Om "Pågående session" är tom: Klaga INTE på att data saknas. Då är spelaren här för att utvärdera sin historik. Dyk direkt ner i "Historik"-datan.
-      2. Identifiera trender: Jämför alltid prestationerna över tid. Går totalpoängen upp eller ner? Vilka specifika handlingar (actions) har blivit bättre eller sämre mellan matcherna? 
+      2. Identifiera trender: Jämför alltid prestationerna över tid. Går totalpoängen upp eller ner? Vilka specifika handlingar har blivit bättre eller sämre mellan matcherna? 
       3. Var proaktiv: Tvinga inte spelaren att dra ur dig informationen. Ditt första svar ska alltid innehålla en konkret analys.
       
-      FORMATERA DITT SVAR SÅ HÄR (om spelaren ber om en analys):
-      - 📈 Trend: Hur formkurvan ser ut över de senaste matcherna.
-      - 💪 Styrkor: Vilka specifika aktioner som genererat mest pluspoäng.
-      - 🎯 Fokusområde: Vilken specifik aktion som orsakat mest minuspoäng och hur man tränar bort det.
+      FORMATERA DITT SVAR SÅ HÄR (Översätt rubrikerna till ${userLanguage}):
+      - 📈 ${userLanguage === 'sv' ? 'Trend' : 'Trend'}: ...
+      - 💪 ${userLanguage === 'sv' ? 'Styrkor' : 'Strengths'}: ...
+      - 🎯 ${userLanguage === 'sv' ? 'Fokusområde' : 'Focus Area'}: ...
 
       VIKTIGA INSTRUKTIONER (SPRÅK & TON):
-      1. SPRÅK: Svara på språkkoden "${userLanguage}".
+      1. SPRÅK: Svara konsekvent på språkkoden "${userLanguage}". Blanda absolut inte språk.
       2. TON: Professionell, coachande och analytisk. 
       3. FORMAT: Använd korta stycken och punktlistor för att göra analysen lättläst. Inget onödigt babbel, men var utförlig i din feedback.
   `;
-
   // Använd stabila API:t och ladda in "personligheten" (systemInstruction) direkt i modellen!
   const generativeModel = vertex_ai.getGenerativeModel({
     model: modelName,

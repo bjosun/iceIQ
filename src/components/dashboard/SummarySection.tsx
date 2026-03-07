@@ -89,12 +89,12 @@ export default function SummarySection({
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         
-        {/* 1. Aktioner (Baspoäng) */}
+        {/* 1. Aktioner (Poäng) */}
         <Card border={false} className="text-center p-4 bg-gray-800/40">
           <div className="flex items-center justify-center mb-2">
             <Target className="text-cyan-400 mr-2" size={20} />
             <h3 className="text-sm font-medium text-gray-300">
-              {t('basePoints') || 'Base Pts'}
+              {t('points') || (language === 'sv' ? 'Poäng' : 'Points')}
             </h3>
           </div>
           <p className={`text-3xl font-bold ${
@@ -105,15 +105,28 @@ export default function SummarySection({
           </p>
         </Card>
 
-        {/* 2. Bonus Points */}
-        <Card border={false} className="text-center p-4 bg-gray-800/40">
+        {/* 2. Intjänat (Clean version) */}
+        <Card border={false} className="text-center p-4 bg-gray-800/40 flex flex-col justify-center">
           <div className="flex items-center justify-center mb-1">
              <Calculator size={14} className="text-cyan-400 mr-1"/>
              <h3 className="text-sm font-medium text-gray-300">
-               Bonus <span className="text-cyan-400 text-xs">(x{bonusFactor})</span>
+               {isMoneyMode 
+                 ? (t('earned') || (language === 'sv' ? 'Intjänat' : 'Earned')) 
+                 : (t('multiplier') || (language === 'sv' ? 'Multiplikator' : 'Multiplier'))}
              </h3>
           </div>
-          <p className="text-2xl font-bold text-cyan-400">+{totalBonus}</p>
+          
+          {isMoneyMode ? (
+            // VISAR BARA SUMMAN (T.ex. 170 SEK)
+            <div className="flex items-center justify-center mt-1">
+               <span className="text-2xl font-bold text-cyan-400">
+                 {totalPoints * bonusFactor} <span className="text-xs font-normal ml-1">{currencySymbol}</span>
+               </span>
+            </div>
+          ) : (
+            // VISAR BARA MULTIPLIKATORN (T.ex. x1)
+            <p className="text-2xl font-bold text-cyan-400">x{bonusFactor}</p>
+          )}
         </Card>
 
         {/* 3. Överfört Saldo */}
