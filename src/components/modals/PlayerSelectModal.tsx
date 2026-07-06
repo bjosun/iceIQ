@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Search, Shield, Wallet, Trash2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { FREE_PLAYER_LIMIT } from '../../utils/constants';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayerData } from '../../hooks/usePlayerData'; 
 import Modal from '../ui/Modal';
@@ -91,12 +92,8 @@ export default function PlayerSelectModal({
     }
 
     // 2. Kolla premium-spärren
-    if (!isPremium && players.length >= 1) {
-      toast.error(language === 'en' 
-        ? "Free plan is limited to 1 player. Upgrade to add more." 
-        : "Gratisplanen är begränsad till 1 spelare. Uppgradera för att lägga till fler.", 
-        { icon: '🔒', duration: 4000 }
-      );
+    if (!isPremium && players.length >= FREE_PLAYER_LIMIT) {
+      toast.error(t('playerLimit.reached', { limit: FREE_PLAYER_LIMIT }), { icon: '🔒', duration: 4000 });
       return;
     }
 
@@ -201,9 +198,7 @@ export default function PlayerSelectModal({
           
           {!isPremium && players.length >= 1 && (
              <p className="text-xs text-center text-gray-500 mt-2">
-               {language === 'en' 
-                 ? "Free plan: 1 of 1 player used." 
-                 : "Gratisplan: 1 av 1 spelare använd."}
+               {t('playerLimit.usage', { count: players.length, limit: FREE_PLAYER_LIMIT })}
              </p>
           )}
         </div>

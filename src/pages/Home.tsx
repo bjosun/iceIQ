@@ -407,6 +407,50 @@ export default function Home() {
             </div>
 
           </div>
+
+          {/* --- JÄMFÖRELSETABELL --- */}
+          <div className="max-w-4xl mx-auto mt-20">
+            <h3 className="text-2xl font-bold text-white text-center mb-8">{t('compare.title')}</h3>
+            <div className="overflow-x-auto rounded-2xl border border-gray-700">
+              <table className="w-full text-sm bg-gray-900/60">
+                <thead>
+                  <tr className="border-b border-gray-700 text-left">
+                    <th className="py-4 px-4 text-gray-400 font-medium">{t('compare.feature')}</th>
+                    <th className="py-4 px-4 text-white font-bold text-center">{t('plans.free.name')}</th>
+                    <th className="py-4 px-4 text-yellow-400 font-bold text-center">Premium</th>
+                    <th className="py-4 px-4 text-indigo-400 font-bold text-center">Elite</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {([
+                    { label: t('compare.players'), free: '3', premium: t('compare.unlimited'), elite: t('compare.unlimited') },
+                    { label: t('compare.aiCredits'), free: '3', premium: '50', elite: '500' },
+                    { label: t('compare.scoring'), free: true, premium: true, elite: true },
+                    { label: t('compare.history'), free: true, premium: true, elite: true },
+                    { label: t('compare.moneyMode'), free: true, premium: true, elite: true },
+                    { label: t('compare.cloud'), free: false, premium: true, elite: true },
+                    { label: t('compare.charts'), free: false, premium: true, elite: true },
+                    { label: t('compare.followUp'), free: false, premium: false, elite: true },
+                    { label: t('compare.support'), free: false, premium: false, elite: true },
+                    { label: t('compare.price'), free: t('compare.freePrice'), premium: `${plans.premium.price} ${plans.premium.period}`, elite: `${plans.elite.price} ${plans.elite.period}` },
+                  ] as { label: string; free: string | boolean; premium: string | boolean; elite: string | boolean }[]).map((row) => (
+                    <tr key={row.label} className="border-b border-gray-800 last:border-0">
+                      <td className="py-3.5 px-4 text-gray-300">{row.label}</td>
+                      {[row.free, row.premium, row.elite].map((value, i) => (
+                        <td key={i} className="py-3.5 px-4 text-center">
+                          {typeof value === 'boolean'
+                            ? (value
+                                ? <CheckCircle size={16} className="text-green-400 inline" />
+                                : <span className="text-gray-600">—</span>)
+                            : <span className="text-white font-medium">{value}</span>}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -1,4 +1,7 @@
 export const APP_NAME = 'Ice IQ';
+
+// Free-plan limits
+export const FREE_PLAYER_LIMIT = 3;
 export const APP_VERSION = '1.0.0';
 export const APP_ID = 'iceiq';
 

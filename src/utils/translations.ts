@@ -87,6 +87,30 @@ export const translations = {
       }
     },
 
+    // Free plan limits
+    playerLimit: {
+      reached: "Free plan is limited to {limit} players. Upgrade to add more.",
+      usage: "Free plan: {count} of {limit} players used."
+    },
+
+    // Plan comparison table
+    compare: {
+      title: "Compare plans",
+      feature: "Feature",
+      players: "Saved players",
+      aiCredits: "AI credits per month",
+      scoring: "Match scoring",
+      history: "Match history",
+      cloud: "Cloud sync",
+      charts: "Advanced charts",
+      moneyMode: "Money Mode",
+      followUp: "Chat with the coach",
+      support: "Priority support",
+      price: "Price",
+      unlimited: "Unlimited",
+      freePrice: "0 SEK"
+    },
+
     // Money Mode Section
     moneyMode: {
       badge: "Unique to Ice IQ",
@@ -124,7 +148,7 @@ export const translations = {
         period: "forever",
         tagline: "For getting started",
         f1: "Basic scoring",
-        f2: "Save 1 player",
+        f2: "Save up to 3 players",
         f3: "Simple history",
         f4: "3 free AI credits/month"
       },
@@ -190,7 +214,7 @@ export const translations = {
     totalBonus: "Total Bonus",
     saveMatchAndReset: "Save Match & Reset",
     resetAll: "Reset Current Match",
-    freeTierLimitPlayer: "Free tier: Max 1 player can be saved.",
+    freeTierLimitPlayer: "Free tier: Max 3 players can be saved.",
     selectPlayer: "Select Player",
     playerHistory: "Player History",
     graph: "Graph",
@@ -224,7 +248,7 @@ export const translations = {
     free_label: "Free",
     perMonth: "per month",
     freeFeature1: "Basic scoring system",
-    freeFeature2Player: "Save 1 player",
+    freeFeature2Player: "Save up to 3 players",
     freeFeature3: "Simple match history",
     premiumFeature1: "Cloud sync",
     premiumFeature2: "Advanced statistics",
@@ -357,6 +381,30 @@ export const translations = {
       }
     },
 
+    // Free plan limits
+    playerLimit: {
+      reached: "Gratisplanen är begränsad till {limit} spelare. Uppgradera för att lägga till fler.",
+      usage: "Gratisplan: {count} av {limit} spelare använda."
+    },
+
+    // Plan comparison table
+    compare: {
+      title: "Jämför planerna",
+      feature: "Funktion",
+      players: "Sparade spelare",
+      aiCredits: "AI-krediter per månad",
+      scoring: "Matchregistrering",
+      history: "Matchhistorik",
+      cloud: "Molnsynk",
+      charts: "Avancerade grafer",
+      moneyMode: "Money Mode",
+      followUp: "Chatta med coachen",
+      support: "Prioriterad support",
+      price: "Pris",
+      unlimited: "Obegränsat",
+      freePrice: "0 SEK"
+    },
+
     // Money Mode Section
     moneyMode: {
       badge: "Unikt för Ice IQ",
@@ -394,7 +442,7 @@ export const translations = {
         period: "för alltid",
         tagline: "För att komma igång",
         f1: "Grundläggande poängsystem",
-        f2: "Spara 1 spelare",
+        f2: "Spara upp till 3 spelare",
         f3: "Enkel historik",
         f4: "3 gratis AI-krediter/mån"
       },
@@ -460,7 +508,7 @@ export const translations = {
     totalBonus: "Total Bonus",
     saveMatchAndReset: "Spara Match & Nollställ",
     resetAll: "Nollställ nuvarande match",
-    freeTierLimitPlayer: "Gratisversionen: Max 1 spelare kan sparas.",
+    freeTierLimitPlayer: "Gratisversionen: Max 3 spelare kan sparas.",
     selectPlayer: "Välj Spelare",
     playerHistory: "Spelarhistorik",
     graph: "Graf",
@@ -494,7 +542,7 @@ export const translations = {
     free_label: "Gratis",
     perMonth: "per månad",
     freeFeature1: "Grundläggande poängsystem",
-    freeFeature2Player: "Spara 1 spelare",
+    freeFeature2Player: "Spara upp till 3 spelare",
     freeFeature3: "Enkel matchhistorik",
     premiumFeature1: "Molnsynkronisering",
     premiumFeature2: "Avancerad statistik",
