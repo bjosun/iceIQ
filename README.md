@@ -39,3 +39,20 @@ iceiq-react/
 ```bash
 git clone <repository-url>
 cd iceiq-react
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create your local environment file by copying the example and filling in your Firebase and Stripe keys:
+```bash
+cp .env.example .env
+```
+The `.env` file is git-ignored and must never be committed.
+
+4. Start the dev server:
+```bash
+npm run dev
+```

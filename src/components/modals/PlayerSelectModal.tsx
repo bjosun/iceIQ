@@ -47,6 +47,7 @@ export default function PlayerSelectModal({
     if (isOpen && user) {
       loadPlayers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user]);
 
   const loadPlayers = async () => {

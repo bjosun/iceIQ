@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs, addDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
-import { Users, Search, Plus, Trash2, User, ChevronRight, TrendingUp } from 'lucide-react';
+import { Users, Search, Plus, Trash2, User, TrendingUp } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
@@ -57,6 +57,7 @@ export default function Players() {
 
   useEffect(() => {
     fetchPlayers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // --- 2. Lägg till spelare ---

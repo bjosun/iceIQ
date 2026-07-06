@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { auth, firestore } from '../services/firebase';
-import { User } from 'firebase/auth';
+import { firestore } from '../services/firebase';
 
 export function useFirebase() {
   const [loading, setLoading] = useState(false);

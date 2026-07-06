@@ -37,13 +37,16 @@ export default function SummarySection({
   onSaveGame,
   onReset,
   totalPoints = 0,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   totalBonus = 0,
   totalFinal = 0,
   carriedOverBalance = 0,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onBalanceChange = () => {},
   bonusFactor = 1,
   isMoneyMode = false,
   onSettleBalance = () => {},
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   carriedOverBonus = 0,
   isSaving = false
 }: SummarySectionProps) {

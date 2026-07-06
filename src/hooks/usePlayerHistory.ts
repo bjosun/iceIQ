@@ -91,7 +91,7 @@ export function usePlayerHistory() {
     }
   }, [user, getPlayerHistory]);
 
-  const deleteGame = useCallback(async (playerName: string, gameId: string): Promise<boolean> => {
+  const deleteGame = useCallback(async (_playerName: string, _gameId: string): Promise<boolean> => {
     if (!user) return false;
 
     try {

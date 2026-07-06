@@ -9,7 +9,7 @@ import SummarySection from '../components/dashboard/SummarySection';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export default function MatchTracker() {
-  const { t } = useLanguage();
+  useLanguage();
 
   // TypeScript-syntaxen nedan kräver att filen heter .tsx
   const [actionCounts, setActionCounts] = useState<Record<string, number>>({});

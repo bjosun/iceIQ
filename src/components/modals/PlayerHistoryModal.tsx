@@ -68,6 +68,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
     if (isOpen && players.length > 0 && !selectedPlayerName) {
       setSelectedPlayerName(players[0].name);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, players]);
 
   // Hämta data när spelare ändras

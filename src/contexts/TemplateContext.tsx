@@ -188,6 +188,7 @@ export function TemplateProvider({ children }: TemplateProviderProps) {
       await firestore.deleteTemplate(user.uid, templateId);
       
       // Update local state
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [templateId]: removed, ...remaining } = customTemplates;
       setCustomTemplates(remaining);
       setTemplates({ ...defaultTemplates, ...remaining });

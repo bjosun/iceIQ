@@ -32,6 +32,7 @@ interface PlayerFormProps {
 
 export default function PlayerForm({
   selectedPlayerName,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onPlayerNameChange,
   teamName,
   onTeamNameChange,

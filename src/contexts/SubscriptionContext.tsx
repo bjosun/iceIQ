@@ -52,6 +52,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       setSubscription({ plan: 'free', status: 'active' });
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const checkUserSubscription = async () => {

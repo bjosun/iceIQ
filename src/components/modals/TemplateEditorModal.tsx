@@ -14,7 +14,7 @@ interface TemplateEditorModalProps {
 }
 
 export default function TemplateEditorModal({ isOpen, onClose }: TemplateEditorModalProps) {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { currentTemplate, saveTemplate } = useTemplates();
   const [templateName, setTemplateName] = useState({ sv: '', en: '' });
   const [actions, setActions] = useState<any[]>([]);

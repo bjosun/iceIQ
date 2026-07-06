@@ -8,7 +8,6 @@ import {
   BarChart3, 
   Cloud, 
   Users, 
-  Shield, 
   Zap, 
   CheckCircle,
   ArrowRight,

@@ -153,7 +153,7 @@ export default function Dashboard() {
                  // Plocka ut det sparade statsobjektet (oftast heter det g.actionCounts i databasen)
                  const rawStats = g.counts || {};  
                  
-                 let readableActions: string[] = [];
+                 const readableActions: string[] = [];
                  
                  try {
                      Object.entries(rawStats).forEach(([key, count]) => {
@@ -212,7 +212,6 @@ export default function Dashboard() {
   // --- 3. BERÄKNA TOTALER ---
   const totals = useMemo(() => {
     let rawPoints = 0; // Faktiska poäng (t.ex. 1 mål = 1 poäng)
-    let moneyValue = 0; // Det monetära värdet
 
     if (currentTemplate && currentTemplate.actions) {
       Object.entries(actionCounts).forEach(([key, count]) => {
