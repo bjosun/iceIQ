@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import heroBg from '../assets/images/hero-bg.jpg';
+import RinkLines from '../components/ui/RinkLines';
 import dashboardPreview from '../assets/images/dashboard-preview.png';
 import {
   BarChart3,
@@ -98,6 +99,10 @@ export default function Home() {
             style={{ backgroundImage: `url(${heroBg})` }}
           ></div>
           <div className="absolute inset-0 bg-gray-900/80 bg-gradient-to-b from-gray-900/90 via-gray-900/70 to-gray-900"></div>
+          {/* Rink-linjer som identitetsbärande dekor */}
+          <RinkLines className="absolute inset-x-0 bottom-0 w-full h-[70%] opacity-40" />
+          {/* Iskänsla: kall ton + frost längs nederkanten */}
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-cyan-950/40 to-transparent"></div>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center">
@@ -284,8 +289,9 @@ export default function Home() {
       </section>
 
       {/* --- PRICING SECTION --- */}
-      <section id="pricing" className="py-24 bg-gray-800/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="pricing" className="py-24 bg-gray-800/30 relative overflow-hidden">
+        <RinkLines className="absolute inset-0 w-full h-full opacity-[0.13]" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-10">
             <h2 className="text-4xl font-bold text-white mb-4">
               {t('pricing.title')}
