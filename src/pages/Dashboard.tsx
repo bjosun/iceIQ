@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTemplates } from '../contexts/TemplateContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { useAiCredits } from '../hooks/useAiCredits';
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
 // Komponenter
@@ -28,7 +29,8 @@ import {
   TrendingUp, 
   Zap, 
   Banknote, 
-  Trophy 
+  Trophy,
+  Sparkles
 } from 'lucide-react';
 
 interface Player {
@@ -41,6 +43,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { t, language } = useLanguage(); 
   const { subscription } = useSubscription(); 
+  const { credits: aiCredits } = useAiCredits();
   const location = useLocation();
   // State för UI
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -403,8 +406,15 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Mode Toggle (Money vs Points) */}
-        <div className="flex justify-end mb-6">
+        {/* AI-krediter + Mode Toggle (Money vs Points) */}
+        <div className="flex justify-between items-center mb-6 gap-3 flex-wrap">
+          {/* Synlig innan chatten öppnas, så krediterna aldrig överraskar */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-indigo-500/40 bg-indigo-500/10">
+            <Sparkles size={14} className="text-yellow-400" />
+            <span className="text-xs font-bold text-indigo-200 uppercase tracking-wider">
+              {aiCredits} {t('ai.credits')}
+            </span>
+          </div>
           <button 
             onClick={() => setIsMoneyMode(!isMoneyMode)}
             className={`flex items-center px-4 py-2 rounded-full border transition-all ${

@@ -1,12 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../../services/firebase'; // OBS! Kolla så denna sökväg stämmer till din firebase-fil
-import { useAuth } from '../../contexts/AuthContext';
 import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../services/firebase'; 
+import { functions } from '../../services/firebase';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
-import { Sparkles, Send, Lock, BrainCircuit, Loader2, RefreshCw } from 'lucide-react';
+import { useAiCredits } from '../../hooks/useAiCredits';
+import { Sparkles, Send, Lock, BrainCircuit, Loader2, RefreshCw, Crown } from 'lucide-react';
 
 interface AiCoachProps {
   playerStats: any;
@@ -18,44 +16,40 @@ interface Message {
   text: string;
 }
 
+// Hur länge varje laddningssteg visas innan nästa tar över (ms).
+// Anropet är ett enda blockerande httpsCallable, så stegen är en
+// klient-side-uppskattning — inte faktisk progress från servern.
+const LOADING_STEP_MS = 2500;
+
 export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
-  const { user } = useAuth();
-  
   const { t, language } = useLanguage();
-  
-  const { isPremium, isElite } = useSubscription(); 
-  
+  const { isPremium, isElite } = useSubscription();
+  const { credits: displayCredits, setCredits: setDisplayCredits } = useAiCredits();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputQuestion, setInputQuestion] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState('');
-  
+  const [showUpgradeCta, setShowUpgradeCta] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const credits = (user as any)?.aiCredits !== undefined ? (user as any).aiCredits : 5; 
-  const [displayCredits, setDisplayCredits] = useState(credits); // <--- Skapa variabeln först!
-  const isLocked = !isPremium && displayCredits <= 0; // <--- Använd den sen!
+  const isLocked = !isPremium && displayCredits <= 0;
 
+  const quickQuestions = [t('ai.quick1'), t('ai.quick2'), t('ai.quick3')];
+  const loadingSteps = [t('ai.loading1'), t('ai.loading2'), t('ai.loading3')];
+
+  // Stega laddningstexten framåt medan vi väntar på svaret
   useEffect(() => {
-    if (!user) return;
-
-    // Eftersom du använder en speciell sökväg i databasen:
-    const userRef = doc(db, 'artifacts', 'default-app-id', 'users', user.uid);
-    
-    // onSnapshot lyssnar på ändringar i realtid!
-    const unsubscribe = onSnapshot(userRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const userData = docSnap.data();
-        // Uppdatera skärmen direkt när databasen ändras (manuellt eller av AI:n)
-        if (userData.aiCredits !== undefined) {
-          setDisplayCredits(userData.aiCredits);
-        }
-      }
-    });
-
-    // Städa upp lyssnaren när vi stänger komponenten
-    return () => unsubscribe();
-  }, [user]);
+    if (!loading) return;
+    setLoadingStep(0);
+    const interval = setInterval(() => {
+      setLoadingStep(prev => Math.min(prev + 1, loadingSteps.length - 1));
+    }, LOADING_STEP_MS);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   // Scrolla ner automatiskt
   useEffect(() => {
@@ -65,51 +59,42 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   }, [messages, loading]);
 
   const handleAskCoach = async (specificQuestion?: string) => {
-    // 1. Avbryt om slut på krediter (Använd displayCredits här nu)
     if (displayCredits <= 0) return;
 
     setLoading(true);
     setError('');
-    
-    // 2. Om användaren ställde en specifik fråga, visa den i chatten direkt
+    setShowUpgradeCta(false);
+
     if (specificQuestion) {
       setMessages(prev => [...prev, { role: 'user', text: specificQuestion }]);
     }
 
-    console.group("🤖 Sending to AI Coach");
-    console.log("Language:", language);
-    console.log("Current Session Stats:", playerStats.stats);
-    console.log("History Length:", playerStats.history?.length || 0);
-    console.log("History Data:", playerStats.history);
-    console.log("Totals:", playerStats.totals);
-    console.groupEnd();
-
     try {
       const askCoach = httpsCallable(functions, 'askCoach');
-      
-      const result: any = await askCoach({ 
+
+      const result: any = await askCoach({
         playerStats: playerStats,
         question: specificQuestion || "",
-        lang: language 
+        lang: language
       });
-      
+
       if (result.data.success) {
-        // Lägg till AI:ns svar i chatten
         setMessages(prev => [...prev, { role: 'ai', text: result.data.analysis }]);
-        setInputQuestion(''); 
-        
-        // --- HÄR ÄR MAGIN ---
-        // Vi uppdaterar UI:t med den nya siffran vi fick tillbaka från servern!
+        setInputQuestion('');
+
+        // Uppdatera UI:t direkt med siffran från servern (snapshotten
+        // i useAiCredits hinner ikapp strax efter)
         setDisplayCredits(result.data.creditsLeft);
       }
-      
+
     } catch (err: any) {
-      console.error("❌ AI Error:", err);
-      
+      console.error("AI Error:", err);
+
       if (err.message.includes('permission-denied')) {
-        onUpgrade(); 
+        onUpgrade();
       } else if (err.message.includes('resource-exhausted')) {
         setError(t('ai.outOfCredits'));
+        setShowUpgradeCta(true);
         setDisplayCredits(0); // Tvinga till 0 om servern säger stopp
       } else {
         setError(t('ai.error'));
@@ -122,6 +107,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   const handleReset = () => {
     setMessages([]);
     setError('');
+    setShowUpgradeCta(false);
     setInputQuestion('');
   };
 
@@ -140,7 +126,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
           <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">
             {t('ai.upsellDesc')}
           </p>
-          <button 
+          <button
             onClick={onUpgrade}
             className="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-cyan-500/20 transition-all transform hover:scale-105"
           >
@@ -154,7 +140,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   // --- CHATT VY (PREMIUM/ELITE) ---
   return (
     <div className="mt-8 bg-gradient-to-br from-indigo-900/40 to-purple-900/40 rounded-2xl border border-indigo-500/30 overflow-hidden shadow-2xl relative flex flex-col min-h-[300px]">
-      
+
       {/* Header */}
       <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-2.5">
@@ -178,19 +164,33 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
 
       {/* Content Area */}
       <div className="p-6 flex-grow flex flex-col gap-4">
-        
+
         {messages.length === 0 && !loading && (
           <div className="text-center py-8">
             <p className="text-gray-300 text-sm mb-6 max-w-md mx-auto leading-relaxed">
               {t('ai.readyDesc')}
             </p>
+
+            {/* Snabbfrågor som chips */}
+            <div className="flex flex-wrap justify-center gap-2 mb-6 max-w-lg mx-auto">
+              {quickQuestions.map((question) => (
+                <button
+                  key={question}
+                  onClick={() => handleAskCoach(question)}
+                  disabled={loading || displayCredits <= 0}
+                  className="px-4 py-2 rounded-full border border-indigo-500/40 bg-indigo-500/10 text-indigo-200 text-xs font-medium hover:bg-indigo-500/25 hover:border-indigo-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+
             <button
               onClick={() => handleAskCoach()}
-              // LÅS KNAPPEN OM displayCredits ÄR 0
               disabled={loading || displayCredits <= 0}
               className={`relative group flex items-center justify-center gap-2 mx-auto px-8 py-3 rounded-xl font-bold text-white transition-all ${
-                loading || displayCredits <= 0 
-                  ? 'bg-gray-700 cursor-not-allowed opacity-70' 
+                loading || displayCredits <= 0
+                  ? 'bg-gray-700 cursor-not-allowed opacity-70'
                   : 'bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50'
               }`}
             >
@@ -204,10 +204,10 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
 
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div 
+            <div
               className={`max-w-[85%] rounded-2xl p-4 text-sm whitespace-pre-wrap leading-relaxed shadow-sm ${
-                msg.role === 'user' 
-                  ? 'bg-indigo-600 text-white rounded-br-none' 
+                msg.role === 'user'
+                  ? 'bg-indigo-600 text-white rounded-br-none'
                   : 'bg-black/30 border border-white/10 text-gray-200 rounded-bl-none'
               }`}
             >
@@ -221,15 +221,24 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
              <div className="bg-black/30 border border-white/10 text-gray-200 rounded-2xl rounded-bl-none p-4 flex items-center gap-3">
                 <Loader2 size={16} className="animate-spin text-indigo-400" />
                 <span className="text-xs text-gray-400 italic">
-                  {t('ai.analyzing')}
+                  {loadingSteps[loadingStep]}
                 </span>
              </div>
           </div>
         )}
-        
+
         {error && (
-          <div className="bg-red-500/10 text-red-200 p-3 rounded-lg text-sm text-center border border-red-500/20">
-            {error}
+          <div className="bg-red-500/10 text-red-200 p-4 rounded-lg text-sm text-center border border-red-500/20">
+            <p className="mb-0">{error}</p>
+            {showUpgradeCta && (
+              <button
+                onClick={onUpgrade}
+                className="mt-3 inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold text-sm py-2 px-5 rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-yellow-500/20"
+              >
+                <Crown size={16} />
+                {t('ai.upgradeCta')}
+              </button>
+            )}
           </div>
         )}
 
@@ -249,19 +258,18 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
              />
              <button
                onClick={() => handleAskCoach(inputQuestion)}
-               // LÅS ÄVEN HÄR OM displayCredits ÄR 0
                disabled={!inputQuestion.trim() || loading || displayCredits <= 0}
                className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
              >
                <Send size={18} />
              </button>
            </div>
-           
+
            <div className="flex justify-between items-center mt-2 px-1">
              <span className="text-[10px] text-gray-500">
                {t('ai.costNote')}
              </span>
-             <button 
+             <button
                onClick={handleReset}
                className="text-[10px] text-gray-500 hover:text-white flex items-center gap-1 transition-colors"
              >

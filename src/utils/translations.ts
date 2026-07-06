@@ -195,7 +195,14 @@ export const translations = {
       newAnalysis: "New Analysis",
       followUpPlaceholder: "Ask a follow-up question...",
       costNote: "Each question costs 1 credit",
-      resetChat: "Reset chat"
+      resetChat: "Reset chat",
+      quick1: "What should I practice before the next game?",
+      quick2: "Compare my last 3 games",
+      quick3: "Where am I strongest right now?",
+      loading1: "Reading your stats…",
+      loading2: "Analyzing patterns…",
+      loading3: "Writing your advice…",
+      upgradeCta: "Upgrade for more credits"
     },
 
     // Player & Match Logic
@@ -489,7 +496,14 @@ export const translations = {
       newAnalysis: "Ny Analys",
       followUpPlaceholder: "Ställ en följdfråga...",
       costNote: "Varje fråga kostar 1 kredit",
-      resetChat: "Rensa chatt"
+      resetChat: "Rensa chatt",
+      quick1: "Vad ska jag träna på till nästa match?",
+      quick2: "Jämför mina senaste 3 matcher",
+      quick3: "Var är jag starkast just nu?",
+      loading1: "Läser din statistik…",
+      loading2: "Analyserar mönster…",
+      loading3: "Formulerar dina råd…",
+      upgradeCta: "Uppgradera för fler krediter"
     },
 
     // Player & Match Logic
