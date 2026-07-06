@@ -76,10 +76,10 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
             {user && (
               <nav className="flex items-center space-x-4 mr-4 border-r border-gray-800 pr-6">
                 <Link to="/dashboard" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
-                  {t('nav.dashboard') || 'Dashboard'}
+                  {t('nav.dashboard')}
                 </Link>
                 <Link to="/players" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
-                  {t('nav.players') || 'Players'}
+                  {t('nav.players')}
                 </Link>
               </nav>
             )}
@@ -88,7 +88,7 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
             <button
               onClick={toggleLanguage}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 transition-all text-xs font-bold"
-              title={language === 'en' ? 'Byt till Svenska' : 'Switch to English'}
+              title={language === 'en' ? t('header.switchToSv') : t('header.switchToEn')}
             >
               <Globe size={14} />
               <span>{language.toUpperCase()}</span>
@@ -108,7 +108,7 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
                     className="flex items-center bg-gradient-to-r from-yellow-500 to-yellow-600 text-black px-3 py-1.5 rounded-lg text-[10px] font-black hover:opacity-90 transition-opacity uppercase"
                   >
                     <Crown size={12} className="mr-1.5" />
-                    {t('nav.upgrade') || 'Upgrade'}
+                    {t('nav.upgrade')}
                   </button>
                 )}
 
@@ -139,11 +139,11 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
             ) : (
               <div className="flex items-center space-x-4">
                 <Link to="/dashboard" state={{ isSignup: false }} className="text-sm font-bold text-gray-400 hover:text-white transition-colors">
-                  {t('nav.login') || 'Login'}
+                  {t('nav.login')}
                 </Link>
                 <Link to="/dashboard" state={{ isSignup: true }}>
                   <button className="bg-cyan-600 px-5 py-2 rounded-xl text-sm font-black text-white hover:bg-cyan-500 transition-all shadow-lg shadow-cyan-600/20 italic uppercase tracking-tighter">
-                    {t('register') || 'Join Now'}
+                    {t('register')}
                   </button>
                 </Link>
               </div>
@@ -178,38 +178,38 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-xl"
               >
-                {t('nav.dashboard') || 'Dashboard'}
+                {t('nav.dashboard')}
               </Link>
               <Link 
                 to="/players" 
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-xl"
               >
-                {t('nav.players') || 'Players'}
+                {t('nav.players')}
               </Link>
               <button
                 onClick={() => { setShowMobileMenu(false); onOpenProfile(); }}
                 className="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-xl"
               >
                 <Settings size={18} className="mr-3 text-cyan-400" />
-                {t('myAccount') || 'My Account'}
+                {t('myAccount')}
               </button>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl"
               >
                 <LogOut size={18} className="mr-3" />
-                {t('nav.logout') || 'Log Out'}
+                {t('nav.logout')}
               </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
               <Link to="/dashboard" state={{ isSignup: false }} className="text-center py-3 text-gray-300 font-bold" onClick={() => setShowMobileMenu(false)}>
-                {t('nav.login') || 'Login'}
+                {t('nav.login')}
               </Link>
               <Link to="/dashboard" state={{ isSignup: true }} onClick={() => setShowMobileMenu(false)}>
                 <button className="w-full bg-cyan-600 py-3 rounded-xl text-white font-black italic uppercase tracking-tighter">
-                   {t('register') || 'Register'}
+                   {t('register')}
                 </button>
               </Link>
             </div>

@@ -21,8 +21,7 @@ interface Message {
 export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   const { user } = useAuth();
   
-  // HÄR ÄR FIXEN: Vi hämtar 'language' också
-  const { t, language } = useLanguage(); 
+  const { t, language } = useLanguage();
   
   const { isPremium, isElite } = useSubscription(); 
   
@@ -110,10 +109,10 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
       if (err.message.includes('permission-denied')) {
         onUpgrade(); 
       } else if (err.message.includes('resource-exhausted')) {
-        setError(t('ai.outOfCredits') || 'Out of credits for this month.');
+        setError(t('ai.outOfCredits'));
         setDisplayCredits(0); // Tvinga till 0 om servern säger stopp
       } else {
-        setError(t('ai.error') || 'Coach is offline. Try again later.');
+        setError(t('ai.error'));
       }
     } finally {
       setLoading(false);
@@ -139,13 +138,13 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
             Ice IQ Coach <span className="text-[10px] bg-cyan-500 text-black px-1.5 py-0.5 rounded font-black">AI</span>
           </h3>
           <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">
-            {t('ai.upsellDesc') || "Get 50 new AI analyses every month by upgrading to Premium."}
+            {t('ai.upsellDesc')}
           </p>
           <button 
             onClick={onUpgrade}
             className="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-cyan-500/20 transition-all transform hover:scale-105"
           >
-            {t('ai.unlock') || "Unlock AI Coach"}
+            {t('ai.unlock')}
           </button>
         </div>
       </div>
@@ -172,8 +171,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
         <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full border border-white/5">
           <Sparkles className="text-yellow-400" size={12} />
           <span className="text-xs font-medium text-gray-300">
-            {/* ANVÄNDER displayCredits OCH SPRÅK */}
-            {displayCredits} {language === 'sv' ? 'krediter kvar' : 'credits left'}
+            {displayCredits} {t('ai.credits')}
           </span>
         </div>
       </div>
@@ -184,9 +182,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
         {messages.length === 0 && !loading && (
           <div className="text-center py-8">
             <p className="text-gray-300 text-sm mb-6 max-w-md mx-auto leading-relaxed">
-              {language === 'sv' 
-                ? "Jag kan analysera dina senaste matcher och ge taktiska råd." 
-                : "I can analyze your latest match stats and provide tactical advice."}
+              {t('ai.readyDesc')}
             </p>
             <button
               onClick={() => handleAskCoach()}
@@ -200,7 +196,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
             >
               <Sparkles size={18} className="group-hover:animate-pulse" />
               <span>
-                {language === 'sv' ? "Analysera (1 kredit)" : "Analyze Stats (1 Credit)"}
+                {t('ai.analyzeBtn')}
               </span>
             </button>
           </div>
@@ -225,7 +221,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
              <div className="bg-black/30 border border-white/10 text-gray-200 rounded-2xl rounded-bl-none p-4 flex items-center gap-3">
                 <Loader2 size={16} className="animate-spin text-indigo-400" />
                 <span className="text-xs text-gray-400 italic">
-                  {language === 'sv' ? "Coachen tänker..." : "Coach is thinking..."}
+                  {t('ai.analyzing')}
                 </span>
              </div>
           </div>
@@ -247,7 +243,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
                type="text"
                value={inputQuestion}
                onChange={(e) => setInputQuestion(e.target.value)}
-               placeholder={language === 'sv' ? "Ställ en följdfråga..." : "Ask a follow-up question..."}
+               placeholder={t('ai.followUpPlaceholder')}
                className="flex-1 bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                onKeyDown={(e) => e.key === 'Enter' && inputQuestion.trim() && handleAskCoach(inputQuestion)}
              />
@@ -263,13 +259,13 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
            
            <div className="flex justify-between items-center mt-2 px-1">
              <span className="text-[10px] text-gray-500">
-               {language === 'sv' ? "Varje fråga kostar 1 kredit" : "Each question costs 1 credit"}
+               {t('ai.costNote')}
              </span>
              <button 
                onClick={handleReset}
                className="text-[10px] text-gray-500 hover:text-white flex items-center gap-1 transition-colors"
              >
-               <RefreshCw size={10} /> {language === 'sv' ? "Rensa chatt" : "Reset chat"}
+               <RefreshCw size={10} /> {t('ai.resetChat')}
              </button>
            </div>
         </div>

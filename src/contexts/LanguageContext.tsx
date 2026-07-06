@@ -4,7 +4,7 @@ import { translations, Language } from '../utils/translations';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
   currentTranslations: typeof translations.en;
 }
 
@@ -41,23 +41,34 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     document.documentElement.lang = lang;
   };
 
-  // 3. Översättningsfunktion (fixad loop-variabel)
-  const t = (key: string): string => {
-    const translation = translations[language];
-    if (!translation) return key;
-    
+  // 3. Översättningsfunktion
+  const lookup = (lang: Language, key: string): string | undefined => {
     const keys = key.split('.');
-    let current: any = translation; // Döp om från 'value' till 'current'
-    
+    let current: any = translations[lang];
+
     for (const k of keys) {
       if (current && typeof current === 'object' && k in current) {
         current = current[k];
       } else {
-        return key; 
+        return undefined;
       }
     }
-    
-    return typeof current === 'string' ? current : key;
+
+    return typeof current === 'string' ? current : undefined;
+  };
+
+  // Saknas nyckeln i valt språk faller vi tillbaka till engelska,
+  // och som sista utväg visas själva nyckeln (syns direkt i UI:t).
+  const t = (key: string, params?: Record<string, string | number>): string => {
+    let text = lookup(language, key) ?? lookup('en', key) ?? key;
+
+    if (params) {
+      for (const [name, value] of Object.entries(params)) {
+        text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), String(value));
+      }
+    }
+
+    return text;
   };
 
   // 4. Context value (objektet som skickas ut)

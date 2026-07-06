@@ -262,11 +262,11 @@ export default function Dashboard() {
   const handleSaveGame = async () => {
     if (isSaving) return;
     if (!selectedPlayerName) {
-      toast.error(t('selectPlayerFirst') || "Please select a player first");
+      toast.error(t('selectPlayerFirst'));
       return;
     }
     if (Object.keys(actionCounts).length === 0) {
-      toast.error(language === 'sv' ? "Ingen statistik registrerad än." : "No stats recorded yet.");
+      toast.error(t('dashboard.noStatsYet'));
       return;
     }
 
@@ -302,11 +302,11 @@ export default function Dashboard() {
       setActionCounts({});
       setRefreshTrigger(prev => prev + 1); 
       
-      toast.success(t('gameSavedSuccessfully') || 'Saved!');
+      toast.success(t('gameSavedSuccessfully'));
 
     } catch (error) { 
       console.error("Save error:", error);
-      toast.error(t('saveError') || "Error saving game."); 
+      toast.error(t('saveError')); 
     } finally {
       setTimeout(() => setIsSaving(false), 500);
     }
@@ -314,13 +314,13 @@ export default function Dashboard() {
   // --- REGLERA SALDO ---
   const handleSettleBalance = async () => {
     if (!selectedPlayerName) return;
-    if (window.confirm(language === 'en' ? `Settle balance for ${selectedPlayerName}?` : `Reglera saldo för ${selectedPlayerName}?`)) {
+    if (window.confirm(t('dashboard.settleConfirm', { name: selectedPlayerName }))) {
       try {
         await updatePlayerBalance(selectedPlayerName, 0); 
         setCarriedOverBalance(0);
         setRefreshTrigger(prev => prev + 1);
-        toast.success("Saldot reglerat!");
-      } catch (e) { toast.error("Kunde inte reglera."); }
+        toast.success(t('dashboard.balanceSettled'));
+      } catch { toast.error(t('dashboard.settleError')); }
     }
   };
 
@@ -374,9 +374,9 @@ export default function Dashboard() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">
-            {language === 'sv' ? 'Välkommen tillbaka,' : 'Welcome back,'} {user.displayName || user.email?.split('@')[0]}
+            {t('dashboard.welcome')} {user.displayName || user.email?.split('@')[0]}
           </h1>
-          <p className="text-gray-400 text-sm mt-1">{t('dashboardSubtitle') || 'Track your scouting progress'}</p>
+          <p className="text-gray-400 text-sm mt-1">{t('dashboardSubtitle')}</p>
         </div>
 
         {/* Top Stats Cards */}
@@ -384,22 +384,22 @@ export default function Dashboard() {
           <Card className="text-center p-4">
             <Users className="text-cyan-400 mx-auto mb-2" size={20} />
             <p className="text-2xl font-bold text-white">{stats.players}</p>
-            <p className="text-xs text-gray-400">Players</p>
+            <p className="text-xs text-gray-400">{t('players')}</p>
           </Card>
           <Card className="text-center p-4">
             <BarChart3 className="text-green-400 mx-auto mb-2" size={20} />
             <p className="text-2xl font-bold text-white">{stats.matches}</p>
-            <p className="text-xs text-gray-400">Matches</p>
+            <p className="text-xs text-gray-400">{t('matches')}</p>
           </Card>
           <Card className="text-center p-4">
             <Target className="text-yellow-400 mx-auto mb-2" size={20} />
             <p className="text-2xl font-bold text-white">{stats.avgPoints}</p>
-            <p className="text-xs text-gray-400">Avg Points</p>
+            <p className="text-xs text-gray-400">{t('avgPoints')}</p>
           </Card>
           <Card className="text-center p-4">
             <TrendingUp className="text-red-400 mx-auto mb-2" size={20} />
             <p className="text-2xl font-bold text-white">{stats.thisWeek}</p>
-            <p className="text-xs text-gray-400">This Week</p>
+            <p className="text-xs text-gray-400">{t('dashboard.thisWeek')}</p>
           </Card>
         </div>
 
@@ -413,7 +413,7 @@ export default function Dashboard() {
           >
             {isMoneyMode ? <Banknote size={18} className="mr-2"/> : <Trophy size={18} className="mr-2"/>}
             <span className="text-xs font-bold uppercase tracking-wider">
-              {isMoneyMode ? 'Money Mode' : 'Points Mode'}
+              {isMoneyMode ? t('dashboard.moneyMode') : t('dashboard.pointsMode')}
             </span>
           </button>
         </div>
@@ -443,8 +443,8 @@ export default function Dashboard() {
               <div className="flex items-center">
                 <Zap className="text-yellow-400 mr-3" size={24} />
                 <div>
-                  <p className="text-sm font-bold text-white">Bonus Weighting</p>
-                  <p className="text-xs text-gray-400">Multiplier for bonus actions</p>
+                  <p className="text-sm font-bold text-white">{t('dashboard.bonusWeighting')}</p>
+                  <p className="text-xs text-gray-400">{t('dashboard.bonusWeightingDesc')}</p>
                 </div>
               </div>
               <select 
@@ -505,9 +505,9 @@ export default function Dashboard() {
             setRefreshTrigger(prev => prev + 1); 
             // 4. Stäng modalen
             setShowPlayerSelect(false);
-            toast.success(language === 'sv' ? `${newName} har lagts till!` : `${newName} added!`);
+            toast.success(t('dashboard.playerAdded', { name: newName }));
           } catch (error) {
-            toast.error(language === 'sv' ? "Kunde inte spara spelaren" : "Could not save player");
+            toast.error(t('dashboard.playerAddError'));
           }
         }} 
         isPremium={isPremium} 

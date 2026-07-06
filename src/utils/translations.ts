@@ -11,7 +11,7 @@ export const translations = {
     register: "Register",
     upgrade: "Upgrade",
     myAccount: "My Account",
-    
+
     // Auth
     loginToContinue: "Log in to Continue",
     continueWithGoogle: "Continue with Google",
@@ -25,7 +25,24 @@ export const translations = {
     confirmPassword: "Confirm Password",
     alreadyRegistered: "Already registered?",
 
-    // Hero Section
+    // Header
+    header: {
+      switchToSv: "Byt till Svenska",
+      switchToEn: "Switch to English",
+    },
+
+    // Home / Hero Section
+    home: {
+      badge: "Now with AI Coach",
+      heroTitle1: "Your Personal",
+      heroTitle2: "Hockey Analyst",
+      heroDesc: "Log a game in a couple of minutes and let the AI coach turn the stats into concrete advice. Simple enough for any parent, player, or coach.",
+      goToDashboard: "Go to Dashboard",
+      tryAiCoach: "Try the AI Coach",
+      aiCardQuote: "\"Great game! You had 85% positive actions in the defensive zone. Focus on breakout passes next period.\"",
+    },
+
+    // Hero Section (legacy)
     hero: {
       title: "Hockey Analytics",
       subtitle: "Made Simple",
@@ -38,13 +55,19 @@ export const translations = {
       viewPlans: "View Plans",
       recommended: "Recommended",
       upgradeNow: "Upgrade Now",
-      startFreeTrial: "Start Free Trial"
+      startFreeTrial: "Start Free",
+      open: "Open",
+      openDashboard: "Open Dashboard"
     },
 
     // Features Section
     features: {
       mainTitle: "Everything You Need for Player Development",
       mainDesc: "From grassroots to professional level, we've got you covered.",
+      ai: {
+        title: "AI Coach",
+        desc: "Get tactical advice and feedback directly from our Gemini-powered AI."
+      },
       analytics: {
         title: "Advanced Analytics",
         desc: "Track player performance with detailed statistics and visualizations."
@@ -66,34 +89,68 @@ export const translations = {
     // Pricing Section
     pricing: {
       title: "Simple, Transparent Pricing",
-      desc: "Choose the plan that fits your needs. No hidden fees."
+      desc: "Choose the plan that fits your needs. No hidden fees.",
+      perMonth: "SEK/month",
+      perYear: "SEK/year",
+      popular: "Popular"
     },
 
     // Plans
     plans: {
       free: {
         name: "Free",
-        period: "forever"
+        period: "forever",
+        tagline: "For getting started",
+        f1: "Basic scoring",
+        f2: "Save 1 player",
+        f3: "Simple history",
+        f4: "3 free AI credits/month"
+      },
+      premium: {
+        tagline: "For dedicated players",
+        f1: "Unlimited players",
+        f2: "Cloud sync",
+        f3: "Advanced charts",
+        f4: "50 AI credits/month",
+        f5: "Gemini Flash AI",
+        cta: "Get Premium"
+      },
+      elite: {
+        badge: "AI Power",
+        tagline: "For future pros",
+        f1: "Everything in Premium",
+        f2: "500 AI credits/month",
+        f3: "Smarter AI (Gemini Pro)",
+        f4: "Chat with the coach (follow-ups)",
+        f5: "Priority support",
+        cta: "Get Elite"
       }
     },
 
     // CTA Section
     cta: {
-      title: "Ready to Transform Your Coaching?",
-      desc: "Join hundreds of coaches already using Ice IQ to improve performance."
+      title: "Ready to Transform Your Game?",
+      desc: "Get started in a couple of minutes. Free, no card required.",
+      titleUser: "Ready to analyze the next game?",
+      descUser: "Your AI coach is waiting for new data."
     },
+
     // AI Coach
     ai: {
       upsellDesc: "Get personalized tactical feedback and training tips powered by Gemini AI.",
       unlock: "Unlock AI Coach",
       credits: "credits left",
-      readyDesc: "I can analyze this player's stats to identify trends, strengths, and areas for improvement.",
+      readyDesc: "I can analyze your latest match stats and provide tactical advice.",
       analyzeBtn: "Analyze Stats (1 Credit)",
       analyzing: "Coach is thinking...",
       outOfCredits: "You're out of AI credits for this month.",
       error: "Coach is offline. Please try again later.",
-      newAnalysis: "New Analysis"
+      newAnalysis: "New Analysis",
+      followUpPlaceholder: "Ask a follow-up question...",
+      costNote: "Each question costs 1 credit",
+      resetChat: "Reset chat"
     },
+
     // Player & Match Logic
     playerName: "Player's Name",
     select: "Select",
@@ -115,12 +172,28 @@ export const translations = {
     playerHistory: "Player History",
     graph: "Graph",
     statsAndTrends: "Stats & Trends",
+
     // Dashboard specific
+    dashboard: {
+      welcome: "Welcome back,",
+      thisWeek: "This Week",
+      noStatsYet: "No stats recorded yet.",
+      settleConfirm: "Settle balance for {name}?",
+      balanceSettled: "Balance settled!",
+      settleError: "Could not settle balance.",
+      playerAdded: "{name} added!",
+      playerAddError: "Could not save player",
+      moneyMode: "Money Mode",
+      pointsMode: "Points Mode",
+      bonusWeighting: "Bonus Weighting",
+      bonusWeightingDesc: "Multiplier for bonus actions"
+    },
     dashboardSubtitle: "Track your scouting progress",
     selectPlayerFirst: "Please select a player first",
     gameSavedSuccessfully: "Game saved successfully!",
     saveError: "Could not save game.",
     resetAllWarning: "Are you sure you want to reset all stats for this match?",
+
     // Subscription Modal & Billing
     selectYourPlan: "Select Your Plan",
     currentPlan: "Current Plan",
@@ -199,7 +272,24 @@ export const translations = {
     confirmPassword: "Bekräfta lösenord",
     alreadyRegistered: "Redan registrerad?",
 
-    // Hero Section
+    // Header
+    header: {
+      switchToSv: "Byt till Svenska",
+      switchToEn: "Switch to English",
+    },
+
+    // Home / Hero Section
+    home: {
+      badge: "Nu med AI-coach",
+      heroTitle1: "Din personliga",
+      heroTitle2: "Hockeyanalytiker",
+      heroDesc: "Registrera en match på ett par minuter och låt AI-coachen göra om statistiken till konkreta råd. Enkelt nog för alla föräldrar, spelare och tränare.",
+      goToDashboard: "Gå till Dashboard",
+      tryAiCoach: "Testa AI-coachen",
+      aiCardQuote: "\"Bra match! Du hade 85% positiva aktioner i defensiv zon. Fokusera på uppspelen i nästa period.\"",
+    },
+
+    // Hero Section (legacy)
     hero: {
       title: "Hockey Analytics",
       subtitle: "Gjord enkelt",
@@ -212,13 +302,19 @@ export const translations = {
       viewPlans: "Se priser",
       recommended: "Rekommenderas",
       upgradeNow: "Uppgradera nu",
-      startFreeTrial: "Starta gratisperiod"
+      startFreeTrial: "Börja gratis",
+      open: "Öppna",
+      openDashboard: "Öppna Dashboard"
     },
 
     // Features Section
     features: {
       mainTitle: "Allt du behöver för spelarutveckling",
       mainDesc: "Från gräsrot till professionell nivå, vi har verktygen för dig.",
+      ai: {
+        title: "AI Coach",
+        desc: "Få taktiska råd och feedback direkt från vår Gemini-drivna AI."
+      },
       analytics: {
         title: "Avancerad Analys",
         desc: "Följ spelarprestationer med detaljerad statistik och visualiseringar."
@@ -240,21 +336,66 @@ export const translations = {
     // Pricing Section
     pricing: {
       title: "Enkel och tydlig prissättning",
-      desc: "Välj den plan som passar dina behov. Inga dolda avgifter."
+      desc: "Välj den plan som passar dina behov. Inga dolda avgifter.",
+      perMonth: "SEK/mån",
+      perYear: "SEK/år",
+      popular: "Populärast"
     },
 
     // Plans
     plans: {
       free: {
         name: "Gratis",
-        period: "för alltid"
+        period: "för alltid",
+        tagline: "För att komma igång",
+        f1: "Grundläggande poängsystem",
+        f2: "Spara 1 spelare",
+        f3: "Enkel historik",
+        f4: "3 gratis AI-krediter/mån"
+      },
+      premium: {
+        tagline: "För seriösa spelare",
+        f1: "Obegränsat antal spelare",
+        f2: "Molnsynk",
+        f3: "Avancerade grafer",
+        f4: "50 AI-krediter/mån",
+        f5: "Gemini Flash AI",
+        cta: "Välj Premium"
+      },
+      elite: {
+        badge: "AI Power",
+        tagline: "För framtida proffs",
+        f1: "Allt i Premium",
+        f2: "500 AI-krediter/mån",
+        f3: "Smartare AI (Gemini Pro)",
+        f4: "Chatta med coachen (följdfrågor)",
+        f5: "Prioriterad support",
+        cta: "Bli Elite"
       }
     },
 
     // CTA Section
     cta: {
-      title: "Redo att transformera din coaching?",
-      desc: "Anslut dig till hundratals tränare som redan använder Ice IQ för att förbättra resultat."
+      title: "Redo att transformera ditt spel?",
+      desc: "Kom igång på ett par minuter. Gratis, inget kort krävs.",
+      titleUser: "Redo att analysera nästa match?",
+      descUser: "Din AI-coach väntar på ny data."
+    },
+
+    // AI Coach
+    ai: {
+      upsellDesc: "Få personlig taktisk feedback och träningstips drivet av Gemini AI.",
+      unlock: "Lås upp AI-Coachen",
+      credits: "krediter kvar",
+      readyDesc: "Jag kan analysera dina senaste matcher och ge taktiska råd.",
+      analyzeBtn: "Analysera Statistik (1 Kredit)",
+      analyzing: "Coachen tänker...",
+      outOfCredits: "Du har slut på AI-krediter för denna månad.",
+      error: "Coachen är inte tillgänglig just nu. Försök igen senare.",
+      newAnalysis: "Ny Analys",
+      followUpPlaceholder: "Ställ en följdfråga...",
+      costNote: "Varje fråga kostar 1 kredit",
+      resetChat: "Rensa chatt"
     },
 
     // Player & Match Logic
@@ -278,6 +419,27 @@ export const translations = {
     playerHistory: "Spelarhistorik",
     graph: "Graf",
     statsAndTrends: "Statistik & Trend",
+
+    // Dashboard specific
+    dashboard: {
+      welcome: "Välkommen tillbaka,",
+      thisWeek: "Denna vecka",
+      noStatsYet: "Ingen statistik registrerad än.",
+      settleConfirm: "Reglera saldo för {name}?",
+      balanceSettled: "Saldot reglerat!",
+      settleError: "Kunde inte reglera.",
+      playerAdded: "{name} har lagts till!",
+      playerAddError: "Kunde inte spara spelaren",
+      moneyMode: "Money Mode",
+      pointsMode: "Poängläge",
+      bonusWeighting: "Bonusviktning",
+      bonusWeightingDesc: "Multiplikator för bonusaktioner"
+    },
+    dashboardSubtitle: "Följ din scouting-utveckling",
+    selectPlayerFirst: "Välj en spelare först",
+    gameSavedSuccessfully: "Matchen sparades!",
+    saveError: "Kunde inte spara matchen.",
+    resetAllWarning: "Är du säker på att du vill nollställa all statistik för denna match?",
 
     // Subscription Modal & Billing
     selectYourPlan: "Välj din Plan",
@@ -309,25 +471,8 @@ export const translations = {
     markAsSettled: "Markera som reglerat",
     settleBalanceConfirm: "Vill du nollställa saldot? Markera detta endast om betalning/reglering har skett.",
     upgradeCTA: "🔒 Uppgradera till Premium",
-    // Dashboard specific
-    dashboardSubtitle: "Följ din scouting-utveckling",
-    selectPlayerFirst: "Välj en spelare först",
-    gameSavedSuccessfully: "Matchen sparades!",
-    saveError: "Kunde inte spara matchen.",
-    resetAllWarning: "Är du säker på att du vill nollställa all statistik för denna match?",
-    // AI Coach
-    ai: {
-      upsellDesc: "Få personlig taktisk feedback och träningstips drivet av Gemini AI.",
-      unlock: "Lås upp AI-Coachen",
-      credits: "krediter kvar",
-      readyDesc: "Jag kan analysera denna spelares statistik för att hitta trender, styrkor och förbättringsområden.",
-      analyzeBtn: "Analysera Statistik (1 Kredit)",
-      analyzing: "Coachen tänker...",
-      outOfCredits: "Du har slut på AI-krediter för denna månad.",
-      error: "Coachen är inte tillgänglig just nu. Försök igen senare.",
-      newAnalysis: "Ny Analys"
-    },
-    // Stats (Dessa lades till här nu för att matcha 'en')
+
+    // Stats
     premiumStats: "Avancerad Statistik",
     upgradeForStats: "Uppgradera till Premium för att låsa upp detaljerad statistik och trendanalys.",
     needMoreMatches: "Behöver minst två matcher för att visa en graf.",
@@ -338,7 +483,7 @@ export const translations = {
     pointDevelopment: "Poängutveckling",
     mostCommonPositive: "Vanligaste Positiva Aktioner",
     mostCommonNegative: "Vanligaste Negativa Aktioner",
-   
+
     // Navigation
     nav: {
       dashboard: "Dashboard",
