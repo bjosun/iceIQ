@@ -65,7 +65,7 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
                 {isPremium && <span className="text-yellow-500 ml-1 text-sm not-italic font-black uppercase">PRO</span>}
               </span>
               <span className="text-[0.6rem] uppercase tracking-widest text-gray-500 font-bold">
-                Scouting V2
+                {t('header.tagline')}
               </span>
             </div>
           </Link>

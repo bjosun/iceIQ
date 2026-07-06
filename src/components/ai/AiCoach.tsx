@@ -164,7 +164,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
           <div>
             <h3 className="text-white font-bold text-sm leading-none">Ice IQ Coach</h3>
             <span className="text-[10px] text-indigo-300 uppercase tracking-wider font-semibold">
-              Powered by Gemini 2.5 {isElite ? 'Pro' : 'Flash'}
+              {t('ai.engineName')}{isElite ? ' Pro' : ''}
             </span>
           </div>
         </div>

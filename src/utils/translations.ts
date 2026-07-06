@@ -27,6 +27,7 @@ export const translations = {
 
     // Header
     header: {
+      tagline: "Smart Hockey Stats",
       switchToSv: "Byt till Svenska",
       switchToEn: "Switch to English",
     },
@@ -66,7 +67,7 @@ export const translations = {
       mainDesc: "From grassroots to professional level, we've got you covered.",
       ai: {
         title: "AI Coach",
-        desc: "Get tactical advice and feedback directly from our Gemini-powered AI."
+        desc: "Get tactical advice and feedback from your personal AI coach."
       },
       analytics: {
         title: "Advanced Analytics",
@@ -112,7 +113,7 @@ export const translations = {
         f2: "Cloud sync",
         f3: "Advanced charts",
         f4: "50 AI credits/month",
-        f5: "Gemini Flash AI",
+        f5: "Fast AI analyses",
         cta: "Get Premium"
       },
       elite: {
@@ -120,7 +121,7 @@ export const translations = {
         tagline: "For future pros",
         f1: "Everything in Premium",
         f2: "500 AI credits/month",
-        f3: "Smarter AI (Gemini Pro)",
+        f3: "Deeper AI analyses",
         f4: "Chat with the coach (follow-ups)",
         f5: "Priority support",
         cta: "Get Elite"
@@ -137,12 +138,13 @@ export const translations = {
 
     // AI Coach
     ai: {
-      upsellDesc: "Get personalized tactical feedback and training tips powered by Gemini AI.",
+      upsellDesc: "Get personalized tactical feedback and training tips from the Ice IQ Coach.",
       unlock: "Unlock AI Coach",
       credits: "credits left",
       readyDesc: "I can analyze your latest match stats and provide tactical advice.",
       analyzeBtn: "Analyze Stats (1 Credit)",
       analyzing: "Coach is thinking...",
+      engineName: "Ice IQ Coach Engine",
       outOfCredits: "You're out of AI credits for this month.",
       error: "Coach is offline. Please try again later.",
       newAnalysis: "New Analysis",
@@ -274,6 +276,7 @@ export const translations = {
 
     // Header
     header: {
+      tagline: "Smart hockeystatistik",
       switchToSv: "Byt till Svenska",
       switchToEn: "Switch to English",
     },
@@ -313,7 +316,7 @@ export const translations = {
       mainDesc: "Från gräsrot till professionell nivå, vi har verktygen för dig.",
       ai: {
         title: "AI Coach",
-        desc: "Få taktiska råd och feedback direkt från vår Gemini-drivna AI."
+        desc: "Få taktiska råd och feedback från din personliga AI-coach."
       },
       analytics: {
         title: "Avancerad Analys",
@@ -359,7 +362,7 @@ export const translations = {
         f2: "Molnsynk",
         f3: "Avancerade grafer",
         f4: "50 AI-krediter/mån",
-        f5: "Gemini Flash AI",
+        f5: "Snabba AI-analyser",
         cta: "Välj Premium"
       },
       elite: {
@@ -367,7 +370,7 @@ export const translations = {
         tagline: "För framtida proffs",
         f1: "Allt i Premium",
         f2: "500 AI-krediter/mån",
-        f3: "Smartare AI (Gemini Pro)",
+        f3: "Djupare AI-analyser",
         f4: "Chatta med coachen (följdfrågor)",
         f5: "Prioriterad support",
         cta: "Bli Elite"
@@ -384,12 +387,13 @@ export const translations = {
 
     // AI Coach
     ai: {
-      upsellDesc: "Få personlig taktisk feedback och träningstips drivet av Gemini AI.",
+      upsellDesc: "Få personlig taktisk feedback och träningstips från Ice IQ Coach.",
       unlock: "Lås upp AI-Coachen",
       credits: "krediter kvar",
       readyDesc: "Jag kan analysera dina senaste matcher och ge taktiska råd.",
       analyzeBtn: "Analysera Statistik (1 Kredit)",
       analyzing: "Coachen tänker...",
+      engineName: "Ice IQ Coach Engine",
       outOfCredits: "Du har slut på AI-krediter för denna månad.",
       error: "Coachen är inte tillgänglig just nu. Försök igen senare.",
       newAnalysis: "Ny Analys",

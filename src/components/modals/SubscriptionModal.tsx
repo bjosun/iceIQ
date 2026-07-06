@@ -70,7 +70,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
       priceYearly: language === 'en' ? '899 SEK' : '899 kr',
       features: [
         { icon: Check, text: language === 'sv' ? "Allt i Premium" : "Everything in Premium", included: true },
-        { icon: BrainCircuit, text: language === 'sv' ? "Smartare AI (Gemini Pro)" : "Smarter AI (Gemini Pro)", included: true },
+        { icon: BrainCircuit, text: t('plans.elite.f3'), included: true },
         { icon: Sparkles, text: language === 'sv' ? "500 AI Coach Krediter / mån" : "500 AI Coach Credits / month", included: true },
         { icon: Shield, text: language === 'sv' ? "Prioriterad Support" : "Priority Support", included: true },
       ]
