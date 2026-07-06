@@ -173,20 +173,7 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
         <div className="md:hidden bg-gray-900 border-b border-white/10 py-6 px-4 space-y-4 animate-in slide-in-from-top-4 duration-300">
           {user ? (
             <div className="grid grid-cols-1 gap-2">
-              <Link 
-                to="/dashboard" 
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-xl"
-              >
-                {t('nav.dashboard')}
-              </Link>
-              <Link 
-                to="/players" 
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-xl"
-              >
-                {t('nav.players')}
-              </Link>
+              {/* Huvudnavigering ligger i MobileBottomNav — här bara konto/inställningar */}
               <button
                 onClick={() => { setShowMobileMenu(false); onOpenProfile(); }}
                 className="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-xl"

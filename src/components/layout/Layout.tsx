@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Header from './Header';
+import MobileBottomNav from './MobileBottomNav';
 import Footer from './Footer';
 import ProfileModal from '../modals/ProfileModal';
 import SubscriptionModal from '../modals/SubscriptionModal';
@@ -31,11 +32,14 @@ export default function Layout({ children }: LayoutProps) {
         onOpenSubscription={() => setShowSub(true)} 
       />
 
-      <main className="flex-grow">
+      <main className={`flex-grow ${user ? 'pb-20 md:pb-0' : ''}`}>
         {children}
       </main>
 
       <Footer />
+
+      {/* Global mobilnavigering (bara inloggade) */}
+      {user && <MobileBottomNav onPremiumClick={() => setShowSub(true)} />}
 
       {/* GLOBAL MODALS
          Dessa renderas bara om användaren är inloggad och 

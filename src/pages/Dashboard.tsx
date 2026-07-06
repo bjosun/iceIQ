@@ -16,7 +16,6 @@ import AiCoach from '../components/ai/AiCoach';
 import PlayerHistoryModal from '../components/modals/PlayerHistoryModal';
 import TemplateEditorModal from '../components/modals/TemplateEditorModal';
 import PlayerSelectModal from '../components/modals/PlayerSelectModal';
-import MobileBottomNav from '../components/layout/MobileBottomNav';
 import Card from '../components/ui/Card';
 import LoginForm from '../components/auth/LoginForm';
 import SignupForm from '../components/auth/SignupForm';
@@ -525,13 +524,6 @@ export default function Dashboard() {
       <SubscriptionModal 
         isOpen={showSubscriptionModal} 
         onClose={() => setShowSubscriptionModal(false)} 
-      />
-      
-      {/* Mobile Nav */}
-      <MobileBottomNav 
-        onHistoryClick={() => setShowHistoryModal(true)}
-        onPremiumClick={() => setShowSubscriptionModal(true)}
-        onRecordGame={handleSaveGame}
       />
     </div>
   );
