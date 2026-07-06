@@ -87,6 +87,27 @@ export const translations = {
       }
     },
 
+    // Money Mode Section
+    moneyMode: {
+      badge: "Unique to Ice IQ",
+      title: "Money Mode",
+      heading: "Turn performance into pocket money — on your terms",
+      desc: "For parents and coaches: attach a small reward to the actions you want to encourage, and Ice IQ keeps track of the balance between games. You decide what counts, how much, and when it is settled.",
+      example: "10 kr per goal, 5 kr per assist — watch the balance grow after every game.",
+      point1Title: "You set the rules",
+      point1Desc: "Reward effort and attitude, not just goals — a solid backcheck can be worth as much as a scored goal.",
+      point2Title: "The balance carries over",
+      point2Desc: "Ice IQ keeps the running balance between games until you choose to settle it.",
+      point3Title: "Built for development",
+      point3Desc: "Nothing is left to chance — every krona is tied to real actions on the ice that you have defined yourself.",
+      note: "Money Mode is a tool for the adult, and always optional. Prefer points only? Switch mode with one tap.",
+      mockTitle: "Tonight's game",
+      mockGoal: "Goal",
+      mockAssist: "Assist",
+      mockBackcheck: "Backcheck",
+      mockBalance: "Total balance"
+    },
+
     // Pricing Section
     pricing: {
       title: "Simple, Transparent Pricing",
@@ -334,6 +355,27 @@ export const translations = {
         title: "Datasäkerhet",
         desc: "Din data är krypterad och säker. Vi delar aldrig din information."
       }
+    },
+
+    // Money Mode Section
+    moneyMode: {
+      badge: "Unikt för Ice IQ",
+      title: "Money Mode",
+      heading: "Gör prestation till fickpengar — på dina villkor",
+      desc: "För föräldrar och tränare: koppla en liten belöning till de aktioner du vill uppmuntra, så håller Ice IQ koll på saldot mellan matcherna. Du bestämmer vad som räknas, hur mycket, och när det regleras.",
+      example: "10 kr per mål, 5 kr per assist — se saldot växa efter varje match.",
+      point1Title: "Du sätter reglerna",
+      point1Desc: "Belöna slit och attityd, inte bara mål — en bra returlöpning kan vara värd lika mycket som ett mål.",
+      point2Title: "Saldot följer med",
+      point2Desc: "Ice IQ håller koll på det löpande saldot mellan matcherna tills ni väljer att reglera det.",
+      point3Title: "Byggt för utveckling",
+      point3Desc: "Inget lämnas åt slumpen — varje krona är kopplad till verkliga aktioner på isen som du själv har definierat.",
+      note: "Money Mode är ett verktyg för den vuxna, och alltid frivilligt. Vill ni hellre köra bara poäng? Byt läge med ett tryck.",
+      mockTitle: "Kvällens match",
+      mockGoal: "Mål",
+      mockAssist: "Assist",
+      mockBackcheck: "Returlöpning",
+      mockBalance: "Totalt saldo"
     },
 
     // Pricing Section

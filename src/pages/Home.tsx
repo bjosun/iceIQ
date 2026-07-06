@@ -14,7 +14,11 @@ import {
   BrainCircuit,
   Sparkles,
   Bot,
-  Crown
+  Crown,
+  Banknote,
+  SlidersHorizontal,
+  PiggyBank,
+  TrendingUp
 } from 'lucide-react';
 
 export default function Home() {
@@ -182,6 +186,99 @@ export default function Home() {
                 <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- MONEY MODE SECTION --- */}
+      <section className="py-24 bg-gray-800/20 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+            {/* Text-sidan (riktad till föräldern/tränaren) */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 mb-6">
+                <Banknote size={14} className="text-yellow-500" />
+                <span className="text-yellow-500 text-xs font-bold uppercase tracking-widest">
+                  {t('moneyMode.badge')}
+                </span>
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                {t('moneyMode.title')}
+              </h2>
+              <p className="text-xl text-cyan-300 font-semibold mb-4">
+                {t('moneyMode.heading')}
+              </p>
+              <p className="text-gray-300 leading-relaxed mb-4">
+                {t('moneyMode.desc')}
+              </p>
+              <p className="text-white font-semibold mb-8">
+                {t('moneyMode.example')}
+              </p>
+
+              <ul className="space-y-5 mb-8">
+                <li className="flex gap-4">
+                  <div className="p-2 bg-gray-900 rounded-lg h-fit"><SlidersHorizontal size={20} className="text-cyan-400" /></div>
+                  <div>
+                    <p className="text-white font-semibold">{t('moneyMode.point1Title')}</p>
+                    <p className="text-gray-400 text-sm">{t('moneyMode.point1Desc')}</p>
+                  </div>
+                </li>
+                <li className="flex gap-4">
+                  <div className="p-2 bg-gray-900 rounded-lg h-fit"><PiggyBank size={20} className="text-cyan-400" /></div>
+                  <div>
+                    <p className="text-white font-semibold">{t('moneyMode.point2Title')}</p>
+                    <p className="text-gray-400 text-sm">{t('moneyMode.point2Desc')}</p>
+                  </div>
+                </li>
+                <li className="flex gap-4">
+                  <div className="p-2 bg-gray-900 rounded-lg h-fit"><TrendingUp size={20} className="text-cyan-400" /></div>
+                  <div>
+                    <p className="text-white font-semibold">{t('moneyMode.point3Title')}</p>
+                    <p className="text-gray-400 text-sm">{t('moneyMode.point3Desc')}</p>
+                  </div>
+                </li>
+              </ul>
+
+              <p className="text-gray-500 text-xs italic">
+                {t('moneyMode.note')}
+              </p>
+            </div>
+
+            {/* Mock av Money Mode i dashboarden */}
+            <div className="relative mx-auto w-full max-w-md">
+              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/40 to-cyan-500/40 rounded-3xl blur opacity-30"></div>
+              <div className="relative bg-gray-900 border border-gray-700 rounded-3xl p-6 shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-white font-bold">{t('moneyMode.mockTitle')}</span>
+                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-yellow-500/50 text-yellow-500 bg-yellow-500/10 text-[10px] font-bold uppercase tracking-wider">
+                    <Banknote size={12} /> {t('moneyMode.title')}
+                  </span>
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3">
+                    <span className="text-gray-300 text-sm">{t('moneyMode.mockGoal')} × 2</span>
+                    <span className="text-green-400 font-bold text-sm">+20 kr</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3">
+                    <span className="text-gray-300 text-sm">{t('moneyMode.mockAssist')} × 1</span>
+                    <span className="text-green-400 font-bold text-sm">+5 kr</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3">
+                    <span className="text-gray-300 text-sm">{t('moneyMode.mockBackcheck')} × 4</span>
+                    <span className="text-green-400 font-bold text-sm">+20 kr</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-gray-700 pt-4">
+                  <span className="text-gray-400 text-sm">{t('moneyMode.mockBalance')}</span>
+                  <span className="text-2xl font-black text-yellow-400">145 kr</span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
