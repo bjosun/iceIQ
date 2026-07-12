@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTemplates } from '../contexts/TemplateContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAiCredits } from '../hooks/useAiCredits';
+import { getDemoPlayerName, getDemoHistory, DEMO_STATS } from '../utils/demoData';
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
 // Komponenter
@@ -72,6 +73,7 @@ export default function Dashboard() {
   const [actionCounts, setActionCounts] = useState<Record<string, number>>({});
   const [carriedOverBalance, setCarriedOverBalance] = useState<number>(0); 
   const [isMoneyMode, setIsMoneyMode] = useState<boolean>(true);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState(false);
 
 
@@ -118,6 +120,17 @@ export default function Dashboard() {
             currentPlayerName = fetchedPlayers[0].name;
             setSelectedPlayerName(currentPlayerName);
           }
+
+          // Onboarding: inga spelare än -> visa tydligt märkt exempeldata
+          // så att grafer, historik och AI-coachen har något att visa.
+          if (fetchedPlayers.length === 0) {
+            setIsDemoMode(true);
+            setSelectedPlayerName(getDemoPlayerName(language));
+            setPlayerHistory(getDemoHistory(language));
+            setStats(DEMO_STATS);
+            return;
+          }
+          setIsDemoMode(false);
         }
         
         // Vi hämtar historik och lägger manuellt till "playerName" på varje match
@@ -193,7 +206,8 @@ export default function Dashboard() {
     fetchData();
     
     return () => { isMounted = false; };
-  }, [user, refreshTrigger, getPlayers, getPlayerHistory, selectedPlayerName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, refreshTrigger, getPlayers, getPlayerHistory, selectedPlayerName, language]);
   // --- 2. Saldo Synkning ---
 
   useEffect(() => {
@@ -263,6 +277,11 @@ export default function Dashboard() {
   // --- SPARA MATCH & UPPDATERA SALDO ---
   const handleSaveGame = async () => {
     if (isSaving) return;
+    if (isDemoMode) {
+      toast(t('demo.saveBlocked'), { icon: '👋' });
+      setShowPlayerSelect(true);
+      return;
+    }
     if (!selectedPlayerName) {
       toast.error(t('selectPlayerFirst'));
       return;
@@ -404,6 +423,24 @@ export default function Dashboard() {
             <p className="text-xs text-gray-400">{t('dashboard.thisWeek')}</p>
           </Card>
         </div>
+
+        {/* Onboarding-banner för exempeldata */}
+        {isDemoMode && (
+          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl p-4">
+            <div>
+              <span className="inline-block text-[10px] font-black uppercase tracking-widest bg-cyan-500 text-black px-2 py-0.5 rounded mb-1.5">
+                {t('demo.badge')}
+              </span>
+              <p className="text-gray-200 text-sm">{t('demo.banner')}</p>
+            </div>
+            <button
+              onClick={() => setShowPlayerSelect(true)}
+              className="shrink-0 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-cyan-600/20"
+            >
+              {t('demo.cta')}
+            </button>
+          </div>
+        )}
 
         {/* AI-krediter + Mode Toggle (Money vs Points) */}
         <div className="flex justify-between items-center mb-6 gap-3 flex-wrap">

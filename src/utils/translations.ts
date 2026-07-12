@@ -87,6 +87,14 @@ export const translations = {
       }
     },
 
+    // Demo/onboarding
+    demo: {
+      badge: "Example data",
+      banner: "This is what Ice IQ looks like with a few games logged. Add your own player to get started for real.",
+      cta: "Add your first player",
+      saveBlocked: "This is example data — add your own player first."
+    },
+
     // Free plan limits
     playerLimit: {
       reached: "Free plan is limited to {limit} players. Upgrade to add more.",
@@ -386,6 +394,14 @@ export const translations = {
         title: "Datasäkerhet",
         desc: "Din data är krypterad och säker. Vi delar aldrig din information."
       }
+    },
+
+    // Demo/onboarding
+    demo: {
+      badge: "Exempeldata",
+      banner: "Så här ser Ice IQ ut med några matcher registrerade. Lägg till din egen spelare för att börja på riktigt.",
+      cta: "Lägg till din första spelare",
+      saveBlocked: "Detta är exempeldata — lägg till en egen spelare först."
     },
 
     // Free plan limits
