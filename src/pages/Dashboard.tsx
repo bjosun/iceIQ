@@ -60,6 +60,26 @@ interface Player {
   currentBalance?: number;
 }
 
+// Aggregat över spelarens ALLA registrerade matcher — ger AI-coachen
+// helheten så den kan resonera om utveckling över tid, inte bara de
+// senaste matcherna.
+function buildSeasonSummary(games: { date: string; points?: number }[]) {
+  if (games.length === 0) return null;
+  const pts = games.map(g => g.points || 0);
+  const sum = pts.reduce((a, b) => a + b, 0);
+  const last5 = pts.slice(-5);
+  return {
+    games: games.length,
+    totalPoints: sum,
+    avgPoints: Number((sum / games.length).toFixed(1)),
+    bestGame: Math.max(...pts),
+    worstGame: Math.min(...pts),
+    last5Avg: Number((last5.reduce((a, b) => a + b, 0) / last5.length).toFixed(1)),
+    firstGame: games[0].date,
+    lastGame: games[games.length - 1].date,
+  };
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { t, language } = useLanguage(); 
@@ -84,6 +104,7 @@ export default function Dashboard() {
   // State för spelare och match
   const [players, setPlayers] = useState<Player[]>([]);
   const [playerHistory, setPlayerHistory] = useState<any[]>([]); // Historik för AI
+  const [seasonSummary, setSeasonSummary] = useState<ReturnType<typeof buildSeasonSummary>>(null);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>(draft?.selectedPlayerName || '');
   const [playerEmail, setPlayerEmail] = useState('');
   const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
@@ -179,7 +200,9 @@ export default function Dashboard() {
           if (fetchedPlayers.length === 0) {
             setIsDemoMode(true);
             setSelectedPlayerName(getDemoPlayerName(language));
-            setPlayerHistory(getDemoHistory(language));
+            const demoHistory = getDemoHistory(language);
+            setPlayerHistory(demoHistory);
+            setSeasonSummary(buildSeasonSummary([...demoHistory].reverse()));
             setStats(DEMO_STATS);
             return;
           }
@@ -213,6 +236,11 @@ export default function Dashboard() {
 
           // --- FIXEN FÖR AI-HISTORIKEN (Nu bygger vi läsbar data för coachen) ---
           if (currentPlayerName) {
+            const playerGames = allGames
+              .filter(g => g.playerName === currentPlayerName)
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            setSeasonSummary(buildSeasonSummary(playerGames));
+
             const history = allGames
               .filter(g => g.playerName === currentPlayerName) 
               .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) 
@@ -445,6 +473,7 @@ export default function Dashboard() {
     date: gameDate,
     stats: enrichedStats, // <-- Nu skickar vi vår nya, smarta lista!
     totals: totals, 
+    season: seasonSummary, // Aggregat över alla matcher (utveckling över tid)
     templateName: currentTemplate?.name
   };
 

@@ -132,6 +132,7 @@ exports.askCoach = functions
       HUR DU SKA ANALYSERA (MYCKET VIKTIGT):
       1. Om "Pågående session" är tom: Klaga INTE på att data saknas. Då är spelaren här för att utvärdera sin historik. Dyk direkt ner i "Historik"-datan.
       2. Identifiera trender: Jämför alltid prestationerna över tid. Går totalpoängen upp eller ner? Vilka specifika handlingar har blivit bättre eller sämre mellan matcherna? 
+      2b. Använd "Säsongsöversikt" för det långa perspektivet: jämför snittet för de senaste 5 matcherna (last5Avg) med säsongssnittet (avgPoints) och säg tydligt om spelaren är på väg uppåt eller nedåt jämfört med sin egen nivå. 
       3. Var proaktiv: Tvinga inte spelaren att dra ur dig informationen. Ditt första svar ska alltid innehålla en konkret analys.
       
       FORMATERA DITT SVAR SÅ HÄR (Översätt rubrikerna till ${userLanguage}):
@@ -160,6 +161,7 @@ exports.askCoach = functions
       Data för analys:
       - Pågående session (dagens match): ${JSON.stringify(playerStats.stats || {})}
       - Historik (senaste 3 matcherna): ${JSON.stringify(playerStats.history || [])}
+      - Säsongsöversikt (alla registrerade matcher): ${JSON.stringify(playerStats.season || {})}
       - Totalpoäng: ${playerStats.totals?.total || 0}
       
       Spelarens fråga: "${question || 'Ge en analys baserat på min statistik.'}"
