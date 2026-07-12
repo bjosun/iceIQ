@@ -24,9 +24,12 @@ const eliteMonthlyPriceId = "price_1T0OCgG6k6tU2YpwHLrOYeHV";
 const eliteYearlyPriceId = "price_1T0ODTG6k6tU2YpwZUMoaXzE";
 
 // --- INITIERA VERTEX AI (GEMINI) ---
+// EU-region: spelardata (namn + statistik för minderåriga) ska inte
+// lämna EU för analys. europe-west1 (Belgien) stödjer Gemini 2.5
+// Flash/Pro; byt till 'global' om regionen skulle sakna en modell.
 const vertex_ai = new VertexAI({
   project: PROJECT_ID,
-  location: 'us-central1'
+  location: 'europe-west1'
 });
 
 // --- STRIPE HELPER ---
