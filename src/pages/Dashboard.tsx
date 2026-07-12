@@ -17,6 +17,7 @@ import AiCoach from '../components/ai/AiCoach';
 import PlayerHistoryModal from '../components/modals/PlayerHistoryModal';
 import TemplateEditorModal from '../components/modals/TemplateEditorModal';
 import PlayerSelectModal from '../components/modals/PlayerSelectModal';
+import ShareReportModal from '../components/modals/ShareReportModal';
 import Card from '../components/ui/Card';
 import LoginForm from '../components/auth/LoginForm';
 import SignupForm from '../components/auth/SignupForm';
@@ -74,6 +75,10 @@ export default function Dashboard() {
   const [carriedOverBalance, setCarriedOverBalance] = useState<number>(0); 
   const [isMoneyMode, setIsMoneyMode] = useState<boolean>(true);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
+  const [reportData, setReportData] = useState<{
+    playerName: string; team: string; date: string; points: number;
+    actions: { label: string; count: number }[];
+  } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
 
@@ -319,6 +324,25 @@ export default function Dashboard() {
 
       if (teamName) localStorage.setItem('lastUsedTeam', teamName);
 
+      // Bygg underlaget till den delbara matchrapporten INNAN formuläret rensas
+      const reportActions = Object.entries(actionCounts)
+        .map(([key, count]) => {
+          try {
+            const keyObj = JSON.parse(key);
+            return { label: keyObj[language] || keyObj.en, count };
+          } catch {
+            return { label: key, count };
+          }
+        })
+        .sort((a, b) => b.count - a.count);
+      setReportData({
+        playerName: selectedPlayerName,
+        team: teamName,
+        date: gameDate,
+        points: totals.actionsPoints,
+        actions: reportActions,
+      });
+
       // Rensa formuläret (men behåll saldot som nu är uppdaterat)
       setActionCounts({});
       setRefreshTrigger(prev => prev + 1); 
@@ -561,6 +585,11 @@ export default function Dashboard() {
       <SubscriptionModal 
         isOpen={showSubscriptionModal} 
         onClose={() => setShowSubscriptionModal(false)} 
+      />
+      <ShareReportModal
+        isOpen={reportData !== null}
+        onClose={() => setReportData(null)}
+        data={reportData}
       />
     </div>
   );

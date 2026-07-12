@@ -87,6 +87,16 @@ export const translations = {
       }
     },
 
+    // Share match report
+    share: {
+      title: "Share match report",
+      desc: "A shareable summary of the game — points and actions only, never balance.",
+      reportTitle: "Match report",
+      pointsLabel: "Points",
+      shareBtn: "Share",
+      downloadBtn: "Download"
+    },
+
     // Demo/onboarding
     demo: {
       badge: "Example data",
@@ -394,6 +404,16 @@ export const translations = {
         title: "Datasäkerhet",
         desc: "Din data är krypterad och säker. Vi delar aldrig din information."
       }
+    },
+
+    // Share match report
+    share: {
+      title: "Dela matchrapport",
+      desc: "En delbar summering av matchen — bara poäng och aktioner, aldrig saldo.",
+      reportTitle: "Matchrapport",
+      pointsLabel: "Poäng",
+      shareBtn: "Dela",
+      downloadBtn: "Ladda ner"
     },
 
     // Demo/onboarding
