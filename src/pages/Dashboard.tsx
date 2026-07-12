@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { usePlayerData } from '../hooks/usePlayerData';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -34,6 +34,26 @@ import {
   Sparkles
 } from 'lucide-react';
 
+// Pågående match sparas lokalt så att en omladdning, låst telefon eller
+// tappad täckning vid rinken inte raderar det som redan registrerats.
+const MATCH_DRAFT_KEY = 'iceiq-match-draft';
+
+function loadMatchDraft(): {
+  actionCounts?: Record<string, number>;
+  selectedPlayerName?: string;
+  gameDate?: string;
+  bonusFactor?: number;
+  isMoneyMode?: boolean;
+} | null {
+  try {
+    const raw = localStorage.getItem(MATCH_DRAFT_KEY);
+    const draft = raw ? JSON.parse(raw) : null;
+    return draft && typeof draft === 'object' ? draft : null;
+  } catch {
+    return null;
+  }
+}
+
 interface Player {
   id: string;
   name: string;
@@ -59,21 +79,22 @@ export default function Dashboard() {
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [showPlayerSelect, setShowPlayerSelect] = useState(false);
   const [showSignup, setShowSignup] = useState(location.state?.isSignup || false);
+  const [draft] = useState(loadMatchDraft);
   
   // State för spelare och match
   const [players, setPlayers] = useState<Player[]>([]);
   const [playerHistory, setPlayerHistory] = useState<any[]>([]); // Historik för AI
-  const [selectedPlayerName, setSelectedPlayerName] = useState<string>('');
+  const [selectedPlayerName, setSelectedPlayerName] = useState<string>(draft?.selectedPlayerName || '');
   const [playerEmail, setPlayerEmail] = useState('');
   const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
-  const [gameDate, setGameDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [gameDate, setGameDate] = useState<string>(draft?.gameDate || new Date().toISOString().split('T')[0]);
   
   // State för poäng och inställningar
-  const [bonusFactor, setBonusFactor] = useState<number>(10); 
+  const [bonusFactor, setBonusFactor] = useState<number>(draft?.bonusFactor ?? 10); 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [actionCounts, setActionCounts] = useState<Record<string, number>>({});
+  const [actionCounts, setActionCounts] = useState<Record<string, number>>(draft?.actionCounts || {});
   const [carriedOverBalance, setCarriedOverBalance] = useState<number>(0); 
-  const [isMoneyMode, setIsMoneyMode] = useState<boolean>(true);
+  const [isMoneyMode, setIsMoneyMode] = useState<boolean>(draft?.isMoneyMode ?? true);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [reportData, setReportData] = useState<{
     playerName: string; team: string; date: string; points: number;
@@ -97,13 +118,40 @@ export default function Dashboard() {
     }, [location.state]); 
 
   // --- EFFEKT: Hantera Bonus Factor baserat på läge ---
+  // Hoppar över första körningen så en återställd draft-faktor inte skrivs över
+  const bonusModeInitialized = useRef(false);
   useEffect(() => {
+    if (!bonusModeInitialized.current) {
+      bonusModeInitialized.current = true;
+      return;
+    }
     if (!isMoneyMode) {
       setBonusFactor(1); // Tvinga 1x (1-till-1) i Poäng-läge
     } else {
       setBonusFactor(10); // Återställ till standard (t.ex. 10x) i Penga-läge
     }
   }, [isMoneyMode]);
+
+  // --- EFFEKT: Persistera pågående match ---
+  // Tom registrering = ingen draft (täcker även spara/nollställ, som rensar actionCounts)
+  useEffect(() => {
+    if (isDemoMode) return;
+    if (Object.keys(actionCounts).length === 0) {
+      localStorage.removeItem(MATCH_DRAFT_KEY);
+      return;
+    }
+    localStorage.setItem(MATCH_DRAFT_KEY, JSON.stringify({
+      actionCounts, selectedPlayerName, gameDate, bonusFactor, isMoneyMode,
+    }));
+  }, [actionCounts, selectedPlayerName, gameDate, bonusFactor, isMoneyMode, isDemoMode]);
+
+  // Berätta att en pågående match återställdes (en gång per mount)
+  useEffect(() => {
+    if (draft?.actionCounts && Object.keys(draft.actionCounts).length > 0) {
+      toast(t('dashboard.draftRestored'), { icon: '💾' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- 1. Ladda Statistik & Spelare & Historik ---
   // --- 1. Ladda Statistik & Spelare & Historik ---

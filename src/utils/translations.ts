@@ -264,7 +264,8 @@ export const translations = {
       moneyMode: "Money Mode",
       pointsMode: "Points Mode",
       bonusWeighting: "Bonus Weighting",
-      bonusWeightingDesc: "Multiplier for bonus actions"
+      bonusWeightingDesc: "Multiplier for bonus actions",
+      draftRestored: "Your in-progress game was restored."
     },
     dashboardSubtitle: "Track your scouting progress",
     selectPlayerFirst: "Please select a player first",
@@ -589,7 +590,8 @@ export const translations = {
       moneyMode: "Money Mode",
       pointsMode: "Poängläge",
       bonusWeighting: "Bonusviktning",
-      bonusWeightingDesc: "Multiplikator för bonusaktioner"
+      bonusWeightingDesc: "Multiplikator för bonusaktioner",
+      draftRestored: "Din pågående match återställdes."
     },
     dashboardSubtitle: "Följ din scouting-utveckling",
     selectPlayerFirst: "Välj en spelare först",
