@@ -4,7 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import heroBg from '../assets/images/hero-bg.jpg';
 import RinkLines from '../components/ui/RinkLines';
-import dashboardPreview from '../assets/images/dashboard-preview.png';
+import HeroPreview from '../components/home/HeroPreview';
 import {
   BarChart3,
   Cloud,
@@ -148,11 +148,7 @@ export default function Home() {
           <div className="relative mx-auto w-full max-w-5xl animate-fade-in-up delay-500 group">
             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
             <div className="relative rounded-2xl border border-white/10 bg-gray-900/80 backdrop-blur-sm p-2 shadow-2xl">
-              <img
-                src={dashboardPreview}
-                alt="Ice IQ Dashboard"
-                className="rounded-xl w-full h-auto shadow-inner"
-              />
+              <HeroPreview />
 
               {/* Flytande AI-kort (Visuell effekt) */}
               <div className="absolute bottom-4 right-4 md:bottom-10 md:right-10 bg-gray-900/90 backdrop-blur-xl border border-indigo-500/50 p-4 rounded-xl shadow-2xl max-w-xs text-left hidden sm:block animate-bounce-slow">
