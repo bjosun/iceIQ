@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { LogOut, CreditCard, Trash2, Shield, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LogOut, CreditCard, Trash2, Shield, User, Mail } from 'lucide-react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { usePlayerData } from '../../hooks/usePlayerData'; // För att rensa data
@@ -22,6 +24,31 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
   
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [digestEnabled, setDigestEnabled] = useState(true);
+
+  // Läs in veckomejl-inställningen när modalen öppnas (på som standard)
+  useEffect(() => {
+    if (!isOpen || !user) return;
+    getDoc(doc(db, 'artifacts', 'default-app-id', 'users', user.uid))
+      .then((snap) => setDigestEnabled(snap.data()?.emailDigest !== false))
+      .catch(() => setDigestEnabled(true));
+  }, [isOpen, user]);
+
+  const handleToggleDigest = async () => {
+    if (!user) return;
+    const next = !digestEnabled;
+    setDigestEnabled(next); // optimistiskt
+    try {
+      await setDoc(
+        doc(db, 'artifacts', 'default-app-id', 'users', user.uid),
+        { emailDigest: next },
+        { merge: true }
+      );
+    } catch (error) {
+      setDigestEnabled(!next);
+      toast.error(language === 'en' ? 'Could not save setting.' : 'Kunde inte spara inställningen.');
+    }
+  };
   const [deleteInput, setDeleteInput] = useState('');
 
   // 1. Hantera Utloggning
@@ -117,6 +144,27 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
               {language === 'en' ? "Manage / Cancel Subscription" : "Hantera / Avsluta Prenumeration"}
             </Button>
           )}
+        </Card>
+
+        {/* Veckomejl */}
+        <Card className="bg-gray-800/50">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-1 flex items-center">
+                <Mail className="mr-2 text-cyan-400" size={20}/>
+                {t('digest.title')}
+              </h3>
+              <p className="text-sm text-gray-400">{t('digest.desc')}</p>
+            </div>
+            <button
+              onClick={handleToggleDigest}
+              role="switch"
+              aria-checked={digestEnabled}
+              className={`shrink-0 w-12 h-6 rounded-full p-0.5 transition-colors ${digestEnabled ? 'bg-cyan-600' : 'bg-gray-600'}`}
+            >
+              <div className={`w-5 h-5 bg-white rounded-full transition-transform ${digestEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
+          </div>
         </Card>
 
         {/* Logga ut */}

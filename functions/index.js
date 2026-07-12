@@ -417,3 +417,106 @@ exports.refillFreeCreditsMonthly = functions
     console.log(`✅ Månadsuppdatering klar: Gav ${FREE_MONTHLY_CREDITS} AI-krediter till ${count} gratisanvändare.`);
     return null;
   });
+// ==========================================
+//  VECKOMEJL (CRON JOB)
+// ==========================================
+// Köar mejl i kollektionen "mail" — kräver att Firebase-tillägget
+// "Trigger Email from Firestore" (firebase/firestore-send-email) är
+// installerat och konfigurerat mot den kollektionen. Utan tillägget
+// skapas dokumenten men inga mejl skickas.
+exports.weeklyDigest = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 540 })
+  .pubsub.schedule('0 8 * * 1') // Måndagar 08:00
+  .timeZone('Europe/Stockholm')
+  .onRun(async () => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const cutoff = weekAgo.toISOString().split('T')[0];
+
+    const usersSnap = await getUsersCollection().get();
+    let queued = 0;
+
+    for (const userDoc of usersSnap.docs) {
+      const userData = userDoc.data();
+      if (userData.emailDigest === false) continue; // användaren har stängt av
+
+      const playersSnap = await userDoc.ref.collection('players').get();
+      if (playersSnap.empty) continue;
+
+      // Summera veckans matcher per spelare (datum lagras som YYYY-MM-DD,
+      // så strängjämförelsen fungerar)
+      const summaries = [];
+      for (const playerDoc of playersSnap.docs) {
+        const gamesSnap = await playerDoc.ref
+          .collection('games')
+          .where('date', '>=', cutoff)
+          .get();
+        if (gamesSnap.empty) continue;
+
+        const games = gamesSnap.docs.map((d) => d.data());
+        summaries.push({
+          name: playerDoc.id,
+          games: games.length,
+          total: games.reduce((sum, g) => sum + (g.points || 0), 0),
+          best: Math.max(...games.map((g) => g.points || 0)),
+        });
+      }
+      // Ingen aktivitet denna vecka -> inget mejl (vi spammar inte)
+      if (summaries.length === 0) continue;
+
+      // E-postadressen bor i Auth, inte i Firestore-dokumentet
+      let email;
+      try {
+        email = (await admin.auth().getUser(userDoc.id)).email;
+      } catch (err) {
+        continue;
+      }
+      if (!email) continue;
+
+      const en = userData.language === 'en';
+      const subject = en
+        ? "Last week on the ice — your Ice IQ summary"
+        : "Förra veckan på isen — din Ice IQ-summering";
+
+      const rows = summaries.map((p) => `
+        <tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;"><strong>${p.name}</strong></td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${p.games}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${p.total}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${p.best}</td>
+        </tr>`).join('');
+
+      const html = `
+        <div style="font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
+          <h2 style="margin:24px 0 4px;">Ice <span style="color:#0891b2;">IQ</span></h2>
+          <p style="margin:0 0 20px;color:#6b7280;">${en ? "Your weekly summary" : "Din veckosummering"}</p>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="background:#f3f4f6;">
+                <th style="padding:8px 12px;text-align:left;">${en ? "Player" : "Spelare"}</th>
+                <th style="padding:8px 12px;">${en ? "Games" : "Matcher"}</th>
+                <th style="padding:8px 12px;">${en ? "Points" : "Poäng"}</th>
+                <th style="padding:8px 12px;">${en ? "Best game" : "Bästa match"}</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <p style="margin:24px 0;">
+            <a href="${APP_URL}/dashboard" style="background:#0891b2;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:bold;">
+              ${en ? "Open Ice IQ" : "Öppna Ice IQ"}
+            </a>
+          </p>
+          <p style="color:#9ca3af;font-size:12px;">
+            ${en
+              ? "You get this email because you use Ice IQ. Turn it off under My Account in the app."
+              : "Du får det här mejlet för att du använder Ice IQ. Stäng av det under Mitt konto i appen."}
+          </p>
+        </div>`;
+
+      await db.collection('mail').add({ to: email, message: { subject, html } });
+      queued++;
+    }
+
+    console.log(`📬 Veckomejl: ${queued} köade.`);
+    return null;
+  });

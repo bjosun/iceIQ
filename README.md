@@ -56,3 +56,19 @@ The `.env` file is git-ignored and must never be committed.
 ```bash
 npm run dev
 ```
+
+## 📬 Weekly email digest
+
+The `weeklyDigest` Cloud Function (Mondays 08:00 Europe/Stockholm) queues a
+summary email for every user with games logged in the past week, by writing
+documents to the `mail` collection.
+
+Requirements:
+1. Install the **Trigger Email from Firestore** extension
+   (`firebase ext:install firebase/firestore-send-email`) configured with the
+   `mail` collection and your SMTP provider.
+2. Deploy functions: `firebase deploy --only functions`
+
+Users can opt out via the toggle under **My Account** in the app
+(`emailDigest: false` on the user document). Emails are only queued for users
+with at least one game in the past 7 days.

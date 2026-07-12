@@ -87,6 +87,12 @@ export const translations = {
       }
     },
 
+    // Weekly email digest
+    digest: {
+      title: "Weekly email summary",
+      desc: "A short Monday recap of last week's games. Only sent when there is something to report."
+    },
+
     // Share match report
     share: {
       title: "Share match report",
@@ -404,6 +410,12 @@ export const translations = {
         title: "Datasäkerhet",
         desc: "Din data är krypterad och säker. Vi delar aldrig din information."
       }
+    },
+
+    // Weekly email digest
+    digest: {
+      title: "Veckosammanfattning via e-post",
+      desc: "En kort måndagssummering av förra veckans matcher. Skickas bara när det finns något att berätta."
     },
 
     // Share match report
