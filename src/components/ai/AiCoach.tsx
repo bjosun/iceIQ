@@ -4,16 +4,12 @@ import { functions } from '../../services/firebase';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAiCredits } from '../../hooks/useAiCredits';
-import { Sparkles, Send, Lock, BrainCircuit, Loader2, RefreshCw, Crown } from 'lucide-react';
+import { useCoachChats, CoachChat, CoachChatMessage } from '../../hooks/useCoachChats';
+import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2 } from 'lucide-react';
 
 interface AiCoachProps {
   playerStats: any;
   onUpgrade: () => void;
-}
-
-interface Message {
-  role: 'ai' | 'user';
-  text: string;
 }
 
 // Hur länge varje laddningssteg visas innan nästa tar över (ms).
@@ -21,12 +17,21 @@ interface Message {
 // klient-side-uppskattning — inte faktisk progress från servern.
 const LOADING_STEP_MS = 2500;
 
+// Pekar ut vilken sparad chatt som är "aktiv" så att en omladdning
+// återställer rätt konversation — och så att "Ny chatt" inte
+// återuppstår vid nästa besök.
+const ACTIVE_CHAT_KEY = 'iceiq-active-coach-chat';
+
 export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   const { t, language } = useLanguage();
   const { isPremium, isElite } = useSubscription();
   const { credits: displayCredits, setCredits: setDisplayCredits } = useAiCredits();
+  const { listChats, saveChat, deleteChat } = useCoachChats();
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<CoachChatMessage[]>([]);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [chats, setChats] = useState<CoachChat[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [inputQuestion, setInputQuestion] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -36,9 +41,38 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isLocked = !isPremium && displayCredits <= 0;
+  const playerName: string = playerStats?.player || '';
 
   const quickQuestions = [t('ai.quick1'), t('ai.quick2'), t('ai.quick3')];
   const loadingSteps = [t('ai.loading1'), t('ai.loading2'), t('ai.loading3')];
+
+  // Återställ den aktiva chatten vid mount / spelarbyte
+  useEffect(() => {
+    let cancelled = false;
+
+    setMessages([]);
+    setChatId(null);
+    setError('');
+    setShowUpgradeCta(false);
+
+    listChats()
+      .then((all) => {
+        if (cancelled) return;
+        setChats(all);
+        const activeId = localStorage.getItem(ACTIVE_CHAT_KEY);
+        const active = all.find(
+          (c) => c.id === activeId && c.playerName === playerName && c.messages.length > 0
+        );
+        if (active) {
+          setMessages(active.messages);
+          setChatId(active.id);
+        }
+      })
+      .catch((err) => console.error('Could not load coach chats:', err));
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerName]);
 
   // Stega laddningstexten framåt medan vi väntar på svaret
   useEffect(() => {
@@ -58,6 +92,17 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
     }
   }, [messages, loading]);
 
+  const persistChat = async (finalMessages: CoachChatMessage[]) => {
+    try {
+      const id = await saveChat(chatId, playerName, finalMessages);
+      if (!chatId) setChatId(id);
+      localStorage.setItem(ACTIVE_CHAT_KEY, id);
+    } catch (err) {
+      // Sparfel ska inte störa själva chatten
+      console.error('Could not save coach chat:', err);
+    }
+  };
+
   const handleAskCoach = async (specificQuestion?: string) => {
     if (displayCredits <= 0) return;
 
@@ -65,9 +110,10 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
     setError('');
     setShowUpgradeCta(false);
 
-    if (specificQuestion) {
-      setMessages(prev => [...prev, { role: 'user', text: specificQuestion }]);
-    }
+    const baseMessages: CoachChatMessage[] = specificQuestion
+      ? [...messages, { role: 'user', text: specificQuestion }]
+      : messages;
+    if (specificQuestion) setMessages(baseMessages);
 
     try {
       const askCoach = httpsCallable(functions, 'askCoach');
@@ -81,12 +127,18 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
       });
 
       if (result.data.success) {
-        setMessages(prev => [...prev, { role: 'ai', text: result.data.analysis }]);
+        const finalMessages: CoachChatMessage[] = [
+          ...baseMessages,
+          { role: 'ai', text: result.data.analysis },
+        ];
+        setMessages(finalMessages);
         setInputQuestion('');
 
         // Uppdatera UI:t direkt med siffran från servern (snapshotten
         // i useAiCredits hinner ikapp strax efter)
         setDisplayCredits(result.data.creditsLeft);
+
+        await persistChat(finalMessages);
       }
 
     } catch (err: any) {
@@ -106,11 +158,65 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
     }
   };
 
-  const handleReset = () => {
+  // Startar en ny chatt — den gamla finns kvar i historiken
+  const handleNewChat = () => {
     setMessages([]);
+    setChatId(null);
     setError('');
     setShowUpgradeCta(false);
     setInputQuestion('');
+    localStorage.removeItem(ACTIVE_CHAT_KEY);
+  };
+
+  const handleOpenHistory = async () => {
+    const next = !showHistory;
+    setShowHistory(next);
+    if (next) {
+      try {
+        setChats(await listChats());
+      } catch (err) {
+        console.error('Could not load coach chats:', err);
+      }
+    }
+  };
+
+  const handleLoadChat = (chat: CoachChat) => {
+    setMessages(chat.messages);
+    setChatId(chat.id);
+    setError('');
+    setShowUpgradeCta(false);
+    setShowHistory(false);
+    localStorage.setItem(ACTIVE_CHAT_KEY, chat.id);
+  };
+
+  const handleDeleteChat = async (e: React.MouseEvent, chat: CoachChat) => {
+    e.stopPropagation();
+    try {
+      await deleteChat(chat.id);
+      setChats(prev => prev.filter(c => c.id !== chat.id));
+      if (chat.id === chatId) {
+        // Den öppna chatten togs bort — fortsatt konversation blir en ny chatt
+        setChatId(null);
+        localStorage.removeItem(ACTIVE_CHAT_KEY);
+      }
+    } catch (err) {
+      console.error('Could not delete coach chat:', err);
+    }
+  };
+
+  const formatChatDate = (chat: CoachChat) => {
+    const date = chat.updatedAt?.toDate?.();
+    if (!date) return '';
+    return date.toLocaleDateString(language === 'sv' ? 'sv-SE' : 'en-GB', {
+      day: 'numeric',
+      month: 'short',
+    });
+  };
+
+  const chatSnippet = (chat: CoachChat) => {
+    const firstUser = chat.messages.find(m => m.role === 'user');
+    const text = (firstUser || chat.messages[0])?.text || '';
+    return text.length > 60 ? text.slice(0, 60) + '…' : text;
   };
 
   // --- LÅST VY (FREE PLAN) ---
@@ -156,13 +262,59 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full border border-white/5">
-          <Sparkles className="text-yellow-400" size={12} />
-          <span className="text-xs font-medium text-gray-300">
-            {displayCredits} {t('ai.credits')}
-          </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleOpenHistory}
+            title={t('ai.history')}
+            className={`p-2 rounded-full border transition-colors ${
+              showHistory
+                ? 'border-indigo-400 text-indigo-200 bg-indigo-500/20'
+                : 'border-white/5 text-gray-400 hover:text-white bg-black/40'
+            }`}
+          >
+            <History size={14} />
+          </button>
+          <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full border border-white/5">
+            <Sparkles className="text-yellow-400" size={12} />
+            <span className="text-xs font-medium text-gray-300">
+              {displayCredits} {t('ai.credits')}
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* Historikpanel */}
+      {showHistory && (
+        <div className="border-b border-white/5 bg-black/30 max-h-64 overflow-y-auto">
+          {chats.length === 0 ? (
+            <p className="text-gray-500 text-xs text-center py-6">{t('ai.historyEmpty')}</p>
+          ) : (
+            chats.map((chat) => (
+              <div
+                key={chat.id}
+                onClick={() => handleLoadChat(chat)}
+                className={`flex items-center justify-between gap-3 px-4 py-3 cursor-pointer border-b border-white/5 last:border-0 transition-colors ${
+                  chat.id === chatId ? 'bg-indigo-500/15' : 'hover:bg-white/5'
+                }`}
+              >
+                <div className="min-w-0">
+                  <p className="text-white text-xs font-semibold truncate">
+                    {chat.playerName} <span className="text-gray-500 font-normal">• {formatChatDate(chat)}</span>
+                  </p>
+                  <p className="text-gray-400 text-xs truncate">{chatSnippet(chat)}</p>
+                </div>
+                <button
+                  onClick={(e) => handleDeleteChat(e, chat)}
+                  title={t('ai.deleteChat')}
+                  className="shrink-0 p-1.5 text-gray-600 hover:text-red-400 transition-colors"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Content Area */}
       <div className="p-6 flex-grow flex flex-col gap-4">
@@ -272,10 +424,10 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
                {t('ai.costNote')}
              </span>
              <button
-               onClick={handleReset}
+               onClick={handleNewChat}
                className="text-[10px] text-gray-500 hover:text-white flex items-center gap-1 transition-colors"
              >
-               <RefreshCw size={10} /> {t('ai.resetChat')}
+               <Plus size={10} /> {t('ai.newChat')}
              </button>
            </div>
         </div>
