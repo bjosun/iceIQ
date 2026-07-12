@@ -75,6 +75,8 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
       const result: any = await askCoach({
         playerStats: playerStats,
         question: specificQuestion || "",
+        // Tidigare turer så coachen minns sina egna svar vid följdfrågor
+        history: messages.slice(-10).map(m => ({ role: m.role, text: m.text })),
         lang: language
       });
 

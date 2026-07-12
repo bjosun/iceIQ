@@ -79,7 +79,7 @@ exports.askCoach = functions
   const userId = context.auth.uid;
   
   // VIKTIGT: Hämta 'lang' här också!
-  const { playerStats, question, lang } = data;
+  const { playerStats, question, history, lang } = data;
 
   // 2. Hämta användaren (dokumentet kanske inte finns ännu för helt nya konton)
   const userRef = getUsersCollection().doc(userId);
@@ -162,9 +162,36 @@ exports.askCoach = functions
       Spelarens fråga: "${question || 'Ge en analys baserat på min statistik.'}"
     `;
 
-    const req = {
-      contents: [{role: 'user', parts: [{text: userMessage}]}],
-    };
+    // Chatthistorik -> flerturskonversation, så följdfrågor har kontext.
+    // Klientdata valideras och begränsas: max 10 turer, 4000 tecken per tur.
+    const safeHistory = (Array.isArray(history) ? history : [])
+      .slice(-10)
+      .filter((m) => m && (m.role === 'user' || m.role === 'ai') && typeof m.text === 'string')
+      .map((m) => ({
+        role: m.role === 'ai' ? 'model' : 'user',
+        parts: [{ text: m.text.slice(0, 4000) }],
+      }));
+
+    // Gemini kräver att konversationen börjar med 'user'. Första analysen
+    // görs via en knapp utan användarmeddelande, så vi lägger in det implicita.
+    if (safeHistory.length > 0 && safeHistory[0].role === 'model') {
+      safeHistory.unshift({ role: 'user', parts: [{ text: 'Ge en analys baserat på min statistik.' }] });
+    }
+
+    // Slå ihop eventuella på varandra följande turer med samma roll
+    // (kan uppstå om ett AI-svar misslyckades mellan två frågor)
+    const contents = [];
+    for (const turn of safeHistory) {
+      const prev = contents[contents.length - 1];
+      if (prev && prev.role === turn.role) {
+        prev.parts[0].text += '\n\n' + turn.parts[0].text;
+      } else {
+        contents.push(turn);
+      }
+    }
+    contents.push({ role: 'user', parts: [{ text: userMessage }] });
+
+    const req = { contents };
 
     const result = await generativeModel.generateContent(req);
     const response = result.response;
