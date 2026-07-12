@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Minus } from 'lucide-react';
+import { Minus } from 'lucide-react';
 import { useTemplates } from '../../contexts/TemplateContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Card from '../ui/Card';
@@ -9,6 +9,9 @@ interface ActionGridProps {
   onCountChange: (counts: Record<string, number>) => void;
 }
 
+// Byggd för användning vid rinken: hela kortet är tryckytan (+1),
+// minus-knappen i hörnet ångrar. Stora ytor, direkt feedback, ingen
+// scroll mitt i registreringen.
 export default function ActionGrid({ actionCounts, onCountChange }: ActionGridProps) {
   const { currentTemplate } = useTemplates();
   const { t, language } = useLanguage();
@@ -32,14 +35,14 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
     const key = JSON.stringify(actionName);
     const current = actionCounts[key] || 0;
     const newCount = Math.max(0, current + change);
-    
+
     const newCounts = { ...actionCounts };
     if (newCount === 0) {
       delete newCounts[key];
     } else {
       newCounts[key] = newCount;
     }
-    
+
     onCountChange(newCounts);
   };
 
@@ -50,6 +53,55 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
       return total + (count * action.points);
     }, 0);
   };
+
+  const renderTiles = (actions: typeof positiveActions, isPositive: boolean) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+      {actions.map((action, index) => {
+        const key = JSON.stringify(action.name);
+        const count = actionCounts[key] || 0;
+        const actionName = action.name[language] || action.name.en;
+        const activeClasses = isPositive
+          ? 'border-green-500/60 bg-green-500/10'
+          : 'border-red-500/60 bg-red-500/10';
+        const countColor = isPositive ? 'text-green-400' : 'text-red-400';
+
+        return (
+          <div key={index} className="relative">
+            <button
+              onClick={() => updateCount(action.name, 1)}
+              className={`w-full min-h-[96px] p-3 rounded-xl border text-left flex flex-col justify-between gap-2 transition-all active:scale-[0.96] touch-manipulation select-none ${
+                count > 0
+                  ? activeClasses
+                  : 'border-gray-700 bg-gray-700/30 hover:border-gray-600'
+              }`}
+            >
+              <p className="font-semibold text-white text-sm leading-snug pr-7">
+                {actionName}
+              </p>
+              <div className="flex items-end justify-between">
+                <span className="text-xs text-gray-400">
+                  {action.points > 0 ? '+' : ''}{action.points} p
+                </span>
+                <span className={`text-3xl font-black leading-none ${count > 0 ? countColor : 'text-gray-600'}`}>
+                  {count}
+                </span>
+              </div>
+            </button>
+
+            {count > 0 && (
+              <button
+                onClick={() => updateCount(action.name, -1)}
+                aria-label={`${actionName} -1`}
+                className="absolute top-2 right-2 w-8 h-8 bg-gray-800/90 hover:bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center text-gray-300 transition-colors touch-manipulation"
+              >
+                <Minus size={15} />
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -63,48 +115,7 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
             +{calculatePoints(positiveActions)} pts
           </span>
         </div>
-        
-        <div className="space-y-3">
-          {positiveActions.map((action, index) => {
-            const key = JSON.stringify(action.name);
-            const count = actionCounts[key] || 0;
-            const actionName = action.name[language] || action.name.en;
-            
-            return (
-              <div 
-                key={index}
-                className="flex items-center justify-between p-4 bg-gray-700/30 rounded-xl"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-white">{actionName}</p>
-                  <p className="text-sm text-gray-400">
-                    {action.points > 0 ? '+' : ''}{action.points} points
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => updateCount(action.name, -1)}
-                    className="w-10 h-10 bg-gray-600 hover:bg-red-500 rounded-full flex items-center justify-center font-bold text-lg transition-colors"
-                  >
-                    <Minus size={20} />
-                  </button>
-                  
-                  <span className="font-bold text-2xl min-w-[3rem] text-center">
-                    {count}
-                  </span>
-                  
-                  <button
-                    onClick={() => updateCount(action.name, 1)}
-                    className="w-10 h-10 bg-gray-600 hover:bg-green-500 rounded-full flex items-center justify-center font-bold text-lg transition-colors"
-                  >
-                    <Plus size={20} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {renderTiles(positiveActions, true)}
       </Card>
 
       {/* Negative Actions */}
@@ -117,48 +128,7 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
             {calculatePoints(negativeActions)} pts
           </span>
         </div>
-        
-        <div className="space-y-3">
-          {negativeActions.map((action, index) => {
-            const key = JSON.stringify(action.name);
-            const count = actionCounts[key] || 0;
-            const actionName = action.name[language] || action.name.en;
-            
-            return (
-              <div 
-                key={index}
-                className="flex items-center justify-between p-4 bg-gray-700/30 rounded-xl"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-white">{actionName}</p>
-                  <p className="text-sm text-gray-400">
-                    {action.points} points
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => updateCount(action.name, -1)}
-                    className="w-10 h-10 bg-gray-600 hover:bg-red-500 rounded-full flex items-center justify-center font-bold text-lg transition-colors"
-                  >
-                    <Minus size={20} />
-                  </button>
-                  
-                  <span className="font-bold text-2xl min-w-[3rem] text-center">
-                    {count}
-                  </span>
-                  
-                  <button
-                    onClick={() => updateCount(action.name, 1)}
-                    className="w-10 h-10 bg-gray-600 hover:bg-green-500 rounded-full flex items-center justify-center font-bold text-lg transition-colors"
-                  >
-                    <Plus size={20} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {renderTiles(negativeActions, false)}
       </Card>
     </div>
   );
