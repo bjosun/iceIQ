@@ -8,8 +8,9 @@ import { useAuth } from '../contexts/AuthContext';
 export function useAiCredits() {
   const { user } = useAuth();
 
+  // 3 = gratisplanens månadskrediter; visas tills snapshotten hunnit svara
   const [credits, setCredits] = useState<number>(
-    (user as any)?.aiCredits !== undefined ? (user as any).aiCredits : 5
+    (user as any)?.aiCredits !== undefined ? (user as any).aiCredits : 3
   );
 
   useEffect(() => {

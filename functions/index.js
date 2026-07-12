@@ -14,6 +14,7 @@ const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 // --- KONFIGURATION ---
 const APP_URL = "https://iceiq-v2.web.app"; 
 const APP_ID = "default-app-id";
+const FREE_MONTHLY_CREDITS = 3; // Gratisplanens AI-krediter per månad
 const PROJECT_ID = "squareverse-36179"; 
 
 // --- PRIS IDn ---
@@ -80,34 +81,27 @@ exports.askCoach = functions
   // VIKTIGT: Hämta 'lang' här också!
   const { playerStats, question, lang } = data;
 
-  // 2. Hämta användaren
+  // 2. Hämta användaren (dokumentet kanske inte finns ännu för helt nya konton)
   const userRef = getUsersCollection().doc(userId);
   const userDoc = await userRef.get();
+  const userData = userDoc.exists ? userDoc.data() : {};
 
-  if (!userDoc.exists) {
-    throw new functions.https.HttpsError('not-found', 'Användare hittades inte.');
-  }
-
-  const userData = userDoc.data();
-   
   // Kontrollera plan
   const isSubscribed = userData.subscriptionStatus === 'active';
   const plan = userData.subscriptionPlan || (isSubscribed ? 'premium' : 'free');
 
-  // Hantera krediter
+  // Hantera krediter. Free-planen inkluderar FREE_MONTHLY_CREDITS gratis
+  // analyser per månad (fylls på av refillFreeCreditsMonthly) — det är
+  // produktens "prova på"-upplevelse, så free får INTE blockeras här.
   let credits = userData.aiCredits;
-  if (credits === undefined && isSubscribed) {
-      credits = 50;
-      await userRef.update({ aiCredits: 50 });
-  } else if (credits === undefined) {
-      credits = 0;
+  if (credits === undefined) {
+      credits = isSubscribed ? (plan === 'elite' ? 500 : 50) : FREE_MONTHLY_CREDITS;
+      // set + merge så nya konton utan användardokument också fungerar.
+      // subscriptionPlan sätts så att månadspåfyllnaden hittar gratisanvändaren.
+      await userRef.set({ aiCredits: credits, subscriptionPlan: plan }, { merge: true });
   }
 
-  // 3. Spärrar
-  if (!isSubscribed && plan === 'free') {
-     throw new functions.https.HttpsError('permission-denied', 'Uppgradera till Premium för att använda coachen.');
-  }
-
+  // 3. Spärr: krediterna är den enda gränsen, oavsett plan
   if (credits <= 0) {
     throw new functions.https.HttpsError('resource-exhausted', 'Slut på krediter för denna månad.');
   }
@@ -415,11 +409,11 @@ exports.refillFreeCreditsMonthly = functions
 
     snapshot.forEach((doc) => {
       // Sätter deras krediter till 3 (sparar eventuella gamla krediter? Nej, vi "nollställer" till max 3 så de inte kan spara ihop 100 gratis)
-      batch.update(doc.ref, { aiCredits: 3 });
+      batch.update(doc.ref, { aiCredits: FREE_MONTHLY_CREDITS });
       count++;
     });
 
     await batch.commit();
-    console.log(`✅ Månadsuppdatering klar: Gav 3 AI-krediter till ${count} gratisanvändare.`);
+    console.log(`✅ Månadsuppdatering klar: Gav ${FREE_MONTHLY_CREDITS} AI-krediter till ${count} gratisanvändare.`);
     return null;
   });
