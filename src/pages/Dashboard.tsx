@@ -13,6 +13,7 @@ import SubscriptionModal from '../components/modals/SubscriptionModal';
 import PlayerForm from '../components/dashboard/PlayerForm';
 import ActionGrid from '../components/dashboard/ActionGrid';
 import SummarySection from '../components/dashboard/SummarySection';
+import SeasonOverview from '../components/dashboard/SeasonOverview';
 import AiCoach from '../components/ai/AiCoach'; 
 import PlayerHistoryModal from '../components/modals/PlayerHistoryModal';
 import TemplateEditorModal from '../components/modals/TemplateEditorModal';
@@ -105,6 +106,7 @@ export default function Dashboard() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [playerHistory, setPlayerHistory] = useState<any[]>([]); // Historik för AI
   const [seasonSummary, setSeasonSummary] = useState<ReturnType<typeof buildSeasonSummary>>(null);
+  const [seasonGames, setSeasonGames] = useState<{ date: string; points: number }[]>([]);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>(draft?.selectedPlayerName || '');
   const [playerEmail, setPlayerEmail] = useState('');
   const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
@@ -202,7 +204,9 @@ export default function Dashboard() {
             setSelectedPlayerName(getDemoPlayerName(language));
             const demoHistory = getDemoHistory(language);
             setPlayerHistory(demoHistory);
-            setSeasonSummary(buildSeasonSummary([...demoHistory].reverse()));
+            const demoGames = [...demoHistory].reverse().map(g => ({ date: g.date, points: g.points }));
+            setSeasonSummary(buildSeasonSummary(demoGames));
+            setSeasonGames(demoGames);
             setStats(DEMO_STATS);
             return;
           }
@@ -240,6 +244,7 @@ export default function Dashboard() {
               .filter(g => g.playerName === currentPlayerName)
               .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             setSeasonSummary(buildSeasonSummary(playerGames));
+            setSeasonGames(playerGames.map(g => ({ date: g.date, points: g.points || 0 })));
 
             const history = allGames
               .filter(g => g.playerName === currentPlayerName) 
@@ -615,6 +620,15 @@ export default function Dashboard() {
                  onUpgrade={() => setShowSubscriptionModal(true)}
                />
             </div>
+          )}
+
+          {/* UTVECKLING ÖVER SÄSONGEN */}
+          {selectedPlayerName && (
+            <SeasonOverview
+              playerName={selectedPlayerName}
+              games={seasonGames}
+              summary={seasonSummary}
+            />
           )}
           
           {/* Summary & Controls */}

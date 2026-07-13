@@ -87,6 +87,14 @@ export const translations = {
       }
     },
 
+    // Season development view
+    seasonView: {
+      title: "Development",
+      last5: "Last 5 avg",
+      trendUp: "Above season average",
+      trendDown: "Below season average"
+    },
+
     // Weekly email digest
     digest: {
       title: "Weekly email summary",
@@ -415,6 +423,14 @@ export const translations = {
         title: "Datasäkerhet",
         desc: "Din data är krypterad och säker. Vi delar aldrig din information."
       }
+    },
+
+    // Season development view
+    seasonView: {
+      title: "Utveckling",
+      last5: "Snitt senaste 5",
+      trendUp: "Över säsongssnittet",
+      trendDown: "Under säsongssnittet"
     },
 
     // Weekly email digest
