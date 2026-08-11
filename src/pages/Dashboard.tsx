@@ -32,7 +32,8 @@ import {
   Zap, 
   Banknote, 
   Trophy,
-  Sparkles
+  Sparkles,
+  Save
 } from 'lucide-react';
 
 // Pågående match sparas lokalt så att en omladdning, låst telefon eller
@@ -493,9 +494,11 @@ export default function Dashboard() {
     );
   }
 
+  const hasUnsavedActions = Object.keys(actionCounts).length > 0;
+
   // --- RENDER DASHBOARD ---
   return (
-    <div className="min-h-screen pb-20 md:pb-8">
+    <div className={`min-h-screen md:pb-8 ${hasUnsavedActions ? 'pb-44' : 'pb-20'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Header */}
@@ -609,6 +612,23 @@ export default function Dashboard() {
             </Card>
           )}
 
+          
+          {/* Summary & Controls */}
+          <SummarySection
+            actionCounts={actionCounts}
+            onSaveGame={handleSaveGame}
+            onReset={() => window.confirm(t('resetAllWarning')) && setActionCounts({})}
+            isMoneyMode={isMoneyMode} 
+            onSettleBalance={handleSettleBalance}
+            totalPoints={totals.actionsPoints}
+            totalBonus={totals.bonusPoints}
+            totalFinal={totals.total}
+            carriedOverBalance={carriedOverBalance}
+            onBalanceChange={setCarriedOverBalance}
+            bonusFactor={bonusFactor}
+            isSaving={isSaving} // Skickar med lås-status
+          />
+
           {/* AI COACH INTEGRATION */}
           {selectedPlayerName && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -630,24 +650,34 @@ export default function Dashboard() {
               summary={seasonSummary}
             />
           )}
-          
-          {/* Summary & Controls */}
-          <SummarySection
-            actionCounts={actionCounts}
-            onSaveGame={handleSaveGame}
-            onReset={() => window.confirm(t('resetAllWarning')) && setActionCounts({})}
-            isMoneyMode={isMoneyMode} 
-            onSettleBalance={handleSettleBalance}
-            totalPoints={totals.actionsPoints}
-            totalBonus={totals.bonusPoints}
-            totalFinal={totals.total}
-            carriedOverBalance={carriedOverBalance}
-            onBalanceChange={setCarriedOverBalance}
-            bonusFactor={bonusFactor}
-            isSaving={isSaving} // Skickar med lås-status
-          />
         </div>
       </div>
+
+      {/* Sticky spara-rad på mobil: syns så fort något registrerats, så man
+          aldrig behöver scrolla för att spara vid rinken. 72px lyfter den
+          ovanför MobileBottomNav. */}
+      {hasUnsavedActions && (
+        <div className="md:hidden fixed inset-x-0 bottom-[72px] z-40 px-3 pb-2 animate-in slide-in-from-bottom-4">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-500/40 bg-gray-900/95 backdrop-blur-md p-3 shadow-2xl">
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-gray-400 leading-none mb-1">
+                {t('totalPointsMatch')}
+              </p>
+              <p className="text-xl font-black text-white leading-none truncate">
+                {totals.matchTotal}{isMoneyMode ? ' kr' : ' p'}
+              </p>
+            </div>
+            <button
+              onClick={handleSaveGame}
+              disabled={isSaving}
+              className="shrink-0 flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white font-bold px-5 py-3 rounded-xl transition-colors touch-manipulation"
+            >
+              <Save size={18} />
+              {t('dashboard.saveShort')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <PlayerHistoryModal isOpen={showHistoryModal} onClose={() => setShowHistoryModal(false)} players={players} />
