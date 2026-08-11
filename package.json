@@ -9,7 +9,8 @@
     "check:i18n": "node scripts/check-i18n.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy:v2": "npm run build && firebase deploy --only hosting:iceiq-v2"
+    "deploy:functions": "npx --yes firebase-tools deploy --only functions",
+    "deploy:v2": "npm run build && npx --yes firebase-tools deploy --only hosting:v2"
   },
   "dependencies": {
     "@stripe/stripe-js": "^2.1.7",
