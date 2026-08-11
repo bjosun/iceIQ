@@ -10,7 +10,6 @@ const db = admin.firestore();
 // Definiera dina secrets
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
-const backfillToken = defineSecret('BACKFILL_TOKEN');
 
 // --- KONFIGURATION ---
 const APP_URL = "https://iceiq-v2.web.app"; 
@@ -552,84 +551,4 @@ exports.weeklyDigest = functions
 
     console.log(`📬 Veckomejl: ${queued} köade.`);
     return null;
-  });
-
-// ==========================================
-//  ENGÅNGS-BACKFILL (körs manuellt, tas bort efteråt)
-// ==========================================
-// Två problem åtgärdas:
-//  1. Konton skapade av äldre signup-kod saknar 'subscriptionPlan', vilket gör
-//     dem osynliga för refillFreeCreditsMonthly — de får aldrig påfyllning.
-//  2. Gratisanvändare har haft krediter de aldrig kunnat spendera (askCoach
-//     blockerade dem); de kompenseras med en engångsgåva.
-//
-// Skyddad av secreten BACKFILL_TOKEN. Idempotent via BACKFILL_FLAG, och
-// betalande konton rörs aldrig. Kör med ?dryRun=true först.
-const BACKFILL_FLAG = 'backfillAug2026';
-const BACKFILL_CREDIT_GIFT = 10;
-const FIRESTORE_BATCH_LIMIT = 500;
-
-exports.backfillFreeUsers = functions
-  .runWith({ secrets: [backfillToken], memory: "512MB", timeoutSeconds: 540 })
-  .https.onRequest(async (req, res) => {
-    const expected = backfillToken.value();
-    const provided = req.get('x-backfill-token') || '';
-    if (!expected || expected.length < 16 || provided !== expected) {
-      console.warn('Backfill: avvisad begäran (fel eller saknad token)');
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    const dryRun = req.query.dryRun === 'true';
-    const snapshot = await getUsersCollection().get();
-
-    const stats = { scanned: 0, planStamped: 0, gifted: 0, skippedPaying: 0, alreadyDone: 0, unchanged: 0 };
-    const pending = [];
-
-    snapshot.forEach((doc) => {
-      stats.scanned++;
-      const data = doc.data();
-
-      // Betalande konton rörs inte — deras krediter styrs av Stripe-webhooken
-      if (data.subscriptionStatus === 'active') {
-        stats.skippedPaying++;
-        return;
-      }
-      if (data[BACKFILL_FLAG]) {
-        stats.alreadyDone++;
-        return;
-      }
-
-      const update = { [BACKFILL_FLAG]: true };
-      let changed = false;
-
-      if (!data.subscriptionPlan) {
-        update.subscriptionPlan = 'free';
-        stats.planStamped++;
-        changed = true;
-      }
-
-      // Höj bara — dra aldrig ner någons saldo
-      const current = typeof data.aiCredits === 'number' ? data.aiCredits : 0;
-      if (current < BACKFILL_CREDIT_GIFT) {
-        update.aiCredits = BACKFILL_CREDIT_GIFT;
-        stats.gifted++;
-        changed = true;
-      }
-
-      if (!changed) stats.unchanged++;
-      pending.push({ ref: doc.ref, update });
-    });
-
-    if (!dryRun) {
-      for (let i = 0; i < pending.length; i += FIRESTORE_BATCH_LIMIT) {
-        const batch = db.batch();
-        for (const { ref, update } of pending.slice(i, i + FIRESTORE_BATCH_LIMIT)) {
-          batch.update(ref, update);
-        }
-        await batch.commit();
-      }
-    }
-
-    console.log(`Backfill ${dryRun ? '(dry run)' : 'utförd'}:`, JSON.stringify(stats));
-    return res.json({ dryRun, creditGift: BACKFILL_CREDIT_GIFT, stats });
   });
