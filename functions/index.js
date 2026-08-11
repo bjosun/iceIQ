@@ -18,10 +18,15 @@ const FREE_MONTHLY_CREDITS = 3; // Gratisplanens AI-krediter per månad
 const PROJECT_ID = "squareverse-36179"; 
 
 // --- PRIS IDn ---
-const monthlyPriceId = "price_1SG0PzG6k6tU2YpwlL1sRjxo"; 
-const yearlyPriceId = "price_1SG0R0G6k6tU2Ypw8v1wALpq"; 
-const eliteMonthlyPriceId = "price_1T0OCgG6k6tU2YpwHLrOYeHV"; 
-const eliteYearlyPriceId = "price_1T0ODTG6k6tU2YpwZUMoaXzE";
+// Produkterna i Stripe: Premium Subscription (prod_TCPEqrpZtAFK5e) och
+// Ice IQ Elite (prod_TyKsZ0OH6O3w6B). Elite har även två USD-priser som
+// appen INTE använder. Kontrollen i createStripeCheckoutSession ser till att
+// en felpekning stoppar köpet i stället för att debitera fel valuta/intervall.
+const monthlyPriceId = "price_1SG0PzG6k6tU2YpwlL1sRjxo";       // Premium 29 kr/mån
+const yearlyPriceId = "price_1SG0R0G6k6tU2Ypw8v1wALpq";        // Premium 299 kr/år
+const eliteMonthlyPriceId = "price_1T0OCgG6k6tU2YpwHLrOYeHV";  // Elite 89 kr/mån
+const eliteYearlyPriceId = "price_1T0ODTG6k6tU2YpwZUMoaXzE";   // Elite 890 kr/år
+const EXPECTED_CURRENCY = "sek";
 
 // --- INITIERA VERTEX AI (GEMINI) ---
 // EU-region: spelardata (namn + statistik för minderåriga) ska inte
@@ -258,6 +263,23 @@ exports.createStripeCheckoutSession = functions
         priceId = interval === "yearly" ? yearlyPriceId : monthlyPriceId;
       }
       
+      // Kontrollera att pris-ID:t verkligen är det vi tror innan kunden debiteras.
+      // Ett hopblandat ID (fel intervall eller USD i stället för SEK) ska stoppa
+      // köpet, inte tyst dra fel belopp. Kräver Prices:read på API-nyckeln.
+      const price = await stripeInstance.prices.retrieve(priceId);
+      const expectedInterval = interval === "yearly" ? "year" : "month";
+      if (price.recurring?.interval !== expectedInterval || price.currency !== EXPECTED_CURRENCY) {
+        console.error(
+          `Prisfel: ${priceId} är ${price.unit_amount / 100} ${price.currency}/` +
+          `${price.recurring?.interval} — förväntade ${EXPECTED_CURRENCY}/${expectedInterval}. ` +
+          `Kontrollera pris-ID:na i functions/index.js.`
+        );
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Pricing is misconfigured. Please contact support."
+        );
+      }
+
       const session = await stripeInstance.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "subscription",

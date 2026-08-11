@@ -37,7 +37,7 @@ export default function Home() {
       period: isYearly ? t('pricing.perYear') : t('pricing.perMonth'),
     },
     elite: {
-      price: isYearly ? '899' : '89',
+      price: isYearly ? '890' : '89',
       period: isYearly ? t('pricing.perYear') : t('pricing.perMonth'),
     }
   };
