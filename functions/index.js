@@ -37,7 +37,16 @@ let stripe;
 const getStripe = () => {
   if (!stripe) {
     const secretKey = stripeSecretKey.value();
-    if (!secretKey) throw new Error("Stripe secret key missing.");
+    if (!secretKey) throw new Error("STRIPE_SECRET_KEY saknas.");
+    // Stripes hemliga nycklar är sk_ (secret) eller rk_ (restricted). Kontrollen
+    // fångar felklistrade värden direkt, med tydligt fel i loggen istället för
+    // ett svårtolkat 401 från Stripe. Bara prefixet loggas, aldrig nyckeln.
+    if (!/^(sk|rk)_(test|live)_/.test(secretKey)) {
+      throw new Error(
+        `STRIPE_SECRET_KEY ser inte ut som en hemlig Stripe-nyckel (börjar med "${secretKey.slice(0, 3)}"). ` +
+        `Förväntat: sk_live_, sk_test_, rk_live_ eller rk_test_.`
+      );
+    }
     stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });
   }
   return stripe;
@@ -264,8 +273,10 @@ exports.createStripeCheckoutSession = functions
 
       return { id: session.id };
     } catch (error) {
+      // Full detalj i serverloggen; klienten får ett generiskt meddelande så att
+      // varken nyckelfragment eller Stripe-interna detaljer hamnar i webbläsaren.
       console.error("Stripe session failed:", error);
-      throw new functions.https.HttpsError("internal", error.message);
+      throw new functions.https.HttpsError("internal", "Could not start checkout. Please try again later.");
     }
   });
 
