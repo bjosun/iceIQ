@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName || '',
+          language: localStorage.getItem('iceiq-language') || 'en',
           createdAt: new Date().toISOString(),
           subscriptionPlan: 'free',
           subscriptionStatus: 'inactive',

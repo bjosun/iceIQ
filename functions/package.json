@@ -16,6 +16,7 @@
     "@google-cloud/vertexai": "^1.10.0",
     "firebase-admin": "^13.6.1",
     "firebase-functions": "^7.0.5",
+    "resend": "^6.19.0",
     "stripe": "^14.0.0"
   },
   "devDependencies": {

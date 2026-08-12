@@ -57,18 +57,21 @@ The `.env` file is git-ignored and must never be committed.
 npm run dev
 ```
 
-## 📬 Weekly email digest
+## 📬 Transactional email (Resend)
 
-The `weeklyDigest` Cloud Function (Mondays 08:00 Europe/Stockholm) queues a
-summary email for every user with games logged in the past week, by writing
-documents to the `mail` collection.
+Two Cloud Functions send email via [Resend](https://resend.com):
+
+- `sendWelcomeEmail` — Firestore trigger on `artifacts/{appId}/users/{userId}`
+  creation. Fires once per new account, in the user's language.
+- `weeklyDigest` — scheduled Mondays 08:00 Europe/Stockholm, summarizes the
+  past week's games per player. Users can opt out via **My Account**
+  (`emailDigest: false` on the user document). Skipped entirely for users
+  with no games that week.
 
 Requirements:
-1. Install the **Trigger Email from Firestore** extension
-   (`firebase ext:install firebase/firestore-send-email`) configured with the
-   `mail` collection and your SMTP provider.
-2. Deploy functions: `firebase deploy --only functions`
-
-Users can opt out via the toggle under **My Account** in the app
-(`emailDigest: false` on the user document). Emails are only queued for users
-with at least one game in the past 7 days.
+1. Set the `RESEND_API_KEY` secret: `firebase functions:secrets:set RESEND_API_KEY`
+2. The sending domain is set in `FROM_EMAIL` in `functions/index.js`. It
+   currently sends from `squareversegroup.com` (already verified in Resend)
+   — swap to an `iceiq.app` address once that domain is added and verified
+   there.
+3. Deploy functions: `firebase deploy --only functions`

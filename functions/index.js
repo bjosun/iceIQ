@@ -1,7 +1,8 @@
 const functions = require("firebase-functions/v1"); // VIKTIGT: /v1 krävs för att .runWith ska fungera med Node 20
 const admin = require("firebase-admin");
 const Stripe = require("stripe");
-const { VertexAI } = require('@google-cloud/vertexai'); 
+const { Resend } = require("resend");
+const { VertexAI } = require('@google-cloud/vertexai');
 const { defineSecret } = require('firebase-functions/params');
 
 admin.initializeApp();
@@ -10,6 +11,7 @@ const db = admin.firestore();
 // Definiera dina secrets
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
+const resendApiKey = defineSecret('RESEND_API_KEY');
 
 // --- KONFIGURATION ---
 const APP_URL = "https://iceiq-v2.web.app"; 
@@ -32,6 +34,88 @@ const EXPECTED_CURRENCY = "sek";
 // med squareverse-ai, som har sin egen konfiguration — utan detta ID skulle
 // alla kunder se samma (fel) varumärke i "Hantera prenumeration".
 const portalConfigurationId = "bpc_1SzOInG6k6tU2Ypwxr85tQu4";
+
+// --- E-POST (RESEND) ---
+// iceiq.app är inte verifierad i Resend än (kräver deras betalplan för fler
+// domäner) — skickar tills vidare från den redan verifierade
+// squareversegroup.com. Byt bara denna rad när iceiq.app är klar.
+const FROM_EMAIL = "Ice IQ <noreply@squareversegroup.com>";
+
+// Tills support@iceiq.app är verifierad går svar hit istället för till
+// noreply-adressen (som inte tar emot något).
+const SUPPORT_REPLY_TO = "bjorn.sundberg@squareverse.se";
+
+let resend;
+const getResend = () => {
+  if (!resend) resend = new Resend(resendApiKey.value());
+  return resend;
+};
+
+const sendEmail = async (to, subject, html, replyTo) => {
+  const { error } = await getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject,
+    html,
+    ...(replyTo ? { reply_to: replyTo } : {}),
+  });
+  if (error) throw new Error(`Resend: ${error.message || JSON.stringify(error)}`);
+};
+
+const buildWelcomeEmail = (lang, displayName) => {
+  const en = lang === 'en';
+  const name = displayName ? displayName.split(' ')[0] : '';
+  const subject = en ? "Welcome to Ice IQ" : "Välkommen till Ice IQ";
+
+  const steps = en
+    ? [
+        ["Add a player", "Name is enough to get started."],
+        ["Log a game", "Tap the actions as they happen, or fill it in afterwards — takes about two minutes."],
+        ["Ask the AI coach", "Get a concrete read on the game and how things are trending."],
+      ]
+    : [
+        ["Lägg till en spelare", "Namnet räcker för att komma igång."],
+        ["Logga en match", "Tryck på händelserna medan de sker, eller fyll i efteråt — tar ett par minuter."],
+        ["Fråga AI-coachen", "Få en konkret bild av matchen och hur utvecklingen ser ut."],
+      ];
+
+  const stepRows = steps.map(([title, desc], i) => `
+    <tr>
+      <td style="padding:10px 12px 10px 0;vertical-align:top;width:28px;">
+        <div style="width:22px;height:22px;border-radius:999px;background:#0891b2;color:#ffffff;font-size:12px;font-weight:bold;text-align:center;line-height:22px;">${i + 1}</div>
+      </td>
+      <td style="padding:10px 0;vertical-align:top;">
+        <strong style="color:#111827;">${title}</strong><br/>
+        <span style="color:#6b7280;font-size:14px;">${desc}</span>
+      </td>
+    </tr>`).join('');
+
+  const html = `
+    <div style="font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
+      <h2 style="margin:24px 0 4px;">Ice <span style="color:#0891b2;">IQ</span></h2>
+      <p style="margin:0 0 20px;color:#6b7280;">
+        ${en ? (name ? `Welcome, ${name}!` : "Welcome!") : (name ? `Välkommen, ${name}!` : "Välkommen!")}
+      </p>
+      <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
+        ${en
+          ? "Ice IQ turns a couple of minutes of match logging into a clear picture of how a player is developing — no spreadsheets, no guesswork."
+          : "Ice IQ gör om ett par minuters matchloggning till en tydlig bild av hur en spelare utvecklas — inga kalkylark, ingen gissning."}
+      </p>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">${stepRows}</table>
+      <p style="margin:28px 0;">
+        <a href="${APP_URL}/dashboard" style="background:#0891b2;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:bold;">
+          ${en ? "Open Ice IQ" : "Öppna Ice IQ"}
+        </a>
+      </p>
+      <p style="color:#6b7280;font-size:14px;line-height:1.6;">
+        ${en
+          ? "Questions or feedback? Just reply to this email — we read everything."
+          : "Frågor eller feedback? Svara bara på det här mejlet — vi läser allt."}
+      </p>
+    </div>`;
+
+  return { subject, html };
+};
 
 // --- INITIERA VERTEX AI (GEMINI) ---
 // EU-region: spelardata (namn + statistik för minderåriga) ska inte
@@ -489,14 +573,32 @@ exports.refillFreeCreditsMonthly = functions
     return null;
   });
 // ==========================================
+//  VÄLKOMSTMEJL (FIRESTORE TRIGGER)
+// ==========================================
+// Triggas när klienten skapar användarens dokument (AuthContext.saveNewUserToDatabase)
+// — täcker alltså både Google-inlogg och e-post/lösenord i ett enda ställe.
+exports.sendWelcomeEmail = functions
+  .runWith({ secrets: [resendApiKey] })
+  .firestore.document('artifacts/{appId}/users/{userId}')
+  .onCreate(async (snap) => {
+    const data = snap.data();
+    if (!data.email) return null;
+
+    const { subject, html } = buildWelcomeEmail(data.language, data.displayName);
+    try {
+      await sendEmail(data.email, subject, html, SUPPORT_REPLY_TO);
+      console.log(`✅ Välkomstmejl skickat till ${data.email}`);
+    } catch (err) {
+      console.error(`Välkomstmejl misslyckades för ${data.email}:`, err);
+    }
+    return null;
+  });
+
+// ==========================================
 //  VECKOMEJL (CRON JOB)
 // ==========================================
-// Köar mejl i kollektionen "mail" — kräver att Firebase-tillägget
-// "Trigger Email from Firestore" (firebase/firestore-send-email) är
-// installerat och konfigurerat mot den kollektionen. Utan tillägget
-// skapas dokumenten men inga mejl skickas.
 exports.weeklyDigest = functions
-  .runWith({ memory: "512MB", timeoutSeconds: 540 })
+  .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey] })
   .pubsub.schedule('0 8 * * 1') // Måndagar 08:00
   .timeZone('Europe/Stockholm')
   .onRun(async () => {
@@ -505,7 +607,7 @@ exports.weeklyDigest = functions
     const cutoff = weekAgo.toISOString().split('T')[0];
 
     const usersSnap = await getUsersCollection().get();
-    let queued = 0;
+    let sent = 0;
 
     for (const userDoc of usersSnap.docs) {
       const userData = userDoc.data();
@@ -584,10 +686,14 @@ exports.weeklyDigest = functions
           </p>
         </div>`;
 
-      await db.collection('mail').add({ to: email, message: { subject, html } });
-      queued++;
+      try {
+        await sendEmail(email, subject, html);
+        sent++;
+      } catch (err) {
+        console.error(`Veckomejl misslyckades för ${userDoc.id}:`, err);
+      }
     }
 
-    console.log(`📬 Veckomejl: ${queued} köade.`);
+    console.log(`📬 Veckomejl: ${sent} skickade.`);
     return null;
   });
