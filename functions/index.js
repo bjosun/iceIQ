@@ -112,6 +112,11 @@ const buildWelcomeEmail = (lang, displayName) => {
           ? "Questions or feedback? Just reply to this email — we read everything."
           : "Frågor eller feedback? Svara bara på det här mejlet — vi läser allt."}
       </p>
+      <p style="color:#9ca3af;font-size:12px;margin-top:24px;">
+        ${en
+          ? "Ice IQ is part of SquareVerse Group, which is why this email arrives from squareversegroup.com."
+          : "Ice IQ är en del av SquareVerse Group, därför kommer det här mejlet från squareversegroup.com."}
+      </p>
     </div>`;
 
   return { subject, html };
