@@ -28,6 +28,11 @@ const eliteMonthlyPriceId = "price_1T0OCgG6k6tU2YpwHLrOYeHV";  // Elite 89 kr/m�
 const eliteYearlyPriceId = "price_1T0ODTG6k6tU2YpwZUMoaXzE";   // Elite 890 kr/år
 const EXPECTED_CURRENCY = "sek";
 
+// Ice IQ-scopad portalkonfiguration (varumärke, länkar). Stripe-kontot delas
+// med squareverse-ai, som har sin egen konfiguration — utan detta ID skulle
+// alla kunder se samma (fel) varumärke i "Hantera prenumeration".
+const portalConfigurationId = "bpc_1SzOInG6k6tU2Ypwxr85tQu4";
+
 // --- INITIERA VERTEX AI (GEMINI) ---
 // EU-region: spelardata (namn + statistik för minderåriga) ska inte
 // lämna EU för analys. europe-west1 (Belgien) stödjer Gemini 2.5
@@ -320,6 +325,7 @@ exports.createStripePortalSession = functions
       const session = await stripeInstance.billingPortal.sessions.create({
         customer: customerId,
         return_url: `${APP_URL}/dashboard`,
+        configuration: portalConfigurationId,
       });
       return { url: session.url };
     } catch (error) {
