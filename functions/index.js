@@ -12,6 +12,9 @@ const db = admin.firestore();
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 const resendApiKey = defineSecret('RESEND_API_KEY');
+// Skyddar den tillfälliga testtriggern för veckomejlet (runWeeklyDigestNow).
+// Tas bort tillsammans med den funktionen när digesten är verifierad.
+const digestTestToken = defineSecret('DIGEST_TEST_TOKEN');
 
 // --- KONFIGURATION ---
 const APP_URL = "https://iceiq-v2.web.app"; 
@@ -600,105 +603,152 @@ exports.sendWelcomeEmail = functions
   });
 
 // ==========================================
-//  VECKOMEJL (CRON JOB)
+//  VECKOMEJL
 // ==========================================
+// Delad körning för både det schemalagda måndagsutskicket och testtriggern
+// nedan. dryRun rapporterar vilka som skulle få mejl utan att skicka något;
+// redirectTo skickar allt till en enda adress så innehållet kan granskas
+// utan att nå riktiga kunder.
+const runWeeklyDigest = async ({ dryRun = false, redirectTo = null, limit = 0 } = {}) => {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const cutoff = weekAgo.toISOString().split('T')[0];
+
+  const usersSnap = await getUsersCollection().get();
+  const recipients = [];
+  let sent = 0;
+
+  for (const userDoc of usersSnap.docs) {
+    const userData = userDoc.data();
+    if (userData.emailDigest === false) continue; // användaren har stängt av
+
+    const playersSnap = await userDoc.ref.collection('players').get();
+    if (playersSnap.empty) continue;
+
+    // Summera veckans matcher per spelare (datum lagras som YYYY-MM-DD,
+    // så strängjämförelsen fungerar)
+    const summaries = [];
+    for (const playerDoc of playersSnap.docs) {
+      const gamesSnap = await playerDoc.ref
+        .collection('games')
+        .where('date', '>=', cutoff)
+        .get();
+      if (gamesSnap.empty) continue;
+
+      const games = gamesSnap.docs.map((d) => d.data());
+      summaries.push({
+        name: playerDoc.id,
+        games: games.length,
+        total: games.reduce((sum, g) => sum + (g.points || 0), 0),
+        best: Math.max(...games.map((g) => g.points || 0)),
+      });
+    }
+    // Ingen aktivitet denna vecka -> inget mejl (vi spammar inte)
+    if (summaries.length === 0) continue;
+
+    // E-postadressen bor i Auth, inte i Firestore-dokumentet
+    let email;
+    try {
+      email = (await admin.auth().getUser(userDoc.id)).email;
+    } catch (err) {
+      continue;
+    }
+    if (!email) continue;
+
+    recipients.push({ uid: userDoc.id, email, players: summaries.length });
+    if (dryRun) continue;
+
+    const en = userData.language === 'en';
+    const subject = en
+      ? "Last week on the ice — your Ice IQ summary"
+      : "Förra veckan på isen — din Ice IQ-summering";
+
+    const rows = summaries.map((p) => `
+      <tr>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;"><strong>${p.name}</strong></td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${p.games}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${p.total}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${p.best}</td>
+      </tr>`).join('');
+
+    const html = `
+      <div style="font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
+        <h2 style="margin:24px 0 4px;">Ice <span style="color:#0891b2;">IQ</span></h2>
+        <p style="margin:0 0 20px;color:#6b7280;">${en ? "Your weekly summary" : "Din veckosummering"}</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <thead>
+            <tr style="background:#f3f4f6;">
+              <th style="padding:8px 12px;text-align:left;">${en ? "Player" : "Spelare"}</th>
+              <th style="padding:8px 12px;">${en ? "Games" : "Matcher"}</th>
+              <th style="padding:8px 12px;">${en ? "Points" : "Poäng"}</th>
+              <th style="padding:8px 12px;">${en ? "Best game" : "Bästa match"}</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <p style="margin:24px 0;">
+          <a href="${APP_URL}/dashboard" style="background:#0891b2;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:bold;">
+            ${en ? "Open Ice IQ" : "Öppna Ice IQ"}
+          </a>
+        </p>
+        <p style="color:#9ca3af;font-size:12px;">
+          ${en
+            ? "You get this email because you use Ice IQ. Turn it off under My Account in the app."
+            : "Du får det här mejlet för att du använder Ice IQ. Stäng av det under Mitt konto i appen."}
+        </p>
+        <p style="color:#9ca3af;font-size:12px;">
+          ${en
+            ? "Ice IQ is part of SquareVerse Group, which is why this email arrives from squareversegroup.com."
+            : "Ice IQ är en del av SquareVerse Group, därför kommer det här mejlet från squareversegroup.com."}
+        </p>
+      </div>`;
+
+    try {
+      await sendEmail(redirectTo || email, subject, html);
+      sent++;
+    } catch (err) {
+      console.error(`Veckomejl misslyckades för ${userDoc.id}:`, err);
+    }
+    if (limit && sent >= limit) break;
+  }
+
+  return { dryRun, redirectTo: redirectTo || null, candidates: recipients.length, sent, recipients };
+};
+
 exports.weeklyDigest = functions
   .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey] })
   .pubsub.schedule('0 8 * * 1') // Måndagar 08:00
   .timeZone('Europe/Stockholm')
   .onRun(async () => {
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    const cutoff = weekAgo.toISOString().split('T')[0];
+    const { sent, candidates } = await runWeeklyDigest();
+    console.log(`📬 Veckomejl: ${sent} skickade av ${candidates} möjliga.`);
+    return null;
+  });
 
-    const usersSnap = await getUsersCollection().get();
-    let sent = 0;
-
-    for (const userDoc of usersSnap.docs) {
-      const userData = userDoc.data();
-      if (userData.emailDigest === false) continue; // användaren har stängt av
-
-      const playersSnap = await userDoc.ref.collection('players').get();
-      if (playersSnap.empty) continue;
-
-      // Summera veckans matcher per spelare (datum lagras som YYYY-MM-DD,
-      // så strängjämförelsen fungerar)
-      const summaries = [];
-      for (const playerDoc of playersSnap.docs) {
-        const gamesSnap = await playerDoc.ref
-          .collection('games')
-          .where('date', '>=', cutoff)
-          .get();
-        if (gamesSnap.empty) continue;
-
-        const games = gamesSnap.docs.map((d) => d.data());
-        summaries.push({
-          name: playerDoc.id,
-          games: games.length,
-          total: games.reduce((sum, g) => sum + (g.points || 0), 0),
-          best: Math.max(...games.map((g) => g.points || 0)),
-        });
-      }
-      // Ingen aktivitet denna vecka -> inget mejl (vi spammar inte)
-      if (summaries.length === 0) continue;
-
-      // E-postadressen bor i Auth, inte i Firestore-dokumentet
-      let email;
-      try {
-        email = (await admin.auth().getUser(userDoc.id)).email;
-      } catch (err) {
-        continue;
-      }
-      if (!email) continue;
-
-      const en = userData.language === 'en';
-      const subject = en
-        ? "Last week on the ice — your Ice IQ summary"
-        : "Förra veckan på isen — din Ice IQ-summering";
-
-      const rows = summaries.map((p) => `
-        <tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;"><strong>${p.name}</strong></td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${p.games}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${p.total}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${p.best}</td>
-        </tr>`).join('');
-
-      const html = `
-        <div style="font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
-          <h2 style="margin:24px 0 4px;">Ice <span style="color:#0891b2;">IQ</span></h2>
-          <p style="margin:0 0 20px;color:#6b7280;">${en ? "Your weekly summary" : "Din veckosummering"}</p>
-          <table style="width:100%;border-collapse:collapse;font-size:14px;">
-            <thead>
-              <tr style="background:#f3f4f6;">
-                <th style="padding:8px 12px;text-align:left;">${en ? "Player" : "Spelare"}</th>
-                <th style="padding:8px 12px;">${en ? "Games" : "Matcher"}</th>
-                <th style="padding:8px 12px;">${en ? "Points" : "Poäng"}</th>
-                <th style="padding:8px 12px;">${en ? "Best game" : "Bästa match"}</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-          <p style="margin:24px 0;">
-            <a href="${APP_URL}/dashboard" style="background:#0891b2;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:bold;">
-              ${en ? "Open Ice IQ" : "Öppna Ice IQ"}
-            </a>
-          </p>
-          <p style="color:#9ca3af;font-size:12px;">
-            ${en
-              ? "You get this email because you use Ice IQ. Turn it off under My Account in the app."
-              : "Du får det här mejlet för att du använder Ice IQ. Stäng av det under Mitt konto i appen."}
-          </p>
-        </div>`;
-
-      try {
-        await sendEmail(email, subject, html);
-        sent++;
-      } catch (err) {
-        console.error(`Veckomejl misslyckades för ${userDoc.id}:`, err);
-      }
+// TILLFÄLLIG: manuell trigger för att verifiera veckomejlet utanför
+// måndagsschemat. Ta bort när digesten är verifierad.
+// Säker som standard — utan ?to= eller ?live=true skickas inga mejl alls.
+//   (inget)      -> torrkörning, rapporterar vilka som skulle få mejl
+//   ?to=adress   -> skickar riktigt innehåll till bara den adressen
+//   ?live=true   -> skickar skarpt till alla mottagare
+//   ?limit=N     -> tak för antal utskick (användbart ihop med ?to=)
+exports.runWeeklyDigestNow = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey, digestTestToken] })
+  .https.onRequest(async (req, res) => {
+    if (req.get('x-digest-token') !== digestTestToken.value()) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
     }
 
-    console.log(`📬 Veckomejl: ${sent} skickade.`);
-    return null;
+    const to = typeof req.query.to === 'string' ? req.query.to : null;
+    const live = req.query.live === 'true';
+    const limit = Number(req.query.limit) || 0;
+
+    try {
+      const result = await runWeeklyDigest({ dryRun: !to && !live, redirectTo: to, limit });
+      res.json(result);
+    } catch (err) {
+      console.error('runWeeklyDigestNow misslyckades:', err);
+      res.status(500).json({ error: 'Failed', message: err.message });
+    }
   });
