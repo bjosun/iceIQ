@@ -33,6 +33,17 @@ const eliteMonthlyPriceId = "price_1T0OCgG6k6tU2YpwHLrOYeHV";  // Elite 89 kr/m�
 const eliteYearlyPriceId = "price_1T0ODTG6k6tU2YpwZUMoaXzE";   // Elite 890 kr/år
 const EXPECTED_CURRENCY = "sek";
 
+// --- ENGÅNGSKÖP AV KREDITER ---
+// Ett enda engångspris i Stripe (mode: payment, INTE prenumeration). Kunden
+// justerar antalet paket själv i kassan via adjustable_quantity, så vi slipper
+// underhålla en pristrappa. Priset per paket är platt — ingen mängdrabatt —
+// vilket gör att prenumerationen förblir det bättre valet ju mer man köper.
+// Ändra siffrorna här om du vill ha ett annat upplägg; de följer med i
+// köpets metadata och styr hur många krediter som delas ut.
+const creditPackPriceId = "REPLACE_WITH_PRICE_ID";
+const CREDITS_PER_PACK = 10;
+const MAX_CREDIT_PACKS = 10;
+
 // Ice IQ-scopad portalkonfiguration (varumärke, länkar). Stripe-kontot delas
 // med squareverse-ai, som har sin egen konfiguration — utan detta ID skulle
 // alla kunder se samma (fel) varumärke i "Hantera prenumeration".
@@ -352,7 +363,43 @@ exports.createStripeCheckoutSession = functions
     try {
       const stripeInstance = getStripe();
       const customerId = await getOrCreateCustomer(userId, userEmail);
-      
+
+      // Engångsköp av krediter: eget läge (payment) och eget pris. Kunden får
+      // justera antalet paket i kassan; webhooken läser slutgiltig kvantitet.
+      if (plan === 'credits') {
+        const packPrice = await stripeInstance.prices.retrieve(creditPackPriceId);
+        // Engångspriser saknar 'recurring' — ett prenumerationspris här skulle
+        // binda kunden till en månadsdebitering hen aldrig bad om.
+        if (packPrice.recurring || packPrice.currency !== EXPECTED_CURRENCY) {
+          console.error(
+            `Prisfel: ${creditPackPriceId} är ${packPrice.currency}` +
+            `${packPrice.recurring ? `/${packPrice.recurring.interval} (återkommande)` : ' (engång)'} ` +
+            `— förväntade ett engångspris i ${EXPECTED_CURRENCY}.`
+          );
+          throw new functions.https.HttpsError(
+            "failed-precondition",
+            "Pricing is misconfigured. Please contact support."
+          );
+        }
+
+        const creditSession = await stripeInstance.checkout.sessions.create({
+          payment_method_types: ["card"],
+          mode: "payment",
+          success_url: `${APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${APP_URL}/dashboard`,
+          client_reference_id: userId,
+          customer: customerId,
+          line_items: [{
+            price: creditPackPriceId,
+            quantity: 1,
+            adjustable_quantity: { enabled: true, minimum: 1, maximum: MAX_CREDIT_PACKS },
+          }],
+          metadata: { type: 'credits', creditsPerPack: String(CREDITS_PER_PACK) },
+        });
+
+        return { id: creditSession.id };
+      }
+
       let priceId;
       if (plan === 'elite') {
         priceId = interval === "yearly" ? eliteYearlyPriceId : eliteMonthlyPriceId;
@@ -473,7 +520,40 @@ exports.stripeWebhook = functions
         const subscriptionId = data.subscription;
         const customerId = data.customer;
 
-        if (userId) {
+        // Engångsköp av krediter: ingen prenumeration inblandad, så grenen
+        // nedan (som slår upp subscriptionId) gäller inte här.
+        if (userId && data.mode === "payment" && data.metadata?.type === "credits") {
+          const lineItems = await stripeInstance.checkout.sessions.listLineItems(data.id, { limit: 1 });
+          const packs = lineItems.data[0]?.quantity || 1;
+          const perPack = Number(data.metadata.creditsPerPack) || CREDITS_PER_PACK;
+          const bought = packs * perPack;
+
+          // Stripe levererar om webhooken vid fel, och increment() är inte
+          // idempotent — utan spärr kan samma köp ge krediter flera gånger.
+          // Sessions-ID:t som dokumentnamn gör körningen säker att upprepa.
+          const userRef = usersRef.doc(userId);
+          const purchaseRef = userRef.collection('creditPurchases').doc(data.id);
+          const granted = await db.runTransaction(async (tx) => {
+            if ((await tx.get(purchaseRef)).exists) return false;
+            tx.set(purchaseRef, {
+              credits: bought,
+              packs,
+              amountTotal: data.amount_total,
+              currency: data.currency,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            tx.set(userRef, {
+              stripeCustomerId: customerId,
+              aiCredits: admin.firestore.FieldValue.increment(bought),
+            }, { merge: true });
+            return true;
+          });
+
+          console.log(granted
+            ? `✅ ${bought} krediter (${packs} paket) till ${userId}`
+            : `↩️ Köp ${data.id} redan behandlat — hoppar över`);
+
+        } else if (userId) {
           const subscription = await stripeInstance.subscriptions.retrieve(subscriptionId);
           const interval = subscription.items.data[0].plan.interval;
           

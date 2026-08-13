@@ -16,7 +16,7 @@ export const getStripe = () => {
 
 export const stripeService = {
   // UPPDATERAD: Tar nu emot 'plan' som första argument
-  async createCheckoutSession(plan: 'premium' | 'elite', interval: 'monthly' | 'yearly', language: string) {
+  async createCheckoutSession(plan: 'premium' | 'elite' | 'credits', interval: 'monthly' | 'yearly', language: string) {
     try {
       // Anropa Cloud Function direkt här
       const createStripeCheckoutSession = httpsCallable(functions, 'createStripeCheckoutSession');

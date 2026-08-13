@@ -19,7 +19,7 @@ interface SubscriptionContextType {
   isPremium: boolean; // Helper: True om man har Premium ELLER Elite
   isElite: boolean;   // Helper: True endast om man har Elite
   // Uppdaterad funktion: Tar nu emot vilken plan man vill köpa
-  upgradeSubscription: (plan: 'premium' | 'elite', interval: 'monthly' | 'yearly') => Promise<void>;
+  upgradeSubscription: (plan: 'premium' | 'elite' | 'credits', interval: 'monthly' | 'yearly') => Promise<void>;
   manageSubscription: () => Promise<void>;
   checkUserSubscription: () => Promise<void>;
 }
@@ -82,7 +82,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
   };
 
-  const upgradeSubscription = async (plan: 'premium' | 'elite', interval: 'monthly' | 'yearly') => {
+  const upgradeSubscription = async (plan: 'premium' | 'elite' | 'credits', interval: 'monthly' | 'yearly') => {
     if (!user) {
       alert('Please log in to upgrade'); // Byt gärna till toast.error
       return;
