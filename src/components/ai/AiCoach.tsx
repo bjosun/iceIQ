@@ -5,7 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAiCredits } from '../../hooks/useAiCredits';
 import { useCoachChats, CoachChat, CoachChatMessage } from '../../hooks/useCoachChats';
-import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2 } from 'lucide-react';
+import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2, ShoppingCart } from 'lucide-react';
 
 interface AiCoachProps {
   playerStats: any;
@@ -24,7 +24,7 @@ const ACTIVE_CHAT_KEY = 'iceiq-active-coach-chat';
 
 export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   const { t, language } = useLanguage();
-  const { isPremium, isElite } = useSubscription();
+  const { isPremium, isElite, upgradeSubscription } = useSubscription();
   const { credits: displayCredits, monthlyCredits, purchasedCredits } = useAiCredits();
   const { listChats, saveChat, deleteChat } = useCoachChats();
 
@@ -37,10 +37,24 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState('');
   const [showUpgradeCta, setShowUpgradeCta] = useState(false);
+  const [buyingCredits, setBuyingCredits] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isLocked = !isPremium && displayCredits <= 0;
+  // "interval" styr bara prenumerationsköp — engångsköp av krediter
+  // ignorerar den, se createStripeCheckoutSession.
+  const handleBuyCredits = async () => {
+    setBuyingCredits(true);
+    try {
+      await upgradeSubscription('credits', 'monthly');
+    } finally {
+      // Nås bara om redirecten aldrig hann ske (fel/avbrott) — vid
+      // lyckad checkout navigerar webbläsaren bort innan detta körs.
+      setBuyingCredits(false);
+    }
+  };
+  const lowOnCredits = displayCredits <= 1;
   const playerName: string = playerStats?.player || '';
 
   const quickQuestions = [t('ai.quick1'), t('ai.quick2'), t('ai.quick3')];
@@ -271,12 +285,22 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
           >
             <History size={14} />
           </button>
-          <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full border border-white/5">
-            <Sparkles className="text-yellow-400" size={12} />
-            <span className="text-xs font-medium text-gray-300">
+          <button
+            onClick={handleBuyCredits}
+            disabled={buyingCredits}
+            title={t('ai.buyCredits')}
+            className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-colors disabled:opacity-60 ${
+              lowOnCredits
+                ? 'bg-red-500/10 border-red-500/40 animate-pulse hover:bg-red-500/20'
+                : 'bg-black/40 border-white/5 hover:bg-black/60'
+            }`}
+          >
+            <Sparkles className={lowOnCredits ? 'text-red-400' : 'text-yellow-400'} size={12} />
+            <span className={`text-xs font-medium ${lowOnCredits ? 'text-red-200' : 'text-gray-300'}`}>
               {displayCredits} {t('ai.credits')}
             </span>
-          </div>
+            <ShoppingCart className={lowOnCredits ? 'text-red-300' : 'text-gray-500'} size={12} />
+          </button>
         </div>
       </div>
 
@@ -392,13 +416,27 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
           <div className="bg-red-500/10 text-red-200 p-4 rounded-lg text-sm text-center border border-red-500/20">
             <p className="mb-0">{error}</p>
             {showUpgradeCta && (
-              <button
-                onClick={onUpgrade}
-                className="mt-3 inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold text-sm py-2 px-5 rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-yellow-500/20"
-              >
-                <Crown size={16} />
-                {t('ai.upgradeCta')}
-              </button>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                <button
+                  onClick={handleBuyCredits}
+                  disabled={buyingCredits}
+                  className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 disabled:opacity-60 text-white font-bold text-sm py-2 px-5 rounded-xl transition-colors"
+                >
+                  <ShoppingCart size={16} />
+                  {buyingCredits ? t('ai.buyingCredits') : t('ai.buyCredits')}
+                </button>
+                {/* Elite har inget högre steg att uppgradera till — bara
+                    krediter är ett meningsfullt köp för dem här. */}
+                {!isElite && (
+                  <button
+                    onClick={onUpgrade}
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold text-sm py-2 px-5 rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-yellow-500/20"
+                  >
+                    <Crown size={16} />
+                    {t('ai.upgradeCta')}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}

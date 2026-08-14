@@ -239,7 +239,10 @@ export const translations = {
       loading1: "Reading your stats…",
       loading2: "Analyzing patterns…",
       loading3: "Writing your advice…",
-      upgradeCta: "Upgrade for more credits"
+      upgradeCta: "Upgrade for more credits",
+      buyCredits: "Buy credits",
+      buyingCredits: "Opening checkout…",
+      lowCreditsWarning: "Almost out of credits"
     },
 
     // Player & Match Logic
@@ -591,7 +594,10 @@ export const translations = {
       loading1: "Läser din statistik…",
       loading2: "Analyserar mönster…",
       loading3: "Formulerar dina råd…",
-      upgradeCta: "Uppgradera för fler krediter"
+      upgradeCta: "Uppgradera för fler krediter",
+      buyCredits: "Köp krediter",
+      buyingCredits: "Öppnar kassan…",
+      lowCreditsWarning: "Nästan slut på krediter"
     },
 
     // Player & Match Logic
