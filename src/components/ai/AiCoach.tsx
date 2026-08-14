@@ -251,6 +251,17 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
           >
             {t('ai.unlock')}
           </button>
+          {/* Krediterna finns till just för den som inte vill binda upp sig
+              i en prenumeration — utan denna är "lås upp" enda vägen ut
+              härifrån, vilket motverkar hela poängen med engångsköp. */}
+          <button
+            onClick={handleBuyCredits}
+            disabled={buyingCredits}
+            className="mt-3 inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-200 text-sm font-medium disabled:opacity-60 transition-colors"
+          >
+            <ShoppingCart size={14} />
+            {buyingCredits ? t('ai.buyingCredits') : t('ai.buyCreditsInstead')}
+          </button>
         </div>
       </div>
     );

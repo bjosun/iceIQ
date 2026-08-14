@@ -242,7 +242,8 @@ export const translations = {
       upgradeCta: "Upgrade for more credits",
       buyCredits: "Buy credits",
       buyingCredits: "Opening checkout…",
-      lowCreditsWarning: "Almost out of credits"
+      lowCreditsWarning: "Almost out of credits",
+      buyCreditsInstead: "Or buy credits instead"
     },
 
     // Player & Match Logic
@@ -597,7 +598,8 @@ export const translations = {
       upgradeCta: "Uppgradera för fler krediter",
       buyCredits: "Köp krediter",
       buyingCredits: "Öppnar kassan…",
-      lowCreditsWarning: "Nästan slut på krediter"
+      lowCreditsWarning: "Nästan slut på krediter",
+      buyCreditsInstead: "Eller köp krediter istället"
     },
 
     // Player & Match Logic
