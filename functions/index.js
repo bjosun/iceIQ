@@ -40,8 +40,8 @@ const EXPECTED_CURRENCY = "sek";
 // vilket gör att prenumerationen förblir det bättre valet ju mer man köper.
 // Ändra siffrorna här om du vill ha ett annat upplägg; de följer med i
 // köpets metadata och styr hur många krediter som delas ut.
-const creditPackPriceId = "REPLACE_WITH_PRICE_ID";
-const CREDITS_PER_PACK = 10;
+const creditPackPriceId = "price_1U4KoDG6k6tU2YpwYPphw4RD"; // 15 krediter, 29 kr
+const CREDITS_PER_PACK = 15;
 const MAX_CREDIT_PACKS = 10;
 
 // Ice IQ-scopad portalkonfiguration (varumärke, länkar). Stripe-kontot delas
@@ -427,6 +427,11 @@ exports.createStripeCheckoutSession = functions
             adjustable_quantity: { enabled: true, minimum: 1, maximum: MAX_CREDIT_PACKS },
           }],
           metadata: { type: 'credits', creditsPerPack: String(CREDITS_PER_PACK) },
+          // Kontot delas med squareverse-ai — utan detta läser kunden bara
+          // det gemensamma kontonamnet på sitt kontoutdrag och kan bestrida
+          // en debitering hen inte känner igen. Bara giltigt i payment-läge;
+          // prenumerationerna (subscription-läge) saknar motsvarande fält.
+          payment_intent_data: { statement_descriptor_suffix: "ICEIQ" },
         });
 
         return { id: creditSession.id };
