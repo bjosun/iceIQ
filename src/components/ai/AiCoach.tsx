@@ -25,7 +25,7 @@ const ACTIVE_CHAT_KEY = 'iceiq-active-coach-chat';
 export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   const { t, language } = useLanguage();
   const { isPremium, isElite } = useSubscription();
-  const { credits: displayCredits, setCredits: setDisplayCredits } = useAiCredits();
+  const { credits: displayCredits, monthlyCredits, purchasedCredits } = useAiCredits();
   const { listChats, saveChat, deleteChat } = useCoachChats();
 
   const [messages, setMessages] = useState<CoachChatMessage[]>([]);
@@ -134,10 +134,6 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
         setMessages(finalMessages);
         setInputQuestion('');
 
-        // Uppdatera UI:t direkt med siffran från servern (snapshotten
-        // i useAiCredits hinner ikapp strax efter)
-        setDisplayCredits(result.data.creditsLeft);
-
         await persistChat(finalMessages);
       }
 
@@ -147,9 +143,10 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
       if (err.message.includes('permission-denied')) {
         onUpgrade();
       } else if (err.message.includes('resource-exhausted')) {
+        // Saldot behöver inte tvingas till 0 här — servern spärrar först när
+        // båda hinkarna är tomma, och snapshotten i useAiCredits visar redan det.
         setError(t('ai.outOfCredits'));
         setShowUpgradeCta(true);
-        setDisplayCredits(0); // Tvinga till 0 om servern säger stopp
       } else {
         setError(t('ai.error'));
       }
@@ -282,6 +279,16 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
           </div>
         </div>
       </div>
+
+      {/* Köpta krediter överlever periodskiftet till skillnad från
+          månadsransonen — visa uppdelningen så det syns att de är orörda. */}
+      {purchasedCredits > 0 && (
+        <div className="px-4 py-1.5 bg-black/20 border-b border-white/5">
+          <p className="text-[11px] text-gray-400">
+            {t('ai.creditsSplit', { monthly: monthlyCredits, purchased: purchasedCredits })}
+          </p>
+        </div>
+      )}
 
       {/* Historikpanel */}
       {showHistory && (

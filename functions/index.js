@@ -190,6 +190,31 @@ const getOrCreateCustomer = async (userId, email) => {
   return customer.id;
 };
 
+// Drar en kredit och returnerar de nya saldona. Månadsransonen används först
+// eftersom den ändå nollställs vid nästa periodskifte — köpta krediter ligger
+// kvar tills de faktiskt används, så kunden ska aldrig förlora dem i onödan.
+// Transaktionen behövs för att spärren längre upp sker FÖRE AI-anropet (som
+// tar sekunder): utan den kan två samtidiga frågor båda passera och dra
+// saldot under noll.
+const deductAiCredit = async (userRef) => {
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(userRef);
+    const d = snap.exists ? snap.data() : {};
+    const monthly = d.aiCredits || 0;
+    const purchased = d.purchasedCredits || 0;
+
+    if (monthly > 0) {
+      tx.update(userRef, { aiCredits: admin.firestore.FieldValue.increment(-1) });
+      return { monthly: monthly - 1, purchased };
+    }
+    if (purchased > 0) {
+      tx.update(userRef, { purchasedCredits: admin.firestore.FieldValue.increment(-1) });
+      return { monthly, purchased: purchased - 1 };
+    }
+    return { monthly, purchased }; // inget kvar — låt inte saldot bli negativt
+  });
+};
+
 // ==========================================
 //  AI COACH FUNCTION (FIXAD & UPPGRADERAD RAM)
 // ==========================================
@@ -215,20 +240,27 @@ exports.askCoach = functions
   const isSubscribed = userData.subscriptionStatus === 'active';
   const plan = userData.subscriptionPlan || (isSubscribed ? 'premium' : 'free');
 
-  // Hantera krediter. Free-planen inkluderar FREE_MONTHLY_CREDITS gratis
-  // analyser per månad (fylls på av refillFreeCreditsMonthly) — det är
-  // produktens "prova på"-upplevelse, så free får INTE blockeras här.
-  let credits = userData.aiCredits;
-  if (credits === undefined) {
-      credits = isSubscribed ? (plan === 'elite' ? 500 : 50) : FREE_MONTHLY_CREDITS;
+  // Krediterna ligger i två separata hinkar:
+  //   aiCredits         månadsranson — sätts om till ett fast värde vid varje
+  //                     periodskifte (refillFreeCreditsMonthly, förnyelse)
+  //   purchasedCredits  engångsköpta — rörs ALDRIG av de jobben, ligger kvar
+  //                     tills de används
+  // Att blanda dem i ett fält skulle innebära att månadspåfyllningen raderar
+  // krediter kunden har betalat för.
+  // Free-planen inkluderar FREE_MONTHLY_CREDITS gratis analyser per månad —
+  // det är produktens "prova på"-upplevelse, så free får INTE blockeras här.
+  let monthlyCredits = userData.aiCredits;
+  if (monthlyCredits === undefined) {
+      monthlyCredits = isSubscribed ? (plan === 'elite' ? 500 : 50) : FREE_MONTHLY_CREDITS;
       // set + merge så nya konton utan användardokument också fungerar.
       // subscriptionPlan sätts så att månadspåfyllnaden hittar gratisanvändaren.
-      await userRef.set({ aiCredits: credits, subscriptionPlan: plan }, { merge: true });
+      await userRef.set({ aiCredits: monthlyCredits, subscriptionPlan: plan }, { merge: true });
   }
+  const purchasedCredits = userData.purchasedCredits || 0;
 
-  // 3. Spärr: krediterna är den enda gränsen, oavsett plan
-  if (credits <= 0) {
-    throw new functions.https.HttpsError('resource-exhausted', 'Slut på krediter för denna månad.');
+  // 3. Spärr: summan av båda hinkarna är gränsen, oavsett plan
+  if (monthlyCredits + purchasedCredits <= 0) {
+    throw new functions.https.HttpsError('resource-exhausted', 'Slut på krediter.');
   }
 
   // Sätt språk
@@ -329,15 +361,15 @@ exports.askCoach = functions
 
     const text = response.candidates[0].content.parts[0].text;
 
-    // 6. Dra av kredit
-    await userRef.update({
-      aiCredits: admin.firestore.FieldValue.increment(-1)
-    });
+    // 6. Dra av kredit — månadsransonen först, köpta krediter sist
+    const balance = await deductAiCredit(userRef);
 
     return { 
       success: true, 
       analysis: text, 
-      creditsLeft: credits - 1 
+      creditsLeft: balance.monthly + balance.purchased,
+      monthlyCredits: balance.monthly,
+      purchasedCredits: balance.purchased 
     };
 
   } catch (error) {
@@ -544,7 +576,7 @@ exports.stripeWebhook = functions
             });
             tx.set(userRef, {
               stripeCustomerId: customerId,
-              aiCredits: admin.firestore.FieldValue.increment(bought),
+              purchasedCredits: admin.firestore.FieldValue.increment(bought),
             }, { merge: true });
             return true;
           });
