@@ -417,7 +417,9 @@ exports.createStripeCheckoutSession = functions
         const creditSession = await stripeInstance.checkout.sessions.create({
           payment_method_types: ["card"],
           mode: "payment",
-          success_url: `${APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+          // success=true krävs av /success-sidan; type=credits gör att den
+          // kan säga "krediter tillagda" i stället för "prenumeration aktiv".
+          success_url: `${APP_URL}/success?success=true&type=credits&session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${APP_URL}/dashboard`,
           client_reference_id: userId,
           customer: customerId,
@@ -464,7 +466,7 @@ exports.createStripeCheckoutSession = functions
       const session = await stripeInstance.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "subscription",
-        success_url: `${APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${APP_URL}/success?success=true&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${APP_URL}/dashboard`,
         client_reference_id: userId,
         customer: customerId,

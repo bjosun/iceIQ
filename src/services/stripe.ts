@@ -76,14 +76,9 @@ export const stripeService = {
 export const checkPaymentStatus = () => {
   const params = new URLSearchParams(window.location.search);
   
-  if (params.get('session_id')) { // Ofta skickar Stripe tillbaka session_id
-    return { 
-      success: true, 
-      message: 'Payment successful! Your subscription is now active.' 
-    };
-  }
-  
-  // Behåll dina gamla checks också för säkerhets skull
+  // session_id hanteras av /success-sidan, som vet vad som köptes och är
+  // översatt — en alert här skulle dubbla meddelandet och gissa fel produkt.
+
   if (params.get('payment_success')) {
     return { 
       success: true, 

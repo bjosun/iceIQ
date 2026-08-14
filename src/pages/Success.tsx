@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -6,29 +6,27 @@ import { useLanguage } from '../contexts/LanguageContext';
 export default function Success() {
   const [searchParams] = useSearchParams();
   const { t } = useLanguage();
-  
+
   const isSuccess = searchParams.get('success') === 'true';
   const isCancelled = searchParams.get('cancelled') === 'true';
+  // Kreditköp och prenumeration landar på samma sida — utan detta skulle
+  // den som köpt krediter få veta att hens "prenumeration är aktiv".
+  const boughtCredits = searchParams.get('type') === 'credits';
+
+  // Checkout körs som en helsidesomdirigering, så window.opener är normalt
+  // null. Knappen som stänger fönstret visas bara när den faktiskt gör något.
+  const openedInPopup = typeof window !== 'undefined' && !!window.opener;
 
   useEffect(() => {
-    // Clean up URL
     if (isSuccess || isCancelled) {
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, '', cleanUrl);
+      window.history.replaceState({}, '', window.location.pathname);
     }
 
-    // Refresh subscription status in parent window if this was opened in a popup
     if (window.opener) {
       window.opener.postMessage({ type: 'payment-completed' }, '*');
       setTimeout(() => window.close(), 2000);
     }
   }, [isSuccess, isCancelled]);
-
-  const handleBackToApp = () => {
-    if (window.opener) {
-      window.close();
-    }
-  };
 
   if (isSuccess) {
     return (
@@ -38,27 +36,29 @@ export default function Success() {
             <CheckCircle className="text-green-400" size={48} />
           </div>
           <h1 className="text-3xl font-bold text-white mb-4">
-            {t('paymentSuccess')}
+            {t('success.title')}
           </h1>
           <p className="text-gray-300 mb-2">
-            Your subscription is now active. Welcome to Premium!
+            {boughtCredits ? t('success.creditsBody') : t('success.subscriptionBody')}
           </p>
           <p className="text-gray-400 text-sm mb-8">
-            You'll receive a confirmation email shortly.
+            {t('success.emailNote')}
           </p>
           <div className="space-y-4">
-            <button
-              onClick={handleBackToApp}
-              className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-semibold transition-colors"
-            >
-              Back to App
-            </button>
             <Link
               to="/dashboard"
-              className="block py-3 text-cyan-400 hover:text-cyan-300 font-medium"
+              className="block py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-semibold transition-colors text-center"
             >
-              Go to Dashboard
+              {t('success.toDashboard')}
             </Link>
+            {openedInPopup && (
+              <button
+                onClick={() => window.close()}
+                className="w-full py-3 text-cyan-400 hover:text-cyan-300 font-medium"
+              >
+                {t('success.backToApp')}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -73,26 +73,26 @@ export default function Success() {
             <XCircle className="text-red-400" size={48} />
           </div>
           <h1 className="text-3xl font-bold text-white mb-4">
-            {t('paymentCancelled')}
+            {t('success.cancelledTitle')}
           </h1>
           <p className="text-gray-300 mb-2">
-            Your payment was cancelled. No charges were made.
+            {t('success.cancelledBody')}
           </p>
           <p className="text-gray-400 text-sm mb-8">
-            You can try again whenever you're ready.
+            {t('success.cancelledNote')}
           </p>
           <div className="space-y-4">
             <Link
               to="/dashboard"
               className="block py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-semibold transition-colors text-center"
             >
-              Back to Dashboard
+              {t('success.toDashboard')}
             </Link>
             <Link
               to="/dashboard?upgrade=true"
               className="block py-3 text-cyan-400 hover:text-cyan-300 font-medium"
             >
-              Try Again
+              {t('success.tryAgain')}
             </Link>
           </div>
         </div>
@@ -100,7 +100,7 @@ export default function Success() {
     );
   }
 
-  // Default view for direct access
+  // Direktbesök utan parametrar
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
       <div className="bg-gray-800 rounded-2xl p-8 max-w-md w-full text-center">
@@ -108,16 +108,16 @@ export default function Success() {
           <CheckCircle className="text-cyan-400" size={48} />
         </div>
         <h1 className="text-3xl font-bold text-white mb-4">
-          Thank You!
+          {t('success.genericTitle')}
         </h1>
         <p className="text-gray-300 mb-8">
-          Your payment has been processed successfully.
+          {t('success.genericBody')}
         </p>
         <Link
           to="/dashboard"
           className="block py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-semibold transition-colors"
         >
-          Return to App
+          {t('success.toDashboard')}
         </Link>
       </div>
     </div>
