@@ -2,7 +2,7 @@ const functions = require("firebase-functions/v1"); // VIKTIGT: /v1 krävs för 
 const admin = require("firebase-admin");
 const Stripe = require("stripe");
 const { Resend } = require("resend");
-const { VertexAI } = require('@google-cloud/vertexai');
+const { VertexAI, SchemaType, FinishReason } = require('@google-cloud/vertexai');
 const { defineSecret } = require('firebase-functions/params');
 
 admin.initializeApp();
@@ -267,28 +267,40 @@ exports.askCoach = functions
   const userLanguage = lang || 'en';
 
   // 4. Välj modell
-  const modelName = plan === 'elite' 
-    ? 'gemini-2.5-pro' 
+  const modelName = plan === 'elite'
+    ? 'gemini-2.5-pro'
     : 'gemini-2.5-flash';
-    
+
   console.log(`Använder modell: ${modelName} (Lang: ${userLanguage})`);
+
+  // Spelarens namn är dokument-ID:t under users/{uid}/players — samma
+  // sökväg klienten skriver till (se src/services/firebase.ts).
+  const playerName = playerStats?.player;
+  const playerRef = playerName ? userRef.collection('players').doc(playerName) : null;
+  const existingNotes = playerRef ? (await playerRef.get()).data()?.coachNotes || '' : '';
 
   const systemPrompt = `
       Du är "Ice IQ Coach", en elitinriktad ishockeytränare och mentor.
       Din uppgift är att maximera spelarens prestation på och utanför isen genom djupgående dataanalys.
 
       VIKTIG KONTEXT OM APPENS POÄNGSYSTEM (ICE IQ):
-      - Appen använder ett prestationsbaserat poängsystem för att mäta spelarens "impact". 
+      - Appen använder ett prestationsbaserat poängsystem för att mäta spelarens "impact".
       - Om 'points_impact' är POSITIV (+): Handlingen var framgångsrik och bidrog till laget.
       - Om 'points_impact' är NEGATIV (-): Handlingen var ett misstag (t.ex. panikrensning, pucktapp).
       - STRICT REGEL: Fråga ALDRIG hur poängsystemet fungerar. Agera som att du är experten.
 
+      SIFFROR — LITA PÅ DE ANGIVNA TOTALERNA, RÄKNA INTE OM DEM:
+      - Datan innehåller redan färdigräknade totalsummor (se fälten nedan).
+      - Räkna ALDRIG ut en egen totalsumma genom att summera enskilda poster i listorna — det är så fel siffror uppstår. Citera alltid det redan angivna talet ordagrant.
+      - "Poäng denna match" och "Totalt saldo" är TVÅ OLIKA TAL (saldot kan innehålla överfört värde från tidigare matcher) — blanda aldrig ihop dem eller påstå att det ena är det andra.
+
       HUR DU SKA ANALYSERA (MYCKET VIKTIGT):
       1. Om "Pågående session" är tom: Klaga INTE på att data saknas. Då är spelaren här för att utvärdera sin historik. Dyk direkt ner i "Historik"-datan.
-      2. Identifiera trender: Jämför alltid prestationerna över tid. Går totalpoängen upp eller ner? Vilka specifika handlingar har blivit bättre eller sämre mellan matcherna? 
-      2b. Använd "Säsongsöversikt" för det långa perspektivet: jämför snittet för de senaste 5 matcherna (last5Avg) med säsongssnittet (avgPoints) och säg tydligt om spelaren är på väg uppåt eller nedåt jämfört med sin egen nivå. 
+      2. Identifiera trender: Jämför alltid prestationerna över tid. Går totalpoängen upp eller ner? Vilka specifika handlingar har blivit bättre eller sämre mellan matcherna?
+      2b. Använd "Säsongsöversikt" för det långa perspektivet: jämför snittet för de senaste 5 matcherna (last5Avg) med säsongssnittet (avgPoints) och säg tydligt om spelaren är på väg uppåt eller nedåt jämfört med sin egen nivå.
       3. Var proaktiv: Tvinga inte spelaren att dra ur dig informationen. Ditt första svar ska alltid innehålla en konkret analys.
-      
+      4. "Tidigare anteckningar om spelaren" (om sådana finns) kommer från förra samtalet — bygg vidare på dem i stället för att börja om, men lita fortfarande bara på siffrorna i den aktuella datan.
+
       FORMATERA DITT SVAR SÅ HÄR (Översätt rubrikerna till ${userLanguage}):
       - 📈 ${userLanguage === 'sv' ? 'Trend' : 'Trend'}: ...
       - 💪 ${userLanguage === 'sv' ? 'Styrkor' : 'Strengths'}: ...
@@ -296,16 +308,38 @@ exports.askCoach = functions
 
       VIKTIGA INSTRUKTIONER (SPRÅK & TON):
       1. SPRÅK: Svara konsekvent på språkkoden "${userLanguage}". Blanda absolut inte språk.
-      2. TON: Professionell, coachande och analytisk. 
+      2. TON: Professionell, coachande och analytisk.
       3. FORMAT: Använd korta stycken och punktlistor för att göra analysen lättläst. Inget onödigt babbel, men var utförlig i din feedback.
+
+      MINNE OM SPELAREN (fältet "coachNotes" i svaret):
+      - Utöver din analys ska du hålla en kort, persistent minnesanteckning om spelaren (max ca 400 tecken) — spelstil, återkommande styrkor/svagheter, vad ni senast pratade om, vad spelaren jobbar på. Detta sparas och skickas tillbaka till dig nästa gång, så nästa samtal kan bygga vidare i stället för att börja om.
+      - Skriv om HELA anteckningen varje gång (inte bara det nya) — slå ihop det du redan visste med det du lärt dig nu. Var kortfattad, bara varaktigt relevanta fakta, inga engångsdetaljer om just denna fråga.
   `;
   // Använd stabila API:t och ladda in "personligheten" (systemInstruction) direkt i modellen!
+  // JSON-schemat tvingar fram två separata fält i samma anrop — svaret till
+  // spelaren och den uppdaterade minnesanteckningen — så vi slipper ett extra
+  // (och dubbelt så dyrt) modellanrop bara för att uppdatera minnet.
   const generativeModel = vertex_ai.getGenerativeModel({
     model: modelName,
     systemInstruction: systemPrompt, // <-- Ninja-tricket!
     generationConfig: {
-      maxOutputTokens: 2048,
+      // Elite (Pro) får mer utrymme och ett begränsat tankebudget-tak — Pro
+      // kan inte stänga av tänkande helt. Flash stänger av det: en
+      // formatterad coach-analys behöver inte flerstegsresonemang, och utan
+      // gränsen kan tänkandet annars äta hela maxOutputTokens och klippa av
+      // svaret mitt i en mening (det som hände innan denna ändring).
+      maxOutputTokens: plan === 'elite' ? 4096 : 2560,
       temperature: 0.4,
+      thinkingConfig: plan === 'elite' ? { thinkingBudget: 1024 } : { thinkingBudget: 0 },
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: SchemaType.OBJECT,
+        properties: {
+          analysis: { type: SchemaType.STRING, description: 'Svaret till spelaren, enligt formateringsinstruktionerna.' },
+          coachNotes: { type: SchemaType.STRING, description: 'Den fullständiga, uppdaterade minnesanteckningen om spelaren.' },
+        },
+        required: ['analysis', 'coachNotes'],
+      },
     },
   });
 
@@ -316,8 +350,10 @@ exports.askCoach = functions
       - Pågående session (dagens match): ${JSON.stringify(playerStats.stats || {})}
       - Historik (senaste 3 matcherna): ${JSON.stringify(playerStats.history || [])}
       - Säsongsöversikt (alla registrerade matcher): ${JSON.stringify(playerStats.season || {})}
-      - Totalpoäng: ${playerStats.totals?.total || 0}
-      
+      - Poäng denna match: ${playerStats.totals?.actionsPoints ?? 0}
+      - Totalt saldo (kan inkludera överfört värde från tidigare matcher): ${playerStats.totals?.total ?? 0}
+      - Tidigare anteckningar om spelaren: ${existingNotes || '(inga ännu — första samtalet)'}
+
       Spelarens fråga: "${question || 'Ge en analys baserat på min statistik.'}"
     `;
 
@@ -354,22 +390,50 @@ exports.askCoach = functions
 
     const result = await generativeModel.generateContent(req);
     const response = result.response;
-    
+
     if (!response.candidates || response.candidates.length === 0) {
         throw new Error("Inget svar från AI.");
     }
 
-    const text = response.candidates[0].content.parts[0].text;
+    const candidate = response.candidates[0];
+    // MAX_TOKENS hände tidigare tyst — svaret klipptes av mitt i en mening
+    // utan varken fel eller logg. Nu syns det i loggen om det trots den
+    // höjda budgeten och avstängda tänkandet skulle inträffa igen.
+    if (candidate.finishReason && candidate.finishReason !== FinishReason.STOP) {
+      console.warn(`askCoach: oväntat finishReason "${candidate.finishReason}" för ${userId}`);
+    }
+
+    const rawText = candidate.content.parts[0].text;
+    let analysis = rawText;
+    let coachNotes = null;
+    try {
+      const parsed = JSON.parse(rawText);
+      analysis = parsed.analysis || rawText;
+      coachNotes = typeof parsed.coachNotes === 'string' ? parsed.coachNotes.slice(0, 800) : null;
+    } catch (e) {
+      // JSON-läget kan i sällsynta fall ge ogiltig JSON (t.ex. vid avklippt
+      // svar). Då visar vi ändå rådatan för spelaren i stället för att
+      // misslyckas helt — bara minnesuppdateringen uteblir den gången.
+      console.warn(`askCoach: kunde inte tolka JSON-svaret för ${userId}: ${e.message}`);
+    }
+
+    if (playerRef && coachNotes) {
+      // Bäst-ansträngning: minnet får inte blockera själva svaret till
+      // spelaren om det här skulle strula.
+      await playerRef.set({ coachNotes }, { merge: true }).catch((e) =>
+        console.warn(`askCoach: kunde inte spara coachNotes för ${userId}/${playerName}: ${e.message}`)
+      );
+    }
 
     // 6. Dra av kredit — månadsransonen först, köpta krediter sist
     const balance = await deductAiCredit(userRef);
 
-    return { 
-      success: true, 
-      analysis: text, 
+    return {
+      success: true,
+      analysis,
       creditsLeft: balance.monthly + balance.purchased,
       monthlyCredits: balance.monthly,
-      purchasedCredits: balance.purchased 
+      purchasedCredits: balance.purchased
     };
 
   } catch (error) {
