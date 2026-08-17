@@ -10,6 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy:functions": "npx --yes firebase-tools deploy --only functions",
+    "deploy:prod": "npm run build && npx --yes firebase-tools deploy --only hosting:prod",
     "deploy:v2": "npm run build && npx --yes firebase-tools deploy --only hosting:v2"
   },
   "dependencies": {

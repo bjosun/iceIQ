@@ -17,7 +17,11 @@ const resendApiKey = defineSecret('RESEND_API_KEY');
 const digestTestToken = defineSecret('DIGEST_TEST_TOKEN');
 
 // --- KONFIGURATION ---
-const APP_URL = "https://iceiq-v2.web.app"; 
+// iceiq.app är den faktiska produktionsdomänen (Firebase Hosting-målet
+// "prod") — iceiq-v2.web.app är ett separat, sällan deployat testmål.
+// Stripes success/cancel-redirect måste peka hit, annars landar kunden
+// på fel sajt efter betalning.
+const APP_URL = "https://iceiq.app";
 const APP_ID = "default-app-id";
 const FREE_MONTHLY_CREDITS = 3; // Gratisplanens AI-krediter per månad
 const PROJECT_ID = "squareverse-36179"; 
