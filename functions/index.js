@@ -281,7 +281,18 @@ exports.askCoach = functions
   // sökväg klienten skriver till (se src/services/firebase.ts).
   const playerName = playerStats?.player;
   const playerRef = playerName ? userRef.collection('players').doc(playerName) : null;
-  const existingNotes = playerRef ? (await playerRef.get()).data()?.coachNotes || '' : '';
+  const playerDocData = playerRef ? (await playerRef.get()).data() || {} : {};
+  // coachTimeline ersätter det gamla enkelfältet coachNotes: en daterad
+  // logg istället för en blob som skrevs över helt varje gång, så coachen
+  // kan referera till en utveckling ("i mars jobbade du på X, nu i augusti
+  // har du...") snarare än bara ett senaste-tillstånd. Konton med den gamla
+  // formen migreras in som en första post första gången de körs om.
+  const existingTimeline = Array.isArray(playerDocData.coachTimeline)
+    ? playerDocData.coachTimeline
+    : (playerDocData.coachNotes
+        ? [{ date: '(tidigare anteckning)', note: String(playerDocData.coachNotes).slice(0, 200) }]
+        : []);
+  const today = new Date().toISOString().slice(0, 10);
 
   const systemPrompt = `
       Du är "Ice IQ Coach", en elitinriktad ishockeytränare och mentor.
@@ -303,7 +314,7 @@ exports.askCoach = functions
       2. Identifiera trender: Jämför alltid prestationerna över tid. Går totalpoängen upp eller ner? Vilka specifika handlingar har blivit bättre eller sämre mellan matcherna?
       2b. Använd "Säsongsöversikt" för det långa perspektivet: jämför snittet för de senaste 5 matcherna (last5Avg) med säsongssnittet (avgPoints) och säg tydligt om spelaren är på väg uppåt eller nedåt jämfört med sin egen nivå.
       3. Var proaktiv: Tvinga inte spelaren att dra ur dig informationen. Ditt första svar ska alltid innehålla en konkret analys.
-      4. "Tidigare anteckningar om spelaren" (om sådana finns) kommer från förra samtalet — bygg vidare på dem i stället för att börja om, men lita fortfarande bara på siffrorna i den aktuella datan.
+      4. "Tidigare tidslinje om spelaren" (om sådan finns) är vad du själv antecknat i tidigare samtal — väv in den naturligt ("du har ju jobbat på X ett tag nu, och det syns...") i stället för att bara räkna upp den. Lita fortfarande bara på siffrorna i den aktuella datan, inte på minnet, för själva talen.
 
       FORMATERA DITT SVAR SÅ HÄR (Översätt rubrikerna till ${userLanguage}):
       - 📈 ${userLanguage === 'sv' ? 'Trend' : 'Trend'}: ...
@@ -312,16 +323,18 @@ exports.askCoach = functions
 
       VIKTIGA INSTRUKTIONER (SPRÅK & TON):
       1. SPRÅK: Svara konsekvent på språkkoden "${userLanguage}". Blanda absolut inte språk.
-      2. TON: Professionell, coachande och analytisk.
-      3. FORMAT: Använd korta stycken och punktlistor för att göra analysen lättläst. Inget onödigt babbel, men var utförlig i din feedback.
+      2. TON: Som en trygg, varm vän som råkar vara en elitcoach — inte en opersonlig rapportgenerator. Använd att du känner spelaren (via tidslinjen) för att låta närvarande och genuint intresserad, inte bara korrekt. Fortfarande ärlig och konkret i sakinnehållet: en trygg vän mjukar inte upp sanningen, den säger den med omtanke.
+      3. FORMAT: Korta stycken och punktlistor. Var koncis snarare än uttömmande — hellre ett par vassa, personliga meningar per rubrik än långa stycken. Detta är också en teknisk gräns: svaret har en tokenbudget, och en instruktion om att vara "utförlig" är precis det som tidigare klippte av svar mitt i en mening.
 
-      MINNE OM SPELAREN (fältet "coachNotes" i svaret):
-      - Utöver din analys ska du hålla en kort, persistent minnesanteckning om spelaren (max ca 400 tecken) — spelstil, återkommande styrkor/svagheter, vad ni senast pratade om, vad spelaren jobbar på. Detta sparas och skickas tillbaka till dig nästa gång, så nästa samtal kan bygga vidare i stället för att börja om.
-      - Skriv om HELA anteckningen varje gång (inte bara det nya) — slå ihop det du redan visste med det du lärt dig nu. Var kortfattad, bara varaktigt relevanta fakta, inga engångsdetaljer om just denna fråga.
+      MINNE OM SPELAREN (fältet "coachTimeline" i svaret):
+      - Du får spelarens tidslinje: en lista med daterade poster om vad du observerat över tid (spelstil, återkommande styrkor/svagheter, vad spelaren jobbat på, vad ni pratat om). Det är så du "känner igen" spelaren mellan samtal.
+      - Lägg till EN NY post (med dagens datum, ${today}) bara om du lärt dig något varaktigt nytt i det här samtalet — inte vid varje litet svar. Om inget nytt tillkommit: returnera listan oförändrad.
+      - Listan får ALDRIG innehålla fler än 8 poster. Är den redan full när du vill lägga till en ny: slå ihop de två minst relevanta/äldsta posterna till en, så det finns plats. Radera aldrig hela historiken.
+      - Varje post: max ~150 tecken, bara varaktigt relevanta fakta — inga engångsdetaljer om just dagens fråga.
   `;
   // Använd stabila API:t och ladda in "personligheten" (systemInstruction) direkt i modellen!
   // JSON-schemat tvingar fram två separata fält i samma anrop — svaret till
-  // spelaren och den uppdaterade minnesanteckningen — så vi slipper ett extra
+  // spelaren och den uppdaterade tidslinjen — så vi slipper ett extra
   // (och dubbelt så dyrt) modellanrop bara för att uppdatera minnet.
   const generativeModel = vertex_ai.getGenerativeModel({
     model: modelName,
@@ -332,7 +345,10 @@ exports.askCoach = functions
       // formatterad coach-analys behöver inte flerstegsresonemang, och utan
       // gränsen kan tänkandet annars äta hela maxOutputTokens och klippa av
       // svaret mitt i en mening (det som hände innan denna ändring).
-      maxOutputTokens: plan === 'elite' ? 4096 : 2560,
+      // Höjt ytterligare en gång: tidslinjen (upp till 8 daterade poster)
+      // är större än den gamla enkeltextens minnesfält, så svaret behöver
+      // mer marginal än tidigare för att inte riskera samma avklippning.
+      maxOutputTokens: plan === 'elite' ? 4096 : 3072,
       temperature: 0.4,
       thinkingConfig: plan === 'elite' ? { thinkingBudget: 1024 } : { thinkingBudget: 0 },
       responseMimeType: 'application/json',
@@ -340,9 +356,20 @@ exports.askCoach = functions
         type: SchemaType.OBJECT,
         properties: {
           analysis: { type: SchemaType.STRING, description: 'Svaret till spelaren, enligt formateringsinstruktionerna.' },
-          coachNotes: { type: SchemaType.STRING, description: 'Den fullständiga, uppdaterade minnesanteckningen om spelaren.' },
+          coachTimeline: {
+            type: SchemaType.ARRAY,
+            description: 'Den fullständiga, uppdaterade tidslinjen om spelaren — max 8 poster.',
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                date: { type: SchemaType.STRING, description: 'YYYY-MM-DD' },
+                note: { type: SchemaType.STRING, description: 'Kort observation, max ca 150 tecken.' },
+              },
+              required: ['date', 'note'],
+            },
+          },
         },
-        required: ['analysis', 'coachNotes'],
+        required: ['analysis', 'coachTimeline'],
       },
     },
   });
@@ -356,7 +383,7 @@ exports.askCoach = functions
       - Säsongsöversikt (alla registrerade matcher): ${JSON.stringify(playerStats.season || {})}
       - Poäng denna match: ${playerStats.totals?.actionsPoints ?? 0}
       - Totalt saldo (kan inkludera överfört värde från tidigare matcher): ${playerStats.totals?.total ?? 0}
-      - Tidigare anteckningar om spelaren: ${existingNotes || '(inga ännu — första samtalet)'}
+      - Tidigare tidslinje om spelaren: ${existingTimeline.length > 0 ? JSON.stringify(existingTimeline) : '(ingen ännu — första samtalet med den här spelaren)'}
 
       Spelarens fråga: "${question || 'Ge en analys baserat på min statistik.'}"
     `;
@@ -409,11 +436,20 @@ exports.askCoach = functions
 
     const rawText = candidate.content.parts[0].text;
     let analysis = rawText;
-    let coachNotes = null;
+    let coachTimeline = null;
     try {
       const parsed = JSON.parse(rawText);
       analysis = parsed.analysis || rawText;
-      coachNotes = typeof parsed.coachNotes === 'string' ? parsed.coachNotes.slice(0, 800) : null;
+      if (Array.isArray(parsed.coachTimeline)) {
+        // Server-sidan gräns oavsett vad modellen faktiskt returnerade —
+        // instruktionen om max 8 poster är bara en instruktion, inte en
+        // garanti. Utan detta kan fältet växa obegränsat om modellen
+        // struntar i sammanslagningsregeln.
+        coachTimeline = parsed.coachTimeline
+          .filter((e) => e && typeof e.date === 'string' && typeof e.note === 'string')
+          .map((e) => ({ date: e.date.slice(0, 20), note: e.note.slice(0, 200) }))
+          .slice(-8);
+      }
     } catch (e) {
       // JSON-läget kan i sällsynta fall ge ogiltig JSON (t.ex. vid avklippt
       // svar). Då visar vi ändå rådatan för spelaren i stället för att
@@ -421,11 +457,14 @@ exports.askCoach = functions
       console.warn(`askCoach: kunde inte tolka JSON-svaret för ${userId}: ${e.message}`);
     }
 
-    if (playerRef && coachNotes) {
+    if (playerRef && coachTimeline) {
       // Bäst-ansträngning: minnet får inte blockera själva svaret till
-      // spelaren om det här skulle strula.
-      await playerRef.set({ coachNotes }, { merge: true }).catch((e) =>
-        console.warn(`askCoach: kunde inte spara coachNotes för ${userId}/${playerName}: ${e.message}`)
+      // spelaren om det här skulle strula. coachNotes (gamla strängfältet)
+      // raderas medvetet inte — coachTimeline-läsningen ovan migrerar in
+      // det vid behov, men vi rör inte bort det här ifall något annat
+      // skulle läsa det.
+      await playerRef.set({ coachTimeline }, { merge: true }).catch((e) =>
+        console.warn(`askCoach: kunde inte spara coachTimeline för ${userId}/${playerName}: ${e.message}`)
       );
     }
 
