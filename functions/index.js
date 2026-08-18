@@ -220,7 +220,19 @@ const getOrCreateCustomer = async (userId, email) => {
   const userData = userDoc.data();
 
   if (userData && userData.stripeCustomerId) {
-    return userData.stripeCustomerId;
+    // Ett sparat ID kan vara skapat under en tidigare/annan Stripe-nyckel
+    // (t.ex. den felaktiga mk_-nyckeln som fixades tidigare, eller testläge)
+    // och existerar då inte under dagens skarpa nyckel. Utan den här
+    // kontrollen fick de kontona ett odiagnostiserbart 500-fel för varje
+    // köpförsök, permanent — self-healing här löser det utan manuell
+    // migrering av gamla konton.
+    try {
+      await stripeInstance.customers.retrieve(userData.stripeCustomerId);
+      return userData.stripeCustomerId;
+    } catch (err) {
+      if (err.code !== 'resource_missing') throw err;
+      console.warn(`Stripe-kund ${userData.stripeCustomerId} finns inte längre för ${userId} — skapar en ny.`);
+    }
   }
 
   console.log(`Creating new Stripe customer for: ${email}`);
@@ -1061,6 +1073,56 @@ exports.runWeeklyDigestNow = functions
       res.json(result);
     } catch (err) {
       console.error('runWeeklyDigestNow misslyckades:', err);
+      res.status(500).json({ error: 'Failed', message: err.message });
+    }
+  });
+
+// TILLFÄLLIG: engångsgranskning av datastrukturen på befintliga konton
+// efter dagens ändringar (kreditdelning, coachTimeline, playerEmail).
+// Räknar bara upp — läser aldrig ut namn, e-post eller annan personlig
+// data i svaret. Samma token som digest-testet, ingen ny hemlighet.
+// Ta bort den här funktionen när granskningen är klar.
+exports.auditDataStructureNow = functions
+  .runWith({ secrets: [digestTestToken], timeoutSeconds: 300 })
+  .https.onRequest(async (req, res) => {
+    if (req.get('x-digest-token') !== digestTestToken.value()) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    try {
+      const usersSnap = await usersRef.get();
+
+      const report = {
+        totalUsers: usersSnap.size,
+        usersMissingPurchasedCreditsField: 0, // ok — koden defaultar till 0 överallt
+        usersMissingAiCreditsField: 0,        // ok — sätts vid första askCoach-anropet
+        totalPlayers: 0,
+        playersWithOldCoachNotesOnly: 0,      // migreras automatiskt vid nästa askCoach
+        playersWithNewCoachTimeline: 0,
+        playersWithNoMemoryYet: 0,            // aldrig frågat AI:n om denna spelare än
+        playersWithEmail: 0,
+      };
+
+      for (const userDoc of usersSnap.docs) {
+        const u = userDoc.data();
+        if (u.purchasedCredits === undefined) report.usersMissingPurchasedCreditsField++;
+        if (u.aiCredits === undefined) report.usersMissingAiCreditsField++;
+
+        const playersSnap = await userDoc.ref.collection('players').get();
+        for (const p of playersSnap.docs) {
+          report.totalPlayers++;
+          const pd = p.data();
+          if (Array.isArray(pd.coachTimeline)) report.playersWithNewCoachTimeline++;
+          else if (pd.coachNotes) report.playersWithOldCoachNotesOnly++;
+          else report.playersWithNoMemoryYet++;
+          if (pd.email) report.playersWithEmail++;
+        }
+      }
+
+      res.json(report);
+    } catch (err) {
+      console.error('auditDataStructureNow misslyckades:', err);
       res.status(500).json({ error: 'Failed', message: err.message });
     }
   });
