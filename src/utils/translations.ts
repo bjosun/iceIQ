@@ -243,11 +243,16 @@ export const translations = {
       buyCredits: "Buy credits",
       buyingCredits: "Opening checkout…",
       lowCreditsWarning: "Almost out of credits",
-      buyCreditsInstead: "Or buy credits instead"
+      buyCreditsInstead: "Or buy credits instead",
+      shareWithPlayer: "Share with player",
+      sharing: "Sending…",
+      sharedWithPlayer: "Sent to the player's email",
+      shareError: "Could not send the email right now"
     },
 
     // Player & Match Logic
     playerName: "Player's Name",
+    playerEmail: "Player's email",
     select: "Select",
     team: "Team",
     gameDate: "Game Date",
@@ -599,11 +604,16 @@ export const translations = {
       buyCredits: "Köp krediter",
       buyingCredits: "Öppnar kassan…",
       lowCreditsWarning: "Nästan slut på krediter",
-      buyCreditsInstead: "Eller köp krediter istället"
+      buyCreditsInstead: "Eller köp krediter istället",
+      shareWithPlayer: "Dela med spelaren",
+      sharing: "Skickar…",
+      sharedWithPlayer: "Skickat till spelarens e-post",
+      shareError: "Kunde inte skicka mejlet just nu"
     },
 
     // Player & Match Logic
     playerName: "Spelarens Namn",
+    playerEmail: "Spelarens e-post",
     select: "Välj",
     team: "Lag",
     gameDate: "Matchdatum",

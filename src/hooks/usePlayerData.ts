@@ -19,7 +19,8 @@ interface Player {
   name: string;
   lastGameDate?: string;
   gameCount?: number;
-  currentBalance?: number; 
+  currentBalance?: number;
+  email?: string;
 }
 
 export function usePlayerData() {
@@ -169,6 +170,19 @@ export function usePlayerData() {
     }
   }, [user]);
 
+  // 5b. UPPDATERA SPELARENS E-POST (för att dela AI-coachens svar med spelaren)
+  const updatePlayerEmail = useCallback(async (playerName: string, email: string) => {
+    if (!user || !playerName) return;
+    try {
+      await firestore.savePlayer(user.uid, playerName, {
+        name: playerName,
+        email: email.trim()
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update email');
+    }
+  }, [user]);
+
   // 6. TOTAL STÄDNING (GDPR / RADERA KONTO)
   const deleteUserData = useCallback(async () => {
     if (!user) return;
@@ -245,6 +259,7 @@ export function usePlayerData() {
     deletePlayer,
     getPlayerStats,
     updatePlayerBalance,
+    updatePlayerEmail,
     deleteUserData,
     loading,
     error,

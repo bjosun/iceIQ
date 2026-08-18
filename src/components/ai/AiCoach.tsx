@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
+import toast from 'react-hot-toast';
 import { functions } from '../../services/firebase';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAiCredits } from '../../hooks/useAiCredits';
 import { useCoachChats, CoachChat, CoachChatMessage } from '../../hooks/useCoachChats';
-import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2, ShoppingCart } from 'lucide-react';
+import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2, ShoppingCart, Mail } from 'lucide-react';
 
 interface AiCoachProps {
   playerStats: any;
+  playerEmail?: string;
   onUpgrade: () => void;
 }
 
@@ -22,11 +24,12 @@ const LOADING_STEP_MS = 2500;
 // återuppstår vid nästa besök.
 const ACTIVE_CHAT_KEY = 'iceiq-active-coach-chat';
 
-export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
+export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoachProps) {
   const { t, language } = useLanguage();
   const { isPremium, isElite, upgradeSubscription } = useSubscription();
   const { credits: displayCredits, monthlyCredits, purchasedCredits } = useAiCredits();
   const { listChats, saveChat, deleteChat } = useCoachChats();
+  const [sharingIndex, setSharingIndex] = useState<number | null>(null);
 
   const [messages, setMessages] = useState<CoachChatMessage[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
@@ -56,6 +59,19 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
   };
   const lowOnCredits = displayCredits <= 1;
   const playerName: string = playerStats?.player || '';
+
+  const handleShareWithPlayer = async (messageIndex: number, analysisText: string) => {
+    setSharingIndex(messageIndex);
+    try {
+      const shareAnalysisWithPlayer = httpsCallable(functions, 'shareAnalysisWithPlayer');
+      await shareAnalysisWithPlayer({ playerName, analysis: analysisText, lang: language });
+      toast.success(t('ai.sharedWithPlayer'));
+    } catch (err: any) {
+      toast.error(err?.message || t('ai.shareError'));
+    } finally {
+      setSharingIndex(null);
+    }
+  };
 
   const quickQuestions = [t('ai.quick1'), t('ai.quick2'), t('ai.quick3')];
   const loadingSteps = [t('ai.loading1'), t('ai.loading2'), t('ai.loading3')];
@@ -399,7 +415,7 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
         )}
 
         {messages.map((msg, index) => (
-          <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div key={index} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
             <div
               className={`max-w-[85%] rounded-2xl p-4 text-sm whitespace-pre-wrap leading-relaxed shadow-sm ${
                 msg.role === 'user'
@@ -409,6 +425,18 @@ export default function AiCoach({ playerStats, onUpgrade }: AiCoachProps) {
             >
               {msg.text}
             </div>
+            {/* Bara synlig när spelaren har en sparad e-post — annars finns
+                inget att skicka till, se PlayerForm. */}
+            {msg.role === 'ai' && playerEmail && (
+              <button
+                onClick={() => handleShareWithPlayer(index, msg.text)}
+                disabled={sharingIndex === index}
+                className="mt-1.5 inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-300 text-xs disabled:opacity-60 transition-colors"
+              >
+                <Mail size={12} />
+                {sharingIndex === index ? t('ai.sharing') : t('ai.shareWithPlayer')}
+              </button>
+            )}
           </div>
         ))}
 

@@ -94,7 +94,7 @@ export default function Dashboard() {
 
   // Hooks för data
   const { currentTemplate, currentTemplateId } = useTemplates();
-  const { getPlayers, getPlayerHistory, saveGame, updatePlayerBalance } = usePlayerData();
+  const { getPlayers, getPlayerHistory, saveGame, updatePlayerBalance, updatePlayerEmail } = usePlayerData();
   
   // State för modaler
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -301,12 +301,14 @@ export default function Dashboard() {
     const syncPlayerBalance = async () => {
       if (!selectedPlayerName || !user) {
         setCarriedOverBalance(0);
+        setPlayerEmail('');
         return;
       }
       try {
-        const playerData = await getPlayers(); 
+        const playerData = await getPlayers();
         const currentPlayer = playerData.find(p => p.name === selectedPlayerName);
         setCarriedOverBalance(currentPlayer?.currentBalance ?? 0);
+        setPlayerEmail(currentPlayer?.email ?? '');
       } catch (error) { setCarriedOverBalance(0); }
     };
     syncPlayerBalance();
@@ -587,6 +589,7 @@ export default function Dashboard() {
             onEditTemplate={() => setShowTemplateEditor(true)}
             playerEmail={playerEmail}
             onPlayerEmailChange={setPlayerEmail}
+            onPlayerEmailBlur={(email) => selectedPlayerName && updatePlayerEmail(selectedPlayerName, email)}
           />
           
           {/* The Stats Grid (Buttons) */}
@@ -632,11 +635,12 @@ export default function Dashboard() {
           {/* AI COACH INTEGRATION */}
           {selectedPlayerName && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-               <AiCoach 
+               <AiCoach
                  playerStats={{
                     ...currentSessionStats,
                     history: playerHistory // Skickar med historiken för bättre analys
-                 }} 
+                 }}
+                 playerEmail={playerEmail}
                  onUpgrade={() => setShowSubscriptionModal(true)}
                />
             </div>

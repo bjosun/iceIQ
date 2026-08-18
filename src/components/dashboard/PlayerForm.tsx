@@ -23,6 +23,7 @@ interface PlayerFormProps {
   onTeamNameChange: (name: string) => void;
   playerEmail: string;
   onPlayerEmailChange: (email: string) => void;
+  onPlayerEmailBlur?: (email: string) => void;
   gameDate: string;
   onGameDateChange: (date: string) => void;
   onOpenPlayerSelect: () => void;
@@ -38,6 +39,7 @@ export default function PlayerForm({
   onTeamNameChange,
   playerEmail,
   onPlayerEmailChange,
+  onPlayerEmailBlur,
   gameDate,
   onGameDateChange,
   onOpenPlayerSelect,
@@ -97,6 +99,7 @@ export default function PlayerForm({
               type="email"
               value={playerEmail}
               onChange={(e) => onPlayerEmailChange(e.target.value)}
+              onBlur={(e) => onPlayerEmailBlur?.(e.target.value)}
               placeholder="Optional"
               icon={Mail}
             />

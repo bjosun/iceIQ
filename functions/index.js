@@ -140,6 +140,45 @@ const buildWelcomeEmail = (lang, displayName) => {
   return { subject, html };
 };
 
+// AI-genererad text är fortfarande extern text som hamnar rakt i ett
+// HTML-mejl — utan detta skulle t.ex. ett bokstavligt "<" i svaret
+// (matematiska jämförelser förekommer i analyser) kunna bryta layouten.
+const escapeHtml = (str) => String(str)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;');
+
+const buildPlayerAnalysisEmail = (lang, playerName, analysisText) => {
+  const en = lang === 'en';
+  const subject = en ? `A note from your Ice IQ Coach` : `En hälsning från din Ice IQ-coach`;
+
+  const html = `
+    <div style="font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
+      <h2 style="margin:24px 0 4px;">Ice <span style="color:#0891b2;">IQ</span></h2>
+      <p style="margin:0 0 20px;color:#6b7280;">
+        ${en ? `Hi ${escapeHtml(playerName)},` : `Hej ${escapeHtml(playerName)},`}
+      </p>
+      <p style="margin:0 0 20px;font-size:15px;line-height:1.6;">
+        ${en
+          ? "Your coach wanted to share this with you:"
+          : "Din coach ville dela det här med dig:"}
+      </p>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;margin-bottom:24px;font-size:15px;line-height:1.7;white-space:pre-wrap;">${escapeHtml(analysisText)}</div>
+      <p style="margin:28px 0;">
+        <a href="${APP_URL}" style="background:#0891b2;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:bold;">
+          ${en ? "Open Ice IQ" : "Öppna Ice IQ"}
+        </a>
+      </p>
+      <p style="color:#9ca3af;font-size:12px;margin-top:24px;">
+        ${en
+          ? "Ice IQ is part of SquareVerse Group, which is why this email arrives from squareversegroup.com."
+          : "Ice IQ är en del av SquareVerse Group, därför kommer det här mejlet från squareversegroup.com."}
+      </p>
+    </div>`;
+
+  return { subject, html };
+};
+
 // --- INITIERA VERTEX AI (GEMINI) ---
 // EU-region: spelardata (namn + statistik för minderåriga) ska inte
 // lämna EU för analys. europe-west1 (Belgien) stödjer Gemini 2.5
@@ -484,6 +523,52 @@ exports.askCoach = functions
     throw new functions.https.HttpsError('internal', `Coachen kunde inte svara just nu: ${error.message}`);
   }
 });
+
+// Mejlar ett redan genererat coach-svar till spelaren. Ingen ny AI-fråga
+// görs här — texten kommer från klienten (den redan visade den efter att
+// ha betalat en kredit för den), så det här kostar inget extra.
+//
+// Medvetet begränsad till exakt det: dela text via mejl. Den (mycket
+// större) idén om att låta spelaren själv chatta med coachen live är ett
+// separat, framtida beslut om auktoriseringsfri åtkomst — den bygger
+// vidare på players/{playerName}.email precis som denna funktion redan
+// gör, så det kräver ingen omskrivning här när/om den byggs.
+exports.shareAnalysisWithPlayer = functions
+  .runWith({ secrets: [resendApiKey] })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Du måste vara inloggad.');
+    }
+
+    const { playerName, analysis, lang } = data;
+    if (!playerName || typeof playerName !== 'string') {
+      throw new functions.https.HttpsError('invalid-argument', 'Spelarnamn saknas.');
+    }
+    if (!analysis || typeof analysis !== 'string') {
+      throw new functions.https.HttpsError('invalid-argument', 'Ingen analys att dela.');
+    }
+
+    const userId = context.auth.uid;
+    const playerRef = getUsersCollection().doc(userId).collection('players').doc(playerName);
+    const playerDoc = await playerRef.get();
+    const email = playerDoc.exists ? playerDoc.data().email : null;
+
+    if (!email) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Spelaren har ingen sparad e-postadress. Lägg till en under spelarens uppgifter först.'
+      );
+    }
+
+    try {
+      const { subject, html } = buildPlayerAnalysisEmail(lang || 'en', playerName, analysis.slice(0, 8000));
+      await sendEmail(email, subject, html, SUPPORT_REPLY_TO);
+      return { success: true };
+    } catch (error) {
+      console.error(`shareAnalysisWithPlayer misslyckades för ${userId}/${playerName}:`, error);
+      throw new functions.https.HttpsError('internal', 'Kunde inte skicka mejlet just nu.');
+    }
+  });
 
 
 // ==========================================
