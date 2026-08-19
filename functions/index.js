@@ -227,8 +227,12 @@ const getOrCreateCustomer = async (userId, email) => {
     // köpförsök, permanent — self-healing här löser det utan manuell
     // migrering av gamla konton.
     try {
-      await stripeInstance.customers.retrieve(userData.stripeCustomerId);
-      return userData.stripeCustomerId;
+      const customer = await stripeInstance.customers.retrieve(userData.stripeCustomerId);
+      // Stripe kastar INTE resource_missing för en raderad kund — retrieve
+      // lyckas och returnerar { deleted: true }. Ett rent try/catch missar
+      // därför precis det fallet: kunden existerade men raderades sedan.
+      if (!customer.deleted) return userData.stripeCustomerId;
+      console.warn(`Stripe-kund ${userData.stripeCustomerId} är raderad för ${userId} — skapar en ny.`);
     } catch (err) {
       if (err.code !== 'resource_missing') throw err;
       console.warn(`Stripe-kund ${userData.stripeCustomerId} finns inte längre för ${userId} — skapar en ny.`);
