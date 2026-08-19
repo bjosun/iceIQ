@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore' // LÄGG TILL DESSA
 import { auth, db } from '../services/firebase' // SE TILL ATT db ÄR IMPORTERAD HÄR
+import { consumeUtmParams } from '../utils/helpers'
 
 interface AuthContextType {
   user: User | null
@@ -34,6 +35,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!userDoc.exists()) {
         // 1. HELT NY ANVÄNDARE (eller föräldralös)
+        // consumeUtmParams() töms samtidigt (engångsläsning) — täcker både
+        // e-post- och Google-signup, eftersom båda går via den här funktionen.
+        const acquisition = consumeUtmParams();
         await setDoc(userRef, {
           uid: user.uid,
           email: user.email,
@@ -44,7 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           subscriptionStatus: 'inactive',
           aiCredits: 3,
           hasReceivedWelcomeCredits: true, // <-- Ny flagga så vi vet att de fått sin gåva
-          role: 'manager' 
+          role: 'manager',
+          ...(acquisition && { acquisition })
         });
         console.log("Ny användare! Databasdokument skapat med 3 krediter.");
       } else {

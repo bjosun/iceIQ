@@ -19,6 +19,45 @@ export function formatCurrency(amount: number, currency: 'SEK' | 'USD' = 'SEK'):
   }).format(amount);
 }
 
+const UTM_STORAGE_KEY = 'iceiq-utm';
+const UTM_PARAMS = ['source', 'medium', 'campaign', 'term', 'content'] as const;
+
+// Läs in UTM-parametrar från URL:en och spara dem lokalt, så källan
+// finns kvar när kontot väl skapas (kan vara flera klick/sidor senare).
+// Första-touch: skriver bara om inget redan sparats, så en retargeting-
+// annons inte tar äran från kampanjen som faktiskt drog in besökaren.
+// localStorage, inte sessionStorage — attributionen ska överleva att
+// fliken stängs, inte bara det pågående besöket (samma val som språket,
+// se AuthContext.tsx).
+export function captureUtmParams(search: string = window.location.search): void {
+  if (localStorage.getItem(UTM_STORAGE_KEY)) return;
+
+  const params = new URLSearchParams(search);
+  const source = params.get('utm_source');
+  if (!source) return;
+
+  const utm: Record<string, string> = { source };
+  UTM_PARAMS.slice(1).forEach((key) => {
+    const value = params.get(`utm_${key}`);
+    if (value) utm[key] = value;
+  });
+
+  localStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(utm));
+}
+
+// Läses vid kontoskapande (AuthContext) och tas sedan bort — attributionen
+// ska bara gälla det EN gången ett konto faktiskt skapas av den besökaren.
+export function consumeUtmParams(): Record<string, string> | null {
+  const raw = localStorage.getItem(UTM_STORAGE_KEY);
+  if (!raw) return null;
+  localStorage.removeItem(UTM_STORAGE_KEY);
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
