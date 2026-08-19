@@ -1091,7 +1091,7 @@ exports.auditDataStructureNow = functions
     }
 
     try {
-      const usersSnap = await usersRef.get();
+      const usersSnap = await getUsersCollection().get();
 
       const report = {
         totalUsers: usersSnap.size,
