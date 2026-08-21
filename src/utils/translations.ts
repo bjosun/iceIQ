@@ -81,6 +81,10 @@ export const translations = {
         title: "Team Management",
         desc: "Manage multiple players and teams with ease."
       },
+      breathing: {
+        title: "Breathing Exercise",
+        desc: "A two-minute routine to find calm before a faceoff or a big moment. Free for everyone."
+      },
       security: {
         title: "Data Security",
         desc: "Your data is encrypted and secure. We never share your information."
@@ -487,6 +491,10 @@ export const translations = {
       teams: {
         title: "Laghantering",
         desc: "Hantera flera spelare och lag med enkelhet."
+      },
+      breathing: {
+        title: "Andningsövning",
+        desc: "En tvåminutersrutin för att hitta lugnet före nedsläpp eller ett stort ögonblick. Gratis för alla."
       },
       security: {
         title: "Datasäkerhet",

@@ -13,6 +13,7 @@ import {
   CheckCircle,
   ArrowRight,
   BrainCircuit,
+  Wind,
   Sparkles,
   Bot,
   Crown,
@@ -62,6 +63,11 @@ export default function Home() {
       icon: <Users className="text-cyan-400" size={24} />,
       title: t('features.teams.title'),
       description: t('features.teams.desc')
+    },
+    {
+      icon: <Wind className="text-cyan-400" size={24} />,
+      title: t('features.breathing.title'),
+      description: t('features.breathing.desc')
     }
   ];
 
@@ -177,7 +183,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div key={index} className="bg-gray-800/50 rounded-2xl p-6 hover:bg-gray-800 transition-colors border border-gray-700/50 group">
                 <div className="mb-4 p-3 bg-gray-900 w-fit rounded-xl group-hover:scale-110 transition-transform duration-300">
