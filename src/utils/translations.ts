@@ -269,6 +269,33 @@ export const translations = {
       insightCardTitle: "Coach insight"
     },
 
+    // Breathing / mental routines
+    breathing: {
+      entry: "Breathing exercise",
+      modalTitle: "Breathing",
+      modalDesc: "Two minutes before a faceoff, or on the way home. Nothing to read — just follow the shape.",
+      patternLabel: "Breathing pattern",
+      pattern: {
+        calm: "Calm 4–6",
+        box: "Box 4-4-4-4"
+      },
+      phase: {
+        in: "Breathe in",
+        hold: "Hold",
+        out: "Breathe out",
+        holdOut: "Hold"
+      },
+      ready: "Ready",
+      start: "Start",
+      pause: "Pause",
+      reset: "Start over",
+      cycles: "{count} rounds done",
+      hint: {
+        calm: "Longer out than in — that is what settles the pulse.",
+        box: "Follow the dot around the square. Four seconds a side."
+      }
+    },
+
     // Player & Match Logic
     playerName: "Player's Name",
     playerEmail: "Player's email",
@@ -646,6 +673,33 @@ export const translations = {
       insightShareTitle: "Dela coach-insikt",
       insightShareDesc: "Coachens en-radare som bild — inget saldo, ingen e-post, bara observationen.",
       insightCardTitle: "Coach-insikt"
+    },
+
+    // Andning / mentala rutiner
+    breathing: {
+      entry: "Andningsövning",
+      modalTitle: "Andning",
+      modalDesc: "Två minuter före nedsläpp, eller på vägen hem. Inget att läsa — följ bara formen.",
+      patternLabel: "Andningsmönster",
+      pattern: {
+        calm: "Lugn 4–6",
+        box: "Box 4-4-4-4"
+      },
+      phase: {
+        in: "Andas in",
+        hold: "Håll",
+        out: "Andas ut",
+        holdOut: "Håll"
+      },
+      ready: "Redo",
+      start: "Starta",
+      pause: "Pausa",
+      reset: "Börja om",
+      cycles: "{count} varv klara",
+      hint: {
+        calm: "Längre ut än in — det är det som lugnar pulsen.",
+        box: "Följ punkten runt kvadraten. Fyra sekunder per sida."
+      }
     },
 
     // Player & Match Logic

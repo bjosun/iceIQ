@@ -6,8 +6,10 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAiCredits } from '../../hooks/useAiCredits';
 import { useCoachChats, CoachChat, CoachChatMessage } from '../../hooks/useCoachChats';
-import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2, ShoppingCart, Mail, Share2 } from 'lucide-react';
+import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2, ShoppingCart, Mail, Share2, Wind } from 'lucide-react';
 import ShareImageModal from '../modals/ShareImageModal';
+import Modal from '../ui/Modal';
+import BreathingExercise from '../breathing/BreathingExercise';
 import { renderInsightCard } from '../../utils/insightCard';
 import { ReportFormat } from '../../utils/shareCanvas';
 
@@ -45,6 +47,15 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
   const [showUpgradeCta, setShowUpgradeCta] = useState(false);
   const [buyingCredits, setBuyingCredits] = useState(false);
   const [insightToShare, setInsightToShare] = useState<string | null>(null);
+  const [showBreathing, setShowBreathing] = useState(false);
+
+  // Andningsövningen är medvetet öppen för alla. Den kostar ingenting att
+  // köra — helt klientsidig, inga API-anrop, inga krediter — och att låsa
+  // ett lugnande verktyg före ett nedsläpp vore fel läge att ta betalt i.
+  // Betalläget hör hemma i rutinbiblioteket, coach-kopplingen och streaks,
+  // som faktiskt kostar att bygga och driva. Ska den här någon gång bakom
+  // paywallen räcker det med en isPremium-koll här.
+  const openBreathing = () => setShowBreathing(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -311,6 +322,13 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={openBreathing}
+            title={t('breathing.entry')}
+            className="p-2 rounded-full border border-white/5 text-gray-400 hover:text-white bg-black/40 transition-colors"
+          >
+            <Wind size={14} />
+          </button>
+          <button
             onClick={handleOpenHistory}
             title={t('ai.history')}
             className={`p-2 rounded-full border transition-colors ${
@@ -558,6 +576,18 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
           })
         }
       />
+
+      <Modal
+        isOpen={showBreathing}
+        onClose={() => setShowBreathing(false)}
+        title={t('breathing.modalTitle')}
+        description={t('breathing.modalDesc')}
+        size="sm"
+      >
+        <div className="py-2">
+          <BreathingExercise />
+        </div>
+      </Modal>
     </div>
   );
 }
