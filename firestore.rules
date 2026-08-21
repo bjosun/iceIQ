@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Matcha själva dokumentet för användaren (Här sparas customTemplates)
+    match /artifacts/{appId}/users/{userId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // Allt som styr betalning eller AI-tillgång — bara servern (Cloud
+      // Functions, via admin-SDK: askCoach, Stripe-webhooken,
+      // refillFreeCreditsMonthly) får sätta eller ändra de här. Utan detta
+      // kan en inloggad användare ge sig själv Elite gratis genom att
+      // skriva subscriptionStatus/subscriptionPlan direkt på sitt eget
+      // dokument, eller sätta aiCredits till ett valfritt tal — askCoach
+      // litar på fälten precis som de står i dokumentet (se
+      // functions/index.js).
+      function protectedFields() {
+        return ['subscriptionPlan', 'subscriptionStatus', 'subscriptionInterval',
+                'subscriptionEnd', 'aiCredits', 'purchasedCredits', 'role',
+                'hasReceivedWelcomeCredits', 'stripeCustomerId'];
+      }
+
+      allow get: if isOwner();
+
+      // Kontot skapas fortfarande av klienten (AuthContext.tsx, ingen
+      // auth-trigger för det idag) — men bara med exakt de startvärden
+      // varje nytt konto ska ha, så en manipulerad signup inte kan sätta
+      // t.ex. subscriptionStatus: 'active' redan vid skapandet.
+      allow create: if isOwner()
+        && request.resource.data.subscriptionPlan == 'free'
+        && request.resource.data.subscriptionStatus == 'inactive'
+        && request.resource.data.aiCredits == 3
+        && request.resource.data.role == 'manager'
+        && !('purchasedCredits' in request.resource.data);
+
+      // Övriga fält (customTemplates, carriedOverBonus, emailDigest,
+      // language, displayName, m.fl.) förblir fritt skrivbara för ägaren —
+      // det är bara de skyddade fälten ovan som aldrig får ändras här.
+      allow update: if isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields()) == false;
+
+      allow delete: if isOwner();
+
+      // Matcha alla undermappar (players, games, coachChats, etc.)
+      match /{document=**} {
+        allow read, write: if isOwner();
+      }
+    }
+  }
+}

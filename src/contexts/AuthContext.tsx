@@ -9,7 +9,7 @@ import {
   onAuthStateChanged,
   deleteUser
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore' // LÄGG TILL DESSA
+import { doc, setDoc, getDoc } from 'firebase/firestore' // LÄGG TILL DESSA
 import { auth, db } from '../services/firebase' // SE TILL ATT db ÄR IMPORTERAD HÄR
 import { consumeUtmParams } from '../utils/helpers'
 
@@ -52,19 +52,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...(acquisition && { acquisition })
         });
         console.log("Ny användare! Databasdokument skapat med 3 krediter.");
-      } else {
-        // 2. EXISTERANDE ANVÄNDARE
-        const data = userDoc.data();
-        
-        // Om de saknar aiCredits helt, eller om de har 0 men aldrig fått "välkomstgåvan"
-        if (data.aiCredits === undefined || (data.aiCredits === 0 && !data.hasReceivedWelcomeCredits)) {
-          await updateDoc(userRef, {
-            aiCredits: 3,
-            hasReceivedWelcomeCredits: true
-          });
-          console.log("Uppdaterade ett gammalt testkonto med 3 välkomstkrediter!");
-        }
       }
+      // 2. EXISTERANDE ANVÄNDARE: inget att göra här längre. aiCredits
+      // (liksom subscriptionPlan/Status m.fl.) är sedan firestore.rules
+      // server-only — klienten får inte längre skriva dem. Ett gammalt
+      // konto utan aiCredits självläker i stället i askCoach, första
+      // gången det kontot faktiskt frågar coachen (se functions/index.js).
     } catch (error) {
       console.error("Kunde inte spara/uppdatera användare i databasen:", error);
     }
