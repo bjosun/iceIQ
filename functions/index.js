@@ -15,6 +15,9 @@ const resendApiKey = defineSecret('RESEND_API_KEY');
 // Skyddar den tillfälliga testtriggern för veckomejlet (runWeeklyDigestNow).
 // Tas bort tillsammans med den funktionen när digesten är verifierad.
 const digestTestToken = defineSecret('DIGEST_TEST_TOKEN');
+// Skyddar acquisitionReport (permanent rapportverktyg) — egen hemlighet så
+// den inte upphör att fungera om digestTestToken tas bort senare.
+const reportsToken = defineSecret('REPORTS_TOKEN');
 
 // --- KONFIGURATION ---
 // iceiq.app är den faktiska produktionsdomänen (Firebase Hosting-målet
@@ -1121,6 +1124,63 @@ exports.runWeeklyDigestNow = functions
       res.json(result);
     } catch (err) {
       console.error('runWeeklyDigestNow misslyckades:', err);
+      res.status(500).json({ error: 'Failed', message: err.message });
+    }
+  });
+
+// Permanent rapportverktyg (till skillnad från de tillfälliga test-
+// endpointsen ovan) — svarar på "vilken kanal ger faktiskt betalande
+// kunder", inte bara "hur många registrerade sig". Bara aggregerade
+// siffror i svaret, aldrig namn eller e-post.
+//
+// ?since=YYYY-MM-DD  begränsar till konton skapade från och med det datumet
+exports.acquisitionReport = functions
+  .runWith({ secrets: [reportsToken], timeoutSeconds: 120 })
+  .https.onRequest(async (req, res) => {
+    if (req.get('x-reports-token') !== reportsToken.value()) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    try {
+      const since = typeof req.query.since === 'string' ? req.query.since : null;
+      const usersSnap = await getUsersCollection().get();
+
+      const report = {
+        since: since || null,
+        totalUsers: 0,
+        totalWithAcquisition: 0,
+        totalDirect: 0, // inget utm_source sparat — direkttrafik eller innan spårningen fanns
+        bySource: {},
+        byCampaign: {},
+      };
+
+      const isPaid = (u) => u.subscriptionStatus === 'active' && u.subscriptionPlan !== 'free';
+
+      const bump = (bucket, key, u) => {
+        if (!bucket[key]) bucket[key] = { signups: 0, paid: 0 };
+        bucket[key].signups++;
+        if (isPaid(u)) bucket[key].paid++;
+      };
+
+      for (const userDoc of usersSnap.docs) {
+        const u = userDoc.data();
+        if (since && (!u.createdAt || u.createdAt < since)) continue;
+
+        report.totalUsers++;
+        const source = u.acquisition?.source;
+        if (!source) {
+          report.totalDirect++;
+          continue;
+        }
+        report.totalWithAcquisition++;
+        bump(report.bySource, source, u);
+        if (u.acquisition?.campaign) bump(report.byCampaign, u.acquisition.campaign, u);
+      }
+
+      res.json(report);
+    } catch (err) {
+      console.error('acquisitionReport misslyckades:', err);
       res.status(500).json({ error: 'Failed', message: err.message });
     }
   });
