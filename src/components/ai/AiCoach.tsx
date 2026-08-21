@@ -1,12 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
-import { functions } from '../../services/firebase';
+import { functions, euFunctions } from '../../services/firebase';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAiCredits } from '../../hooks/useAiCredits';
 import { useCoachChats, CoachChat, CoachChatMessage } from '../../hooks/useCoachChats';
-import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2, ShoppingCart, Mail } from 'lucide-react';
+import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2, ShoppingCart, Mail, Share2 } from 'lucide-react';
+import ShareImageModal from '../modals/ShareImageModal';
+import { renderInsightCard } from '../../utils/insightCard';
+import { ReportFormat } from '../../utils/shareCanvas';
 
 interface AiCoachProps {
   playerStats: any;
@@ -41,6 +44,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
   const [error, setError] = useState('');
   const [showUpgradeCta, setShowUpgradeCta] = useState(false);
   const [buyingCredits, setBuyingCredits] = useState(false);
+  const [insightToShare, setInsightToShare] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -146,7 +150,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
     if (specificQuestion) setMessages(baseMessages);
 
     try {
-      const askCoach = httpsCallable(functions, 'askCoach');
+      const askCoach = httpsCallable(euFunctions, 'askCoach');
 
       const result: any = await askCoach({
         playerStats: playerStats,
@@ -157,9 +161,14 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
       });
 
       if (result.data.success) {
+        const highlight = typeof result.data.shareHighlight === 'string'
+          ? result.data.shareHighlight.trim()
+          : '';
         const finalMessages: CoachChatMessage[] = [
           ...baseMessages,
-          { role: 'ai', text: result.data.analysis },
+          // highlight sätts bara när den finns: Firestore avvisar undefined
+          // som fältvärde, och finalMessages sparas rakt av i saveChat.
+          { role: 'ai', text: result.data.analysis, ...(highlight ? { highlight } : {}) },
         ];
         setMessages(finalMessages);
         setInputQuestion('');
@@ -427,16 +436,29 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             </div>
             {/* Bara synlig när spelaren har en sparad e-post — annars finns
                 inget att skicka till, se PlayerForm. */}
-            {msg.role === 'ai' && playerEmail && (
-              <button
-                onClick={() => handleShareWithPlayer(index, msg.text)}
-                disabled={sharingIndex === index}
-                className="mt-1.5 inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-300 text-xs disabled:opacity-60 transition-colors"
-              >
-                <Mail size={12} />
-                {sharingIndex === index ? t('ai.sharing') : t('ai.shareWithPlayer')}
-              </button>
-            )}
+            <div className="flex items-center gap-4 mt-1.5">
+              {msg.role === 'ai' && playerEmail && (
+                <button
+                  onClick={() => handleShareWithPlayer(index, msg.text)}
+                  disabled={sharingIndex === index}
+                  className="inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-300 text-xs disabled:opacity-60 transition-colors"
+                >
+                  <Mail size={12} />
+                  {sharingIndex === index ? t('ai.sharing') : t('ai.shareWithPlayer')}
+                </button>
+              )}
+              {/* Bara när coachen faktiskt hade något sant att lyfta — den
+                  returnerar tom sträng hellre än ett påhittat beröm. */}
+              {msg.role === 'ai' && msg.highlight && (
+                <button
+                  onClick={() => setInsightToShare(msg.highlight!)}
+                  className="inline-flex items-center gap-1.5 text-cyan-500/80 hover:text-cyan-300 text-xs transition-colors"
+                >
+                  <Share2 size={12} />
+                  {t('ai.shareInsight')}
+                </button>
+              )}
+            </div>
           </div>
         ))}
 
@@ -516,6 +538,26 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
            </div>
         </div>
       )}
+
+      <ShareImageModal
+        isOpen={insightToShare !== null}
+        onClose={() => setInsightToShare(null)}
+        title={t('ai.insightShareTitle')}
+        desc={t('ai.insightShareDesc')}
+        fileNameBase={`iceiq-insikt-${(playerName || 'spelare').replace(/\s+/g, '-').toLowerCase()}`}
+        renderKey={insightToShare ?? ''}
+        render={(format: ReportFormat) =>
+          renderInsightCard({
+            playerName,
+            insight: insightToShare ?? '',
+            format,
+            labels: {
+              cardTitle: t('ai.insightCardTitle'),
+              coachName: 'Ice IQ Coach',
+            },
+          })
+        }
+      />
     </div>
   );
 }

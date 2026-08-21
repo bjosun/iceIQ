@@ -29,6 +29,11 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app);
+// askCoach ligger i europe-west1: spelardata om minderåriga behandlas inom EU
+// hela vägen, inte bara i Vertex-anropet. Övriga funktioner (Stripe m.fl.)
+// ligger kvar i us-central1 och använder därför standardinstansen ovan —
+// stripeWebhook har dessutom en URL registrerad hos Stripe som inte får ändras.
+export const euFunctions = getFunctions(app, 'europe-west1');
 export const googleProvider = new GoogleAuthProvider();
 
 // --- HELPERS ---

@@ -18,6 +18,12 @@ import { useAuth } from '../contexts/AuthContext';
 export interface CoachChatMessage {
   role: 'ai' | 'user';
   text: string;
+  /**
+   * Coachens delbara en-radare för det här svaret (se shareHighlight i
+   * askCoach). Utelämnas helt när den saknas — Firestore avvisar
+   * undefined som fältvärde, så den får aldrig sättas till undefined.
+   */
+  highlight?: string;
 }
 
 export interface CoachChat {

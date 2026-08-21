@@ -2,7 +2,7 @@ const functions = require("firebase-functions/v1"); // VIKTIGT: /v1 krävs för 
 const admin = require("firebase-admin");
 const Stripe = require("stripe");
 const { Resend } = require("resend");
-const { VertexAI, SchemaType, FinishReason } = require('@google-cloud/vertexai');
+const { GoogleGenAI, Type, FinishReason } = require('@google/genai');
 const { defineSecret } = require('firebase-functions/params');
 
 admin.initializeApp();
@@ -181,9 +181,15 @@ const buildPlayerAnalysisEmail = (lang, playerName, analysisText) => {
 
 // --- INITIERA VERTEX AI (GEMINI) ---
 // EU-region: spelardata (namn + statistik för minderåriga) ska inte
-// lämna EU för analys. europe-west1 (Belgien) stödjer Gemini 2.5
-// Flash/Pro; byt till 'global' om regionen skulle sakna en modell.
-const vertex_ai = new VertexAI({
+// lämna EU för analys. europe-west1 (Belgien) har Gemini 2.5 Flash/Pro.
+// Kontrollerat 2026-08-20: INGEN Gemini 3-modell finns i någon EU-region
+// (europe-west1/-west4/-north1/-central2 ger bara 2.5). Gemini 3 går bara
+// att nå via location 'global', vilket flyttar behandlingen ut ur EU —
+// därför står vi kvar på 2.5 tills 3-serien landar i europe-west1.
+// Byt alltså INTE till 'global' för att komma åt en nyare modell utan att
+// det är ett medvetet beslut om var barns data behandlas.
+const vertex_ai = new GoogleGenAI({
+  vertexai: true,
   project: PROJECT_ID,
   location: 'europe-west1'
 });
@@ -277,7 +283,17 @@ const deductAiCredit = async (userRef) => {
 // ==========================================
 //  AI COACH FUNCTION (FIXAD & UPPGRADERAD RAM)
 // ==========================================
+// Regionen: funktionen låg tidigare i us-central1 (Firebase-standard) medan
+// Vertex-anropet gick till europe-west1 — spelardatan passerade alltså USA på
+// vägen till en "EU-analys". Sedan 2026-08-21 kör askCoach bara i EU, och
+// klienten anropar den via en egen getFunctions(app, 'europe-west1')-instans
+// (euFunctions i src/services/firebase.ts). Flyttas regionen här måste den
+// ändras där också — annars får klienten 404 från fel region.
+// Övriga funktioner ligger kvar i us-central1; stripeWebhook har dessutom en
+// URL registrerad hos Stripe som inte får ändras.
+// Ordningen spelar roll: .region() måste komma före .runWith().
 exports.askCoach = functions
+  .region('europe-west1')
   .runWith({ memory: "1GB", timeoutSeconds: 120 }) // Ökat minne för AI:n för att förhindra krasch
   .https.onCall(async (data, context) => {
   // 1. Säkerhetskoll
@@ -382,53 +398,67 @@ exports.askCoach = functions
       2. TON: Som en trygg, varm vän som råkar vara en elitcoach — inte en opersonlig rapportgenerator. Använd att du känner spelaren (via tidslinjen) för att låta närvarande och genuint intresserad, inte bara korrekt. Fortfarande ärlig och konkret i sakinnehållet: en trygg vän mjukar inte upp sanningen, den säger den med omtanke.
       3. FORMAT: Korta stycken och punktlistor. Var koncis snarare än uttömmande — hellre ett par vassa, personliga meningar per rubrik än långa stycken. Detta är också en teknisk gräns: svaret har en tokenbudget, och en instruktion om att vara "utförlig" är precis det som tidigare klippte av svar mitt i en mening.
 
+      DELBAR HÖJDPUNKT (fältet "shareHighlight" i svaret):
+      - EN mening som spelaren eller föräldern ska kunna dela stolt — den starkaste SANNA observationen i datan.
+      - Max 90 tecken, på språkkoden "${userLanguage}". Ingen emoji, ingen rubrik, ingen avslutande punkt.
+      - Bara sådant som är belagt i siffrorna du fått. Hitta ALDRIG på ett tal, och avrunda inte uppåt till något snyggare.
+      - Finns inget genuint positivt att lyfta den här gången: returnera en tom sträng. Ett påhittat beröm hamnar i en laggrupp och blir genomskådat.
+      - Skriv den som ett konstaterande, inte som en hälsning: "Fem vunna sargdueller — flest hittills i säsongen".
+
       MINNE OM SPELAREN (fältet "coachTimeline" i svaret):
       - Du får spelarens tidslinje: en lista med daterade poster om vad du observerat över tid (spelstil, återkommande styrkor/svagheter, vad spelaren jobbat på, vad ni pratat om). Det är så du "känner igen" spelaren mellan samtal.
       - Lägg till EN NY post (med dagens datum, ${today}) bara om du lärt dig något varaktigt nytt i det här samtalet — inte vid varje litet svar. Om inget nytt tillkommit: returnera listan oförändrad.
       - Listan får ALDRIG innehålla fler än 8 poster. Är den redan full när du vill lägga till en ny: slå ihop de två minst relevanta/äldsta posterna till en, så det finns plats. Radera aldrig hela historiken.
       - Varje post: max ~150 tecken, bara varaktigt relevanta fakta — inga engångsdetaljer om just dagens fråga.
   `;
-  // Använd stabila API:t och ladda in "personligheten" (systemInstruction) direkt i modellen!
-  // JSON-schemat tvingar fram två separata fält i samma anrop — svaret till
-  // spelaren och den uppdaterade tidslinjen — så vi slipper ett extra
-  // (och dubbelt så dyrt) modellanrop bara för att uppdatera minnet.
-  const generativeModel = vertex_ai.getGenerativeModel({
-    model: modelName,
-    systemInstruction: systemPrompt, // <-- Ninja-tricket!
-    generationConfig: {
-      // Elite (Pro) får mer utrymme och ett begränsat tankebudget-tak — Pro
-      // kan inte stänga av tänkande helt. Flash stänger av det: en
-      // formatterad coach-analys behöver inte flerstegsresonemang, och utan
-      // gränsen kan tänkandet annars äta hela maxOutputTokens och klippa av
-      // svaret mitt i en mening (det som hände innan denna ändring).
-      // Höjt ytterligare en gång: tidslinjen (upp till 8 daterade poster)
-      // är större än den gamla enkeltextens minnesfält, så svaret behöver
-      // mer marginal än tidigare för att inte riskera samma avklippning.
-      maxOutputTokens: plan === 'elite' ? 4096 : 3072,
-      temperature: 0.4,
-      thinkingConfig: plan === 'elite' ? { thinkingBudget: 1024 } : { thinkingBudget: 0 },
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: SchemaType.OBJECT,
-        properties: {
-          analysis: { type: SchemaType.STRING, description: 'Svaret till spelaren, enligt formateringsinstruktionerna.' },
-          coachTimeline: {
-            type: SchemaType.ARRAY,
-            description: 'Den fullständiga, uppdaterade tidslinjen om spelaren — max 8 poster.',
-            items: {
-              type: SchemaType.OBJECT,
-              properties: {
-                date: { type: SchemaType.STRING, description: 'YYYY-MM-DD' },
-                note: { type: SchemaType.STRING, description: 'Kort observation, max ca 150 tecken.' },
-              },
-              required: ['date', 'note'],
+  // "Personligheten" (systemInstruction) ligger i konfigurationen och skickas
+  // med varje anrop. JSON-schemat tvingar fram flera fält i samma anrop —
+  // svaret till spelaren, delningsraden och den uppdaterade tidslinjen — så vi
+  // slipper ett extra (och dubbelt så dyrt) modellanrop bara för minnet.
+  // I Gen AI-SDK:t är generering och systeminstruktion ett och samma
+  // config-objekt; den gamla nästlade generationConfig finns inte kvar.
+  const generationConfig = {
+    systemInstruction: systemPrompt,
+    // Elite (Pro) får mer utrymme och ett begränsat tankebudget-tak — Pro
+    // kan inte stänga av tänkande helt. Flash stänger av det: en
+    // formatterad coach-analys behöver inte flerstegsresonemang, och utan
+    // gränsen kan tänkandet annars äta hela maxOutputTokens och klippa av
+    // svaret mitt i en mening (det som hände innan denna ändring).
+    // Höjt ytterligare en gång: tidslinjen (upp till 8 daterade poster)
+    // är större än den gamla enkeltextens minnesfält, så svaret behöver
+    // mer marginal än tidigare för att inte riskera samma avklippning.
+    // Höjt igen när shareHighlight tillkom. Taket är en gräns, inte en
+    // reservation — outnyttjade tokens kostar ingenting — så marginalen
+    // är gratis försäkring mot just den avklippning som beskrivs ovan.
+    maxOutputTokens: plan === 'elite' ? 4352 : 3328,
+    temperature: 0.4,
+    thinkingConfig: plan === 'elite' ? { thinkingBudget: 1024 } : { thinkingBudget: 0 },
+    responseMimeType: 'application/json',
+    responseSchema: {
+      type: Type.OBJECT,
+      properties: {
+        analysis: { type: Type.STRING, description: 'Svaret till spelaren, enligt formateringsinstruktionerna.' },
+        shareHighlight: { type: Type.STRING, description: 'En delbar en-radare, max 90 tecken. Tom sträng om inget sant positivt finns att lyfta.' },
+        coachTimeline: {
+          type: Type.ARRAY,
+          description: 'Den fullständiga, uppdaterade tidslinjen om spelaren — max 8 poster.',
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              date: { type: Type.STRING, description: 'YYYY-MM-DD' },
+              note: { type: Type.STRING, description: 'Kort observation, max ca 150 tecken.' },
             },
+            required: ['date', 'note'],
           },
         },
-        required: ['analysis', 'coachTimeline'],
       },
+      // shareHighlight är medvetet INTE required: den är en trevlighet
+      // ovanpå analysen, och ett fält som modellen inte lyckas fylla ska
+      // aldrig kunna fälla själva coach-svaret. Utelämnas den blir
+      // shareHighlight tom sträng och delningsknappen visas bara inte.
+      required: ['analysis', 'coachTimeline'],
     },
-  });
+  };
 
   // 5. Hantera användarens unika data och fråga
   try {
@@ -473,10 +503,13 @@ exports.askCoach = functions
     }
     contents.push({ role: 'user', parts: [{ text: userMessage }] });
 
-    const req = { contents };
-
-    const result = await generativeModel.generateContent(req);
-    const response = result.response;
+    // Gen AI-SDK:t returnerar svaret direkt — inget mellanliggande
+    // result.response som i det gamla Vertex-SDK:t.
+    const response = await vertex_ai.models.generateContent({
+      model: modelName,
+      contents,
+      config: generationConfig,
+    });
 
     if (!response.candidates || response.candidates.length === 0) {
         throw new Error("Inget svar från AI.");
@@ -490,12 +523,22 @@ exports.askCoach = functions
       console.warn(`askCoach: oväntat finishReason "${candidate.finishReason}" för ${userId}`);
     }
 
-    const rawText = candidate.content.parts[0].text;
+    // response.text slår ihop alla textdelar i svaret. Det gamla
+    // parts[0].text tog bara den första — vilket räckte så länge svaret
+    // alltid kom i ett stycke, men tappar innehåll om modellen delar upp
+    // JSON:en i flera delar.
+    const rawText = response.text || '';
     let analysis = rawText;
+    let shareHighlight = '';
     let coachTimeline = null;
     try {
       const parsed = JSON.parse(rawText);
       analysis = parsed.analysis || rawText;
+      // Serverside-gräns oavsett vad modellen returnerade: 90 tecken är
+      // vad kortet rymmer, och instruktionen är bara en instruktion.
+      if (typeof parsed.shareHighlight === 'string') {
+        shareHighlight = parsed.shareHighlight.trim().slice(0, 90);
+      }
       if (Array.isArray(parsed.coachTimeline)) {
         // Server-sidan gräns oavsett vad modellen faktiskt returnerade —
         // instruktionen om max 8 poster är bara en instruktion, inte en
@@ -530,6 +573,7 @@ exports.askCoach = functions
     return {
       success: true,
       analysis,
+      shareHighlight,
       creditsLeft: balance.monthly + balance.purchased,
       monthlyCredits: balance.monthly,
       purchasedCredits: balance.purchased

@@ -6,6 +6,8 @@ import { useTemplates } from '../contexts/TemplateContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAiCredits } from '../hooks/useAiCredits';
 import { getDemoPlayerName, getDemoHistory, DEMO_STATS } from '../utils/demoData';
+import { pickMatchHighlight, MatchHighlight } from '../utils/matchHighlight';
+import { MatchReportStats } from '../utils/matchReport';
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
 // Komponenter
@@ -123,6 +125,8 @@ export default function Dashboard() {
   const [reportData, setReportData] = useState<{
     playerName: string; team: string; date: string; points: number;
     actions: { label: string; count: number }[];
+    highlight?: MatchHighlight | null;
+    stats?: MatchReportStats;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -413,18 +417,49 @@ export default function Dashboard() {
         .map(([key, count]) => {
           try {
             const keyObj = JSON.parse(key);
-            return { label: keyObj[language] || keyObj.en, count };
+            const action = currentTemplate?.actions.find(a => a.name.en === keyObj.en);
+            return {
+              label: keyObj[language] || keyObj.en,
+              count,
+              type: action?.type ?? ('positive' as const),
+            };
           } catch {
-            return { label: key, count };
+            return { label: key, count, type: 'positive' as const };
           }
         })
         .sort((a, b) => b.count - a.count);
+
+      // seasonGames laddas om först via refreshTrigger längre ner och
+      // innehåller alltså fortfarande bara matcherna FÖRE den här — vilket
+      // är precis vad höjdpunkten ska jämföra mot.
+      const highlight = pickMatchHighlight({
+        points: totals.actionsPoints,
+        previousGames: seasonGames,
+        actions: reportActions,
+      });
+
+      // Säsongen till och med den här matchen. Den sparade matchen räknas
+      // med — bilden ska visa läget som det är när den delas, inte som det
+      // var före matchen.
+      const seasonPoints = [...seasonGames.map(g => g.points || 0), totals.actionsPoints];
+      const seasonStats: MatchReportStats | undefined = seasonPoints.length >= 2
+        ? {
+            games: seasonPoints.length,
+            avgPoints: Number((seasonPoints.reduce((a, b) => a + b, 0) / seasonPoints.length).toFixed(1)),
+            bestGame: Math.max(...seasonPoints),
+          }
+        // Första matchen: "1 match, snitt = poängen, bästa = poängen" säger
+        // ingenting. Kortet visar höjdpunkten i stället.
+        : undefined;
+
       setReportData({
         playerName: selectedPlayerName,
         team: teamName,
         date: gameDate,
         points: totals.actionsPoints,
-        actions: reportActions,
+        actions: reportActions.map(({ label, count }) => ({ label, count })),
+        highlight,
+        stats: seasonStats,
       });
 
       // Rensa formuläret (men behåll saldot som nu är uppdaterat)

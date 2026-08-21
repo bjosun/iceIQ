@@ -108,7 +108,22 @@ export const translations = {
       reportTitle: "Match report",
       pointsLabel: "Points",
       shareBtn: "Share",
-      downloadBtn: "Download"
+      downloadBtn: "Download",
+      formatSquare: "Square",
+      formatStory: "Story",
+      statGames: "Games",
+      statAvg: "Average",
+      statBest: "Best"
+    },
+
+    // Matchens höjdpunkt på den delbara bilden — regelbaserad, se
+    // src/utils/matchHighlight.ts. Håll dem korta: de ska rymmas på en rad.
+    highlight: {
+      firstGame: "First game logged",
+      seasonBest: "Season best — {points} pts",
+      streak: "{count} games in a row above average",
+      aboveAverage: "{percent}% above season average",
+      topAction: "{count}× {action}"
     },
 
     // Demo/onboarding
@@ -247,7 +262,11 @@ export const translations = {
       shareWithPlayer: "Share with player",
       sharing: "Sending…",
       sharedWithPlayer: "Sent to the player's email",
-      shareError: "Could not send the email right now"
+      shareError: "Could not send the email right now",
+      shareInsight: "Share this insight",
+      insightShareTitle: "Share coach insight",
+      insightShareDesc: "The coach's one-liner as an image — no balance, no email, nothing but the observation.",
+      insightCardTitle: "Coach insight"
     },
 
     // Player & Match Logic
@@ -469,7 +488,21 @@ export const translations = {
       reportTitle: "Matchrapport",
       pointsLabel: "Poäng",
       shareBtn: "Dela",
-      downloadBtn: "Ladda ner"
+      downloadBtn: "Ladda ner",
+      formatSquare: "Kvadrat",
+      formatStory: "Story",
+      statGames: "Matcher",
+      statAvg: "Snitt",
+      statBest: "Bästa"
+    },
+
+    // Se kommentaren i 'en' ovan.
+    highlight: {
+      firstGame: "Första registrerade matchen",
+      seasonBest: "Säsongsbästa — {points} poäng",
+      streak: "{count} matcher i rad över snittet",
+      aboveAverage: "{percent} % över säsongssnittet",
+      topAction: "{count} × {action}"
     },
 
     // Demo/onboarding
@@ -608,7 +641,11 @@ export const translations = {
       shareWithPlayer: "Dela med spelaren",
       sharing: "Skickar…",
       sharedWithPlayer: "Skickat till spelarens e-post",
-      shareError: "Kunde inte skicka mejlet just nu"
+      shareError: "Kunde inte skicka mejlet just nu",
+      shareInsight: "Dela insikten",
+      insightShareTitle: "Dela coach-insikt",
+      insightShareDesc: "Coachens en-radare som bild — inget saldo, ingen e-post, bara observationen.",
+      insightCardTitle: "Coach-insikt"
     },
 
     // Player & Match Logic
