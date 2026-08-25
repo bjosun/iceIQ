@@ -158,7 +158,14 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
     const baseMessages: CoachChatMessage[] = specificQuestion
       ? [...messages, { role: 'user', text: specificQuestion }]
       : messages;
-    if (specificQuestion) setMessages(baseMessages);
+    if (specificQuestion) {
+      setMessages(baseMessages);
+      // Rensas direkt vid skicka, inte när svaret kommer — annars ligger
+      // texten kvar i rutan under hela väntetiden (flera sekunder, se
+      // maxOutputTokens-kommentaren i functions/index.js) och ser ut som
+      // att den fastnat, trots att frågan redan gått iväg.
+      setInputQuestion('');
+    }
 
     try {
       const askCoach = httpsCallable(euFunctions, 'askCoach');
@@ -182,7 +189,6 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
           { role: 'ai', text: result.data.analysis, ...(highlight ? { highlight } : {}) },
         ];
         setMessages(finalMessages);
-        setInputQuestion('');
 
         await persistChat(finalMessages);
       }
