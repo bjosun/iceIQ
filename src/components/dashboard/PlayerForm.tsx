@@ -1,20 +1,25 @@
-import React from 'react';
-import { 
-  Calendar, 
-  Shield, 
-  User, 
-  History, 
-  LayoutTemplate, 
+import React, { useState } from 'react';
+import {
+  Calendar,
+  Shield,
+  User,
+  History,
+  LayoutTemplate,
   ChevronRight,
   Mail,
-  Edit
+  Edit,
+  Link2
 } from 'lucide-react';
+import { httpsCallable } from 'firebase/functions';
+import toast from 'react-hot-toast';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTemplates } from '../../contexts/TemplateContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
+import { euFunctions } from '../../services/firebase';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import PlayerLinkModal from '../modals/PlayerLinkModal';
 
 interface PlayerFormProps {
   selectedPlayerName: string;
@@ -50,10 +55,32 @@ export default function PlayerForm({
   const { subscription } = useSubscription();
   const { templates, currentTemplateId, setCurrentTemplate } = useTemplates();
 
+  const [mintingLink, setMintingLink] = useState(false);
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+
   const templateOptions = Object.entries(templates).map(([id, template]) => ({
     value: id,
     label: template.name[language]
   }));
+
+  // Genererar (eller återanvänder) en beständig länk för den valda spelaren
+  // — se mintPlayerLink i functions/index.js. Ingen inloggning krävs för att
+  // öppna den; token:en i URL:en är hela behörigheten.
+  const handleGenerateLink = async () => {
+    if (!selectedPlayerName) return;
+    setMintingLink(true);
+    try {
+      const mintPlayerLink = httpsCallable(euFunctions, 'mintPlayerLink');
+      const result: any = await mintPlayerLink({ playerName: selectedPlayerName });
+      setLinkUrl(result.data.url);
+      setLinkModalOpen(true);
+    } catch (err: any) {
+      toast.error(err?.message || t('playerLink.mintError'));
+    } finally {
+      setMintingLink(false);
+    }
+  };
 
   return (
     <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-6">
@@ -162,9 +189,27 @@ export default function PlayerForm({
           >
             {t('showPlayerHistory') || "History"}
           </Button>
+
+          {/* Spelarlänk — en egen, inloggningsfri sida för spelaren själv */}
+          <Button
+            variant="secondary"
+            onClick={handleGenerateLink}
+            icon={Link2}
+            disabled={!selectedPlayerName || mintingLink}
+            className="w-full md:w-auto"
+          >
+            {mintingLink ? t('playerLink.generating') : t('playerLink.generateButton')}
+          </Button>
         </div>
 
       </div>
+
+      <PlayerLinkModal
+        isOpen={linkModalOpen}
+        onClose={() => setLinkModalOpen(false)}
+        url={linkUrl}
+        playerName={selectedPlayerName}
+      />
     </Card>
   );
 }

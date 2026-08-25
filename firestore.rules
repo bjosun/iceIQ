@@ -48,5 +48,13 @@ service cloud.firestore {
         allow read, write: if isOwner();
       }
     }
+
+    // Delningslänkar för spelare (se functions/index.js: mintPlayerLink /
+    // getPlayerLinkData). Läses/skrivs uteslutande av Cloud Functions via
+    // Admin SDK, som kringgår regler helt — explicit deny här är bara
+    // självdokumentation/försvar-i-djupet, ändrar inget faktiskt beteende.
+    match /artifacts/{appId}/playerLinks/{token} {
+      allow read, write: if false;
+    }
   }
 }

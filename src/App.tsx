@@ -15,6 +15,7 @@ import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import Success from './pages/Success'
 import MatchTracker from './pages/MatchTracker'
+import PlayerLinkPage from './pages/PlayerLinkPage'
 
 import Layout from './components/layout/Layout'
 import './index.css'
@@ -29,7 +30,9 @@ function AppContent() {
     captureUtmParams();
   }, [location.search]);
 
-  const hideLayout = location.pathname === '/success';
+  // /p/:token är spelarens egen, inloggningsfria sida (se PlayerLinkPage) —
+  // ska aldrig visa förälderns Header/nav.
+  const hideLayout = location.pathname === '/success' || location.pathname.startsWith('/p/');
 
   return (
     <>
@@ -55,6 +58,7 @@ function AppContent() {
       {hideLayout ? (
         <Routes>
           <Route path="/success" element={<Success />} />
+          <Route path="/p/:token" element={<PlayerLinkPage />} />
         </Routes>
       ) : (
         <Layout>

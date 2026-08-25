@@ -300,6 +300,26 @@ export const translations = {
       }
     },
 
+    // Player link — a standalone, login-free page for the player themselves
+    playerLink: {
+      generateButton: "Generate link",
+      generating: "Generating…",
+      mintError: "Could not generate the link right now",
+      modalTitle: "Link for {name}",
+      modalDesc: "A standalone page {name} can open on their own device — no login needed. The same link works every time.",
+      copy: "Copy link",
+      copied: "Link copied",
+      share: "Share",
+      pageGreeting: "Hi {name}!",
+      breathingSectionTitle: "Breathing exercise",
+      coachNoteTitle: "What your coach has said",
+      noCoachNote: "Nothing from the coach yet — check back after your next game.",
+      notFoundTitle: "Link not found",
+      notFoundBody: "This link doesn't seem to be valid. Ask whoever sent it to send a new one.",
+      revokedTitle: "Link no longer active",
+      revokedBody: "This link has been turned off. Ask whoever sent it for a new one."
+    },
+
     // Player & Match Logic
     playerName: "Player's Name",
     playerEmail: "Player's email",
@@ -708,6 +728,26 @@ export const translations = {
         calm: "Längre ut än in — det är det som lugnar pulsen.",
         box: "Följ punkten runt kvadraten. Fyra sekunder per sida."
       }
+    },
+
+    // Spelarlänk — en egen, inloggningsfri sida för spelaren själv
+    playerLink: {
+      generateButton: "Generera länk",
+      generating: "Genererar…",
+      mintError: "Kunde inte generera länken just nu",
+      modalTitle: "Länk till {name}",
+      modalDesc: "En egen sida {name} kan öppna på sin egen enhet — ingen inloggning behövs. Samma länk fungerar varje gång.",
+      copy: "Kopiera länk",
+      copied: "Länk kopierad",
+      share: "Dela",
+      pageGreeting: "Hej {name}!",
+      breathingSectionTitle: "Andningsövning",
+      coachNoteTitle: "Vad din coach har sagt",
+      noCoachNote: "Inget från coachen ännu — kolla in igen efter nästa match.",
+      notFoundTitle: "Länken hittades inte",
+      notFoundBody: "Den här länken verkar inte vara giltig. Be den som skickade den att skicka en ny.",
+      revokedTitle: "Länken är inte längre aktiv",
+      revokedBody: "Den här länken har stängts av. Be den som skickade den om en ny."
     },
 
     // Player & Match Logic

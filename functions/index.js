@@ -1,4 +1,5 @@
 const functions = require("firebase-functions/v1"); // VIKTIGT: /v1 krävs för att .runWith ska fungera med Node 20
+const crypto = require("crypto"); // För spelarlänk-tokens (randomBytes är inte globalt i Node)
 const admin = require("firebase-admin");
 const Stripe = require("stripe");
 const { Resend } = require("resend");
@@ -221,6 +222,26 @@ const getStripe = () => {
 const getUsersCollection = () => {
   return db.collection("artifacts").doc(APP_ID).collection("users");
 };
+
+// Server-sidan spegling av buildSeasonSummary i src/pages/Dashboard.tsx —
+// samma formel, så spelarlänkens siffror alltid matchar det föräldern ser
+// i appen. Hålls i synk manuellt; ändra båda om formeln ändras.
+function buildSeasonSummary(games) {
+  if (games.length === 0) return null;
+  const pts = games.map((g) => g.points || 0);
+  const sum = pts.reduce((a, b) => a + b, 0);
+  const last5 = pts.slice(-5);
+  return {
+    games: games.length,
+    totalPoints: sum,
+    avgPoints: Number((sum / games.length).toFixed(1)),
+    bestGame: Math.max(...pts),
+    worstGame: Math.min(...pts),
+    last5Avg: Number((last5.reduce((a, b) => a + b, 0) / last5.length).toFixed(1)),
+    firstGame: games[0].date,
+    lastGame: games[games.length - 1].date,
+  };
+}
 
 const getOrCreateCustomer = async (userId, email) => {
   const stripeInstance = getStripe();
@@ -632,6 +653,133 @@ exports.shareAnalysisWithPlayer = functions
       console.error(`shareAnalysisWithPlayer misslyckades för ${userId}/${playerName}:`, error);
       throw new functions.https.HttpsError('internal', 'Kunde inte skicka mejlet just nu.');
     }
+  });
+
+// ==========================================
+//  SPELARLÄNK (dela läge, ingen inloggning)
+// ==========================================
+// Ger föräldern en beständig länk att skicka till spelaren (t.ex. via sms).
+// Spelaren öppnar den på sin egen enhet utan konto. Token:en i playerLinks
+// (192 bitars slump, se crypto.randomBytes nedan) ÄR behörighetsbeviset —
+// det finns medvetet ingen inloggning att kringgå.
+//
+// EU-region av samma skäl som askCoach: spelardata om minderåriga ska
+// behandlas inom EU hela vägen (se kommentaren vid askCoach).
+exports.mintPlayerLink = functions
+  .region('europe-west1')
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Du måste vara inloggad.');
+    }
+    const userId = context.auth.uid;
+    const { playerName } = data;
+    if (!playerName || typeof playerName !== 'string') {
+      throw new functions.https.HttpsError('invalid-argument', 'Spelarnamn saknas.');
+    }
+
+    // Ägarkoll: spelaren måste finnas under den inloggade förälderns egna
+    // users/{uid}/players — annars kunde vem som helst skapa en länk för
+    // en spelare de inte äger genom att bara gissa ett namn.
+    const playerRef = getUsersCollection().doc(userId).collection('players').doc(playerName);
+    const playerDoc = await playerRef.get();
+    if (!playerDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Spelaren hittades inte.');
+    }
+
+    const linksRef = db.collection('artifacts').doc(APP_ID).collection('playerLinks');
+
+    // Länken ska vara BESTÅENDE — samma URL ska funka igen och igen.
+    // Återanvänd en redan aktiv (icke-återkallad) länk för samma spelare
+    // i stället för att skapa en ny varje gång knappen trycks, annars
+    // sprider sig flera giltiga länkar för samma spelare i onödan.
+    // Rent likhetsfilter (==) på tre fält — kräver inget kompositindex.
+    const existing = await linksRef
+      .where('userId', '==', userId)
+      .where('playerName', '==', playerName)
+      .where('revokedAt', '==', null)
+      .limit(1)
+      .get();
+    if (!existing.empty) {
+      const token = existing.docs[0].id;
+      return { token, url: `${APP_URL}/p/${token}` };
+    }
+
+    const token = crypto.randomBytes(24).toString('base64url');
+    await linksRef.doc(token).set({
+      userId,
+      playerName,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      revokedAt: null,
+    });
+    return { token, url: `${APP_URL}/p/${token}` };
+  });
+
+// Läses av spelarens egen (inloggningsfria) sida. Ingen context.auth-koll
+// medvetet — token:en är beviset. Returnerar BARA det som PlayerLinkPage
+// faktiskt visar: spelarnamn, säsongsdata och senaste coach-yttrandet.
+// Aldrig currentBalance, email, subscriptionPlan/Status, aiCredits eller
+// purchasedCredits — samma princip som matchReport.ts redan följer för
+// delade matchrapporter, men strängare eftersom det här är en riktigt
+// publik, inloggningsfri URL.
+exports.getPlayerLinkData = functions
+  .region('europe-west1')
+  .https.onCall(async (data) => {
+    const { token } = data;
+    if (!token || typeof token !== 'string') {
+      throw new functions.https.HttpsError('invalid-argument', 'Ogiltig länk.');
+    }
+
+    const linkRef = db.collection('artifacts').doc(APP_ID).collection('playerLinks').doc(token);
+    const linkDoc = await linkRef.get();
+    if (!linkDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Länken hittades inte.');
+    }
+    const link = linkDoc.data();
+    if (link.revokedAt) {
+      throw new functions.https.HttpsError('permission-denied', 'Länken är inte längre aktiv.');
+    }
+
+    const { userId, playerName } = link;
+    const playerRef = getUsersCollection().doc(userId).collection('players').doc(playerName);
+    const playerDoc = await playerRef.get();
+    if (!playerDoc.exists) {
+      // Spelaren kan ha raderats efter att länken skapades.
+      throw new functions.https.HttpsError('not-found', 'Spelaren hittades inte längre.');
+    }
+
+    // Enkelfälts-orderBy ('date') — kräver inget kompositindex.
+    const gamesSnap = await playerRef.collection('games').orderBy('date', 'asc').get();
+    const games = gamesSnap.docs.map((d) => ({ date: d.data().date, points: d.data().points || 0 }));
+    const full = buildSeasonSummary(games);
+    // Trimmat till exakt det SeasonOverview-komponenten behöver — inga
+    // extra fält (totalPoints, firstGame, lastGame, worstGame) skickas
+    // över nätet i onödan, även om de inte är känsliga i sig.
+    const summary = full
+      ? { games: full.games, avgPoints: full.avgPoints, bestGame: full.bestGame, last5Avg: full.last5Avg }
+      : null;
+
+    // Senaste coach-yttrandet: läses ur redan sparad text i coachChats
+    // (sparas av klienten i useCoachChats.ts efter varje coach-svar) —
+    // INGET nytt AI-anrop görs här. Vi undviker medvetet ett filter på
+    // playerName + orderBy('updatedAt') ihop (det skulle kräva ett nytt
+    // kompositindex); hämtar i stället de senaste chattarna för hela
+    // kontot och letar upp rätt spelare i minnet. Om spelaren har fler än
+    // 30 andra coach-chattar sen den senaste om denna spelare missas den
+    // — ett medvetet, ofarligt undantag (fältet blir bara null) snarare
+    // än att kräva ett extra indexdeploy för v1.
+    const chatsSnap = await getUsersCollection().doc(userId).collection('coachChats')
+      .orderBy('updatedAt', 'desc')
+      .limit(30)
+      .get();
+    let latestCoachNote = null;
+    const chatDoc = chatsSnap.docs.find((d) => d.data().playerName === playerName);
+    if (chatDoc) {
+      const messages = chatDoc.data().messages || [];
+      const lastAi = [...messages].reverse().find((m) => m.role === 'ai');
+      if (lastAi) latestCoachNote = lastAi.text;
+    }
+
+    return { playerName, games, summary, latestCoachNote };
   });
 
 
