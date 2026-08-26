@@ -27,7 +27,12 @@ export default function MobileBottomNav({ onPremiumClick }: MobileBottomNavProps
           <span className="text-xs mt-1">{t('nav.dashboard')}</span>
         </Link>
 
-        <Link to="/players" className={linkClass('/players')}>
+        {/* Ingen egen /players-route finns — spelarhanteringen bor i
+            Dashboards PlayerSelectModal. Länken tar dit och öppnar den
+            direkt. Lyser upp tillsammans med Dashboard-fliken eftersom
+            de landar på samma sida — det finns inget eget /players-läge
+            att särskilja på i location.pathname längre. */}
+        <Link to="/dashboard" state={{ openPlayerSelect: true }} className={linkClass('/dashboard')}>
           <Users size={24} />
           <span className="text-xs mt-1">{t('nav.players')}</span>
         </Link>

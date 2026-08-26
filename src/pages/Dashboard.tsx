@@ -143,6 +143,11 @@ export default function Dashboard() {
     if (location.state?.isSignup !== undefined) {
       setShowSignup(location.state.isSignup);
     }
+    // Från Header/MobileBottomNav: "Players" har ingen egen route, den
+    // navigerar hit och öppnar spelarväljaren direkt (se Header.tsx).
+    if (location.state?.openPlayerSelect) {
+      setShowPlayerSelect(true);
+    }
     }, [location.state]); 
 
   // --- EFFEKT: Hantera Bonus Factor baserat på läge ---

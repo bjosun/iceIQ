@@ -78,7 +78,14 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
                 <Link to="/dashboard" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
                   {t('nav.dashboard')}
                 </Link>
-                <Link to="/players" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                {/* Ingen egen /players-route finns — spelarhanteringen bor i
+                    Dashboards PlayerSelectModal. Länken tar dit och öppnar
+                    den direkt i stället för att peka på en tom sida. */}
+                <Link
+                  to="/dashboard"
+                  state={{ openPlayerSelect: true }}
+                  className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                >
                   {t('nav.players')}
                 </Link>
               </nav>
