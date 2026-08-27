@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
-import { Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { Loader2, AlertCircle, Sparkles, Backpack, PenLine, Moon, Check } from 'lucide-react';
 import { euFunctions } from '../services/firebase';
 import { useLanguage } from '../contexts/LanguageContext';
 import BreathingExercise from '../components/breathing/BreathingExercise';
+import RoutineStack, { RoutineStep } from '../components/routines/RoutineStack';
 import SeasonOverview from '../components/dashboard/SeasonOverview';
 
 interface PlayerLinkData {
@@ -12,6 +13,8 @@ interface PlayerLinkData {
   games: { date: string; points: number }[];
   summary: { games: number; avgPoints: number; bestGame: number; last5Avg: number } | null;
   latestCoachNote: string | null;
+  /** Matcher i rad med rutinen gjord — se computeRoutineStreak i functions/index.js. */
+  routineStreak: number;
 }
 
 type LoadState = 'loading' | 'ready' | 'not-found' | 'revoked' | 'error';
@@ -24,6 +27,9 @@ export default function PlayerLinkPage() {
   const { t } = useLanguage();
   const [state, setState] = useState<LoadState>('loading');
   const [data, setData] = useState<PlayerLinkData | null>(null);
+  // Streaken uppdateras lokalt när rutinen just gjorts, så belöningskortet
+  // visar rätt siffra utan att sidan behöver laddas om.
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     if (!token) {
@@ -35,7 +41,9 @@ export default function PlayerLinkPage() {
     getPlayerLinkData({ token })
       .then((res) => {
         if (cancelled) return;
-        setData(res.data as PlayerLinkData);
+        const payload = res.data as PlayerLinkData;
+        setData(payload);
+        setStreak(payload.routineStreak || 0);
         setState('ready');
       })
       .catch((err: any) => {
@@ -70,6 +78,65 @@ export default function PlayerLinkPage() {
     );
   }
 
+  // Enda rutinen i biblioteket idag — se routines.nightBeforeGame i
+  // translations.ts för copyn och content/routines/kvallen-fore-match.md
+  // för källdokumentet/resonemanget. RoutineStack är byggd generisk med
+  // avsikt: nästa rutin blir en ny steps-array här, inte en ny komponent.
+  const nightBeforeGameSteps: RoutineStep[] = [
+    {
+      icon: Backpack,
+      title: t('routines.nightBeforeGame.intro'),
+    },
+    {
+      icon: PenLine,
+      title: t('routines.nightBeforeGame.step1Title'),
+      input: {
+        placeholder: t('routines.nightBeforeGame.step1Placeholder'),
+        errorText: t('routines.nightBeforeGame.step1Error'),
+      },
+    },
+    {
+      icon: Moon,
+      title: t('routines.nightBeforeGame.step2Title'),
+      body: t('routines.nightBeforeGame.step2Body'),
+      action: {
+        label: t('routines.nightBeforeGame.step2Cta'),
+        onClick: () => document.getElementById('breathing-section')?.scrollIntoView({ behavior: 'smooth' }),
+      },
+    },
+    {
+      icon: Check,
+      title: t('routines.nightBeforeGame.rewardTitle'),
+      rewardBody: (answer) =>
+        answer
+          ? t('routines.nightBeforeGame.rewardBodyWithAnswer', { answer })
+          : t('routines.nightBeforeGame.rewardBodyEmpty'),
+      footnote: t('routines.nightBeforeGame.floor'),
+    },
+  ];
+
+  // Bäst-ansträngning: rutinen är gjord i spelarens huvud oavsett vad
+  // servern svarar, så ett misslyckat anrop får aldrig visa ett felmeddelande
+  // ovanpå belöningskortet. Streaken blir bara inte uppdaterad den gången.
+  const handleRoutineComplete = () => {
+    if (!token) return;
+    const logRoutineCompletion = httpsCallable(euFunctions, 'logRoutineCompletion');
+    logRoutineCompletion({ token })
+      .then((res) => {
+        const next = (res.data as { streak?: number }).streak;
+        if (typeof next === 'number') setStreak(next);
+      })
+      .catch(() => {
+        /* Tyst: se kommentaren ovan. */
+      });
+  };
+
+  const streakNote = streak > 0
+    ? (streak === 1
+        ? t('routines.nightBeforeGame.streakOne')
+        : t('routines.nightBeforeGame.streakMany', { count: streak }))
+    : undefined;
+
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-8">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -83,6 +150,18 @@ export default function PlayerLinkPage() {
         </div>
 
         <div className="bg-gray-800 rounded-2xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">{t('routines.nightBeforeGame.sectionTitle')}</h2>
+          <RoutineStack
+            steps={nightBeforeGameSteps}
+            backLabel={t('routines.nightBeforeGame.back')}
+            nextLabel={t('routines.nightBeforeGame.next')}
+            doneLabel={t('routines.nightBeforeGame.done')}
+            onComplete={handleRoutineComplete}
+            completionNote={streakNote}
+          />
+        </div>
+
+        <div id="breathing-section" className="bg-gray-800 rounded-2xl p-6 scroll-mt-4">
           <h2 className="text-lg font-semibold text-white mb-4">{t('playerLink.breathingSectionTitle')}</h2>
           <BreathingExercise />
         </div>

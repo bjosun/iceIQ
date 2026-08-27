@@ -81,9 +81,9 @@ export const translations = {
         title: "Team Management",
         desc: "Manage multiple players and teams with ease."
       },
-      breathing: {
-        title: "Breathing Exercise",
-        desc: "A two-minute routine to find calm before a faceoff or a big moment. Free for everyone."
+      mental: {
+        title: "Mental training",
+        desc: "Short routines that help players prepare and stay calm — a pre-game ritual, breathing exercises, and more on the way. Free for everyone."
       },
       security: {
         title: "Data Security",
@@ -298,6 +298,33 @@ export const translations = {
       hint: {
         calm: "Longer out than in — that is what settles the pulse.",
         box: "Follow the dot around the square. Four seconds a side."
+      }
+    },
+
+    // Rutiner: fast, granskad copy — se content/routines/*.md för källan
+    // och resonemanget kring varför den INTE genereras av AI:n live.
+    // routines.nightBeforeGame är den enda rutinen i biblioteket idag.
+    routines: {
+      nightBeforeGame: {
+        sectionTitle: "The night before a game",
+        intro: "This is something players who want to get really good do the night before a game. Not because you have to — it just works.",
+        step1Title: "What's ONE thing you want to do well tomorrow?",
+        step1Placeholder: "e.g. keep my head up on passes",
+        step1Error: "Write one thing before you continue.",
+        step2Title: "Right before you turn off the light",
+        step2Body: "Do a short breathing exercise, or spend ten seconds picturing that one thing — see yourself doing it, and it going well.",
+        step2Cta: "Go to the breathing exercise",
+        rewardTitle: "Then you're done",
+        rewardBodyWithAnswer: "You said: {answer}. Whatever happens tomorrow, you've done your part tonight. That's enough.",
+        rewardBodyEmpty: "Whatever happens tomorrow, you've done your part tonight. That's enough.",
+        floor: "If the nerves feel bigger than this, talk to your coach or an adult you trust. This routine is for game-day nerves, not for everything.",
+        back: "Back",
+        next: "Next",
+        done: "Done",
+        // Matchrelativ streak, inte kalenderdagar — se computeRoutineStreak
+        // i functions/index.js för varför.
+        streakOne: "1 game prepared for",
+        streakMany: "{count} games in a row prepared for"
       }
     },
 
@@ -518,9 +545,9 @@ export const translations = {
         title: "Laghantering",
         desc: "Hantera flera spelare och lag med enkelhet."
       },
-      breathing: {
-        title: "Andningsövning",
-        desc: "En tvåminutersrutin för att hitta lugnet före nedsläpp eller ett stort ögonblick. Gratis för alla."
+      mental: {
+        title: "Mental träning",
+        desc: "Korta rutiner som hjälper spelare förbereda sig och hålla lugnet — en rutin inför match, andningsövningar och fler på väg. Gratis för alla."
       },
       security: {
         title: "Datasäkerhet",
@@ -734,6 +761,28 @@ export const translations = {
       hint: {
         calm: "Längre ut än in — det är det som lugnar pulsen.",
         box: "Följ punkten runt kvadraten. Fyra sekunder per sida."
+      }
+    },
+
+    routines: {
+      nightBeforeGame: {
+        sectionTitle: "Kvällen innan match",
+        intro: "Det här är något spelare som vill bli riktigt bra gör kvällen innan match. Inte för att man måste — det funkar bara.",
+        step1Title: "Vad är EN sak du vill göra bra imorgon?",
+        step1Placeholder: "t.ex. hålla huvudet uppe vid passningar",
+        step1Error: "Skriv en sak innan du går vidare.",
+        step2Title: "Precis innan lampan släcks",
+        step2Body: "Kör en kort andningsövning, eller tänk igenom den där EN saken i tio sekunder — se dig själv göra den, och att det går bra.",
+        step2Cta: "Gå till andningsövningen",
+        rewardTitle: "Sen är du klar",
+        rewardBodyWithAnswer: "Du sa: {answer}. Oavsett vad som händer imorgon: du har gjort din del ikväll. Det räcker.",
+        rewardBodyEmpty: "Oavsett vad som händer imorgon: du har gjort din del ikväll. Det räcker.",
+        floor: "Känns nerverna större än så här — prata med din tränare eller en vuxen du litar på. Den här rutinen är till för matchnerver, inte för allt.",
+        back: "Tillbaka",
+        next: "Nästa",
+        done: "Klar",
+        streakOne: "1 match förberedd",
+        streakMany: "{count} matcher i rad förberedda"
       }
     },
 

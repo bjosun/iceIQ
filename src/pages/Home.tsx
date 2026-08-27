@@ -66,8 +66,8 @@ export default function Home() {
     },
     {
       icon: <Wind className="text-cyan-400" size={24} />,
-      title: t('features.breathing.title'),
-      description: t('features.breathing.desc')
+      title: t('features.mental.title'),
+      description: t('features.mental.desc')
     }
   ];
 

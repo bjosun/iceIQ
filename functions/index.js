@@ -266,6 +266,43 @@ function buildSeasonSummary(games) {
   };
 }
 
+// Matchrelativ streak för kvällen-innan-match-rutinen: "X matcher i rad
+// med rutinen gjord". Medvetet INTE en kalenderstreak à la Deepstash —
+// matcher spelas 1-3 ggr/veckan, så en daglig streak hade straffat barnet
+// för sportens rytm i stället för för att faktiskt hoppa över rutinen.
+//
+// En rutinpost daterad D räknas för en match spelad D (samma kväll) eller
+// D+1 (rutinen görs kvällen innan). Räknar bakåt från senaste spelade
+// matchen och stannar vid första matchen utan förberedelse.
+//
+// Not: en rutin gjord ikväll inför en match som ännu inte spelats syns
+// inte i streaken förrän matchen faktiskt registrerats — matchen finns
+// inte i games förrän föräldern loggat den. Det är avsiktligt: streaken
+// räknar förberedda matcher, inte avsikter.
+function computeRoutineStreak(games, completions) {
+  if (!Array.isArray(games) || games.length === 0) return 0;
+  const done = new Set(Array.isArray(completions) ? completions : []);
+  if (done.size === 0) return 0;
+
+  const dayBefore = (isoDate) => {
+    const d = new Date(`${isoDate}T00:00:00Z`);
+    if (Number.isNaN(d.getTime())) return null;
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
+  };
+
+  let streak = 0;
+  // games kommer sorterad stigande på datum (se getPlayerLinkData).
+  for (let i = games.length - 1; i >= 0; i--) {
+    const gameDate = games[i].date;
+    if (typeof gameDate !== 'string') break;
+    const prev = dayBefore(gameDate);
+    if (done.has(gameDate) || (prev && done.has(prev))) streak++;
+    else break;
+  }
+  return streak;
+}
+
 const getOrCreateCustomer = async (userId, email) => {
   const stripeInstance = getStripe();
   const userRef = getUsersCollection().doc(userId);
@@ -769,6 +806,76 @@ exports.mintPlayerLink = functions
     return { token, url: `${APP_URL}/p/${token}` };
   });
 
+// Delad tokenupplösning för de inloggningsfria spelarlänk-funktionerna.
+// Kastar samma fel som tidigare låg inline i getPlayerLinkData, så både
+// läs- och skrivvägen behandlar ogiltiga/återkallade tokens identiskt.
+async function resolvePlayerLink(token) {
+  if (!token || typeof token !== 'string') {
+    throw new functions.https.HttpsError('invalid-argument', 'Ogiltig länk.');
+  }
+  const linkRef = db.collection('artifacts').doc(APP_ID).collection('playerLinks').doc(token);
+  const linkDoc = await linkRef.get();
+  if (!linkDoc.exists) {
+    throw new functions.https.HttpsError('not-found', 'Länken hittades inte.');
+  }
+  const link = linkDoc.data();
+  if (link.revokedAt) {
+    throw new functions.https.HttpsError('permission-denied', 'Länken är inte längre aktiv.');
+  }
+  return link;
+}
+
+// FÖRSTA skrivvägen från den inloggningsfria spelarsidan — allt annat där
+// är läsning. Säkerhetsöverväganden, i tur och ordning:
+//
+// 1. Token:en är hela behörigheten (som resten av spelarlänken). Den som
+//    har länken får redan se spelarens statistik, så att också kunna
+//    markera en rutin som gjord vidgar inte vad en läckt länk avslöjar.
+// 2. Skriver ENDAST routineCompletions. Rör aldrig poäng, saldo, krediter
+//    eller prenumerationsfält — den här funktionen har inget att göra i
+//    de fälten, och att begränsa den här är billigare än att lita på
+//    Firestore-reglerna (som ändå inte gäller för admin-SDK:t).
+// 3. Datumet sätts av SERVERN, aldrig av klienten. Annars kunde vem som
+//    helst med länken backdatera poster och fabricera en streak.
+// 4. En post per datum: är dagens datum redan loggat returnerar vi utan
+//    att skriva. Det gör upprepade anrop gratis (ingen Firestore-skrivning
+//    per klick) och håller fältet naturligt begränsat.
+// 5. Listan kapas till de 60 senaste datumen — streaken behöver bara de
+//    senaste matcherna, och fältet får aldrig växa obegränsat.
+exports.logRoutineCompletion = functions
+  .region('europe-west1')
+  .https.onCall(async (data) => {
+    const link = await resolvePlayerLink(data && data.token);
+    const { userId, playerName } = link;
+
+    const playerRef = getUsersCollection().doc(userId).collection('players').doc(playerName);
+    const playerDoc = await playerRef.get();
+    if (!playerDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Spelaren hittades inte längre.');
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const existing = playerDoc.data().routineCompletions;
+    const completions = Array.isArray(existing)
+      ? existing.filter((d) => typeof d === 'string')
+      : [];
+
+    if (completions.includes(today)) {
+      // Redan loggad idag — ingen skrivning, men returnera aktuell streak
+      // så knappen ändå kan visa rätt siffra.
+      const gamesSnap = await playerRef.collection('games').orderBy('date', 'asc').get();
+      const games = gamesSnap.docs.map((d) => ({ date: d.data().date }));
+      return { alreadyLogged: true, streak: computeRoutineStreak(games, completions) };
+    }
+
+    const updated = [...completions, today].sort().slice(-60);
+    await playerRef.set({ routineCompletions: updated }, { merge: true });
+
+    const gamesSnap = await playerRef.collection('games').orderBy('date', 'asc').get();
+    const games = gamesSnap.docs.map((d) => ({ date: d.data().date }));
+    return { alreadyLogged: false, streak: computeRoutineStreak(games, updated) };
+  });
+
 // Läses av spelarens egen (inloggningsfria) sida. Ingen context.auth-koll
 // medvetet — token:en är beviset. Returnerar BARA det som PlayerLinkPage
 // faktiskt visar: spelarnamn, säsongsdata och senaste coach-yttrandet.
@@ -779,21 +886,7 @@ exports.mintPlayerLink = functions
 exports.getPlayerLinkData = functions
   .region('europe-west1')
   .https.onCall(async (data) => {
-    const { token } = data;
-    if (!token || typeof token !== 'string') {
-      throw new functions.https.HttpsError('invalid-argument', 'Ogiltig länk.');
-    }
-
-    const linkRef = db.collection('artifacts').doc(APP_ID).collection('playerLinks').doc(token);
-    const linkDoc = await linkRef.get();
-    if (!linkDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Länken hittades inte.');
-    }
-    const link = linkDoc.data();
-    if (link.revokedAt) {
-      throw new functions.https.HttpsError('permission-denied', 'Länken är inte längre aktiv.');
-    }
-
+    const link = await resolvePlayerLink(data && data.token);
     const { userId, playerName } = link;
     const playerRef = getUsersCollection().doc(userId).collection('players').doc(playerName);
     const playerDoc = await playerRef.get();
@@ -834,7 +927,12 @@ exports.getPlayerLinkData = functions
       if (lastAi) latestCoachNote = lastAi.text;
     }
 
-    return { playerName, games, summary, latestCoachNote };
+    // routineCompletions skrivs bara av logRoutineCompletion ovan. Själva
+    // datumen skickas aldrig till klienten — bara den räknade streaken,
+    // som är det enda sidan visar.
+    const routineStreak = computeRoutineStreak(games, playerDoc.data().routineCompletions);
+
+    return { playerName, games, summary, latestCoachNote, routineStreak };
   });
 
 
