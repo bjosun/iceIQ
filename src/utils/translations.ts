@@ -268,6 +268,7 @@ export const translations = {
       sharedWithPlayer: "Sent to the player's email",
       shareError: "Could not send the email right now",
       shareInsight: "Share this insight",
+      tryBreathing: "Want to try a breathing exercise?",
       insightShareTitle: "Share coach insight",
       insightShareDesc: "The coach's one-liner as an image — no balance, no email, nothing but the observation.",
       insightCardTitle: "Coach insight"
@@ -703,6 +704,7 @@ export const translations = {
       sharedWithPlayer: "Skickat till spelarens e-post",
       shareError: "Kunde inte skicka mejlet just nu",
       shareInsight: "Dela insikten",
+      tryBreathing: "Vill du prova en andningsövning?",
       insightShareTitle: "Dela coach-insikt",
       insightShareDesc: "Coachens en-radare som bild — inget saldo, ingen e-post, bara observationen.",
       insightCardTitle: "Coach-insikt"

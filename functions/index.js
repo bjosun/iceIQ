@@ -28,7 +28,30 @@ const reportsToken = defineSecret('REPORTS_TOKEN');
 const APP_URL = "https://iceiq.app";
 const APP_ID = "default-app-id";
 const FREE_MONTHLY_CREDITS = 3; // Gratisplanens AI-krediter per månad
-const PROJECT_ID = "squareverse-36179"; 
+const PROJECT_ID = "squareverse-36179";
+
+// focusTags i askCoach: en fast, liten v1-lista, grundad i två källor —
+// dels den fasta poängtaxonomin (TemplateContext.tsx, finns i varenda
+// match oavsett hur lite fritext som skrivits), dels de faktiska
+// coachTimeline-anteckningar som redan fanns i produktionen 2026-08-26
+// (bara 5 poster totalt då — pucktapp/passningsspel, sargdueller och
+// zonspel återkom där, och en post nämnde uttryckligen "lugn under press"
+// och mentala övningar). Fysik och sömn/återhämtning är medvetet
+// uteslutna: det finns inget rutininnehåll att peka mot för dem ännu,
+// bara andningsövningen (kopplad till fokus_press). Listan är en startpunkt
+// — väx den när fler coachTimeline-poster ger ett bredare underlag.
+// En enda källa till sanning för både schemats enum och
+// serverfiltreringen nedan, så de aldrig kan glida isär.
+const FOCUS_TAGS = [
+  'puckhantering_press',
+  'sargdueller',
+  'zonspel',
+  'avslut',
+  'defensivt_ansvar',
+  'tekningar',
+  'malvaktsspel',
+  'fokus_press',
+]; 
 
 // --- PRIS IDn ---
 // Produkterna i Stripe: Premium Subscription (prod_TCPEqrpZtAFK5e) och
@@ -429,6 +452,22 @@ exports.askCoach = functions
       - Finns inget genuint positivt att lyfta den här gången: returnera en tom sträng. Ett påhittat beröm hamnar i en laggrupp och blir genomskådat.
       - Skriv den som ett konstaterande, inte som en hälsning: "Fem vunna sargdueller — flest hittills i säsongen".
 
+      FOKUSOMRÅDEN (fältet "focusTags" i svaret):
+      - Max 2 taggar, och bara om ett TYDLIGT mönster i datan pekar dit — en enda match räcker inte om historiken/säsongsöversikten säger något annat. Det vanliga fallet är en tom lista, inte undantaget.
+      - Välj ENDAST ur listan nedan. Hitta aldrig på en egen tagg — okända taggar filtreras bort ändå.
+      - Taggarna syns aldrig för spelaren och nämns aldrig i själva svaret ("analysis") — de styr bara vilken hjälp appen kan erbjuda i efterhand, som ett tyst erbjudande spelaren själv får välja att öppna.
+      - fokus_press sätts bara vid ett tydligt mönster av att tappa marginalerna under press (paniktappningar, ojämn prestation matcher med mycket press) ELLER om frågan/samtalet uttryckligen handlar om nerver, fokus eller matchdagsrutiner — INTE bara för att en match gick dåligt.
+
+      Tillgängliga taggar:
+      - puckhantering_press: återkommande pucktapp eller misslyckade passningar, särskilt under press
+      - sargdueller: tydligt mönster i vunna eller förlorade närkamper
+      - zonspel: tydligt mönster i zoninträden eller zonförsvar
+      - avslut: tydligt mönster i skottavslut eller skapade målchanser
+      - defensivt_ansvar: tydligt mönster i blockerade skott, klarerade lägen eller insläppta mål mot
+      - tekningar: tydligt mönster i tekningsstatistik (bara relevant för forwards)
+      - malvaktsspel: tydligt mönster i räddningar eller returer (bara relevant för målvakter)
+      - fokus_press: se villkoret ovan — mental press, inte prestationssvacka
+
       MINNE OM SPELAREN (fältet "coachTimeline" i svaret):
       - Du får spelarens tidslinje: en lista med daterade poster om vad du observerat över tid (spelstil, återkommande styrkor/svagheter, vad spelaren jobbat på, vad ni pratat om). Det är så du "känner igen" spelaren mellan samtal.
       - Lägg till EN NY post (med dagens datum, ${today}) bara om du lärt dig något varaktigt nytt i det här samtalet — inte vid varje litet svar. Om inget nytt tillkommit: returnera listan oförändrad.
@@ -463,6 +502,11 @@ exports.askCoach = functions
       properties: {
         analysis: { type: Type.STRING, description: 'Svaret till spelaren, enligt formateringsinstruktionerna.' },
         shareHighlight: { type: Type.STRING, description: 'En delbar en-radare, max 90 tecken. Tom sträng om inget sant positivt finns att lyfta.' },
+        focusTags: {
+          type: Type.ARRAY,
+          description: 'Max 2 taggar ur den fasta listan, bara vid ett tydligt mönster i datan. Tom lista är det vanliga.',
+          items: { type: Type.STRING, enum: FOCUS_TAGS },
+        },
         coachTimeline: {
           type: Type.ARRAY,
           description: 'Den fullständiga, uppdaterade tidslinjen om spelaren — max 8 poster.',
@@ -476,10 +520,11 @@ exports.askCoach = functions
           },
         },
       },
-      // shareHighlight är medvetet INTE required: den är en trevlighet
-      // ovanpå analysen, och ett fält som modellen inte lyckas fylla ska
-      // aldrig kunna fälla själva coach-svaret. Utelämnas den blir
-      // shareHighlight tom sträng och delningsknappen visas bara inte.
+      // shareHighlight och focusTags är medvetet INTE required: båda är
+      // en trevlighet ovanpå analysen, och ett fält som modellen inte
+      // lyckas fylla ska aldrig kunna fälla själva coach-svaret. Utelämnas
+      // de blir det tom sträng respektive tom lista — delningsknappen och
+      // rutin-erbjudandet visas bara inte.
       required: ['analysis', 'coachTimeline'],
     },
   };
@@ -554,6 +599,7 @@ exports.askCoach = functions
     const rawText = response.text || '';
     let analysis = rawText;
     let shareHighlight = '';
+    let focusTags = [];
     let coachTimeline = null;
     try {
       const parsed = JSON.parse(rawText);
@@ -562,6 +608,14 @@ exports.askCoach = functions
       // vad kortet rymmer, och instruktionen är bara en instruktion.
       if (typeof parsed.shareHighlight === 'string') {
         shareHighlight = parsed.shareHighlight.trim().slice(0, 90);
+      }
+      if (Array.isArray(parsed.focusTags)) {
+        // enum i schemat styr redan modellen, men filtrera ändå mot
+        // FOCUS_TAGS här — samma "lita inte på att instruktionen hölls"
+        // som resten av parsningen. Max 2, precis som prompten ber om.
+        focusTags = parsed.focusTags
+          .filter((tag) => typeof tag === 'string' && FOCUS_TAGS.includes(tag))
+          .slice(0, 2);
       }
       if (Array.isArray(parsed.coachTimeline)) {
         // Server-sidan gräns oavsett vad modellen faktiskt returnerade —
@@ -598,6 +652,7 @@ exports.askCoach = functions
       success: true,
       analysis,
       shareHighlight,
+      focusTags,
       creditsLeft: balance.monthly + balance.purchased,
       monthlyCredits: balance.monthly,
       purchasedCredits: balance.purchased

@@ -182,11 +182,18 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
         const highlight = typeof result.data.shareHighlight === 'string'
           ? result.data.shareHighlight.trim()
           : '';
+        const focusTags = Array.isArray(result.data.focusTags) ? result.data.focusTags : [];
         const finalMessages: CoachChatMessage[] = [
           ...baseMessages,
-          // highlight sätts bara när den finns: Firestore avvisar undefined
-          // som fältvärde, och finalMessages sparas rakt av i saveChat.
-          { role: 'ai', text: result.data.analysis, ...(highlight ? { highlight } : {}) },
+          // highlight/focusTags sätts bara när de finns: Firestore avvisar
+          // undefined som fältvärde, och finalMessages sparas rakt av i
+          // saveChat.
+          {
+            role: 'ai',
+            text: result.data.analysis,
+            ...(highlight ? { highlight } : {}),
+            ...(focusTags.length ? { focusTags } : {}),
+          },
         ];
         setMessages(finalMessages);
 
@@ -480,6 +487,19 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
                 >
                   <Share2 size={12} />
                   {t('ai.shareInsight')}
+                </button>
+              )}
+              {/* Tyst erbjudande, aldrig ett recept från coachen själv (se
+                  FOKUSOMRÅDEN i functions/index.js) — bara ett nästa steg
+                  spelaren själv får välja att öppna. fokus_press är i dag
+                  den enda taggen med ett faktiskt mål att peka mot. */}
+              {msg.role === 'ai' && msg.focusTags?.includes('fokus_press') && (
+                <button
+                  onClick={openBreathing}
+                  className="inline-flex items-center gap-1.5 text-cyan-500/80 hover:text-cyan-300 text-xs transition-colors"
+                >
+                  <Wind size={12} />
+                  {t('ai.tryBreathing')}
                 </button>
               )}
             </div>

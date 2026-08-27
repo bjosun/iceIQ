@@ -24,6 +24,12 @@ export interface CoachChatMessage {
    * undefined som fältvärde, så den får aldrig sättas till undefined.
    */
   highlight?: string;
+  /**
+   * Fasta nyckelord (se FOCUS_TAGS i functions/index.js) som pekar ut om
+   * något i rutinbiblioteket är relevant för det här svaret — t.ex.
+   * fokus_press för andningsövningen. Tom lista/utelämnat är det vanliga.
+   */
+  focusTags?: string[];
 }
 
 export interface CoachChat {
