@@ -303,6 +303,11 @@ export const translations = {
     // Player link — a standalone, login-free page for the player themselves
     playerLink: {
       generateButton: "Generate link",
+      // Tooltip på själva knappen (title-attribut) — förklarar VARFÖR man
+      // klickar, inte bara vad knappen heter. Modalens egen modalDesc
+      // täcker mekaniken (ingen inloggning osv) EFTER man redan klickat;
+      // det här är det steget innan.
+      generateHint: "A page {name} can open on their own phone — breathing exercise, progress, and your notes. No login needed.",
       generating: "Generating…",
       mintError: "Could not generate the link right now",
       modalTitle: "Link for {name}",
@@ -733,6 +738,7 @@ export const translations = {
     // Spelarlänk — en egen, inloggningsfri sida för spelaren själv
     playerLink: {
       generateButton: "Generera länk",
+      generateHint: "En sida {name} kan öppna på sin egen mobil — andningsövning, utveckling och dina anteckningar. Ingen inloggning behövs.",
       generating: "Genererar…",
       mintError: "Kunde inte generera länken just nu",
       modalTitle: "Länk till {name}",

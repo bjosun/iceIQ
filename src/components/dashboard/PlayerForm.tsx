@@ -190,12 +190,16 @@ export default function PlayerForm({
             {t('showPlayerHistory') || "History"}
           </Button>
 
-          {/* Spelarlänk — en egen, inloggningsfri sida för spelaren själv */}
+          {/* Spelarlänk — en egen, inloggningsfri sida för spelaren själv.
+              title ger en hover-tooltip som säger VARFÖR man klickar (samma
+              mönster som Edit-knappen ovan) — knappetiketten "Generera länk"
+              ensam säger inte vad man faktiskt får. */}
           <Button
             variant="secondary"
             onClick={handleGenerateLink}
             icon={Link2}
             disabled={!selectedPlayerName || mintingLink}
+            title={selectedPlayerName ? t('playerLink.generateHint', { name: selectedPlayerName }) : undefined}
             className="w-full md:w-auto"
           >
             {mintingLink ? t('playerLink.generating') : t('playerLink.generateButton')}
