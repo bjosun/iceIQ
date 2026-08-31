@@ -153,9 +153,8 @@ export const translations = {
       scoring: "Match scoring",
       history: "Match history",
       cloud: "Cloud sync",
-      charts: "Advanced charts",
+      charts: "Deeper stats & trends",
       moneyMode: "Money Mode",
-      followUp: "Chat with the coach",
       support: "Priority support",
       price: "Price",
       unlimited: "Unlimited",
@@ -207,7 +206,7 @@ export const translations = {
         tagline: "For dedicated players",
         f1: "Unlimited players",
         f2: "Cloud sync",
-        f3: "Advanced charts",
+        f3: "Deeper stats & trends",
         f4: "50 AI credits/month",
         f5: "Fast AI analyses",
         cta: "Get Premium"
@@ -218,7 +217,6 @@ export const translations = {
         f1: "Everything in Premium",
         f2: "500 AI credits/month",
         f3: "Deeper AI analyses",
-        f4: "Chat with the coach (follow-ups)",
         f5: "Priority support",
         cta: "Get Elite"
       }
@@ -616,9 +614,8 @@ export const translations = {
       scoring: "Matchregistrering",
       history: "Matchhistorik",
       cloud: "Molnsynk",
-      charts: "Avancerade grafer",
+      charts: "Djupare statistik & trender",
       moneyMode: "Money Mode",
-      followUp: "Chatta med coachen",
       support: "Prioriterad support",
       price: "Pris",
       unlimited: "Obegränsat",
@@ -670,7 +667,7 @@ export const translations = {
         tagline: "För seriösa spelare",
         f1: "Obegränsat antal spelare",
         f2: "Molnsynk",
-        f3: "Avancerade grafer",
+        f3: "Djupare statistik & trender",
         f4: "50 AI-krediter/mån",
         f5: "Snabba AI-analyser",
         cta: "Välj Premium"
@@ -681,7 +678,6 @@ export const translations = {
         f1: "Allt i Premium",
         f2: "500 AI-krediter/mån",
         f3: "Djupare AI-analyser",
-        f4: "Chatta med coachen (följdfrågor)",
         f5: "Prioriterad support",
         cta: "Bli Elite"
       }

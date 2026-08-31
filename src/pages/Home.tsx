@@ -89,7 +89,6 @@ export default function Home() {
     { key: 'plans.elite.f1', highlight: false },
     { key: 'plans.elite.f2', highlight: true },
     { key: 'plans.elite.f3', highlight: true },
-    { key: 'plans.elite.f4', highlight: true },
     { key: 'plans.elite.f5', highlight: false },
   ];
 
@@ -438,7 +437,6 @@ export default function Home() {
                     { label: t('compare.moneyMode'), free: true, premium: true, elite: true },
                     { label: t('compare.cloud'), free: false, premium: true, elite: true },
                     { label: t('compare.charts'), free: false, premium: true, elite: true },
-                    { label: t('compare.followUp'), free: false, premium: false, elite: true },
                     { label: t('compare.support'), free: false, premium: false, elite: true },
                     { label: t('compare.price'), free: t('compare.freePrice'), premium: `${plans.premium.price} ${plans.premium.period}`, elite: `${plans.elite.price} ${plans.elite.period}` },
                   ] as { label: string; free: string | boolean; premium: string | boolean; elite: string | boolean }[]).map((row) => (
