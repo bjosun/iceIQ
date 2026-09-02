@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from './Header';
 import MobileBottomNav from './MobileBottomNav';
 import Footer from './Footer';
+import PaymentAlertBanner from './PaymentAlertBanner';
 import ProfileModal from '../modals/ProfileModal';
 import SubscriptionModal from '../modals/SubscriptionModal';
 import { useSubscription } from '../../contexts/SubscriptionContext';
@@ -31,6 +32,10 @@ export default function Layout({ children }: LayoutProps) {
         onOpenProfile={() => setShowProfile(true)} 
         onOpenSubscription={() => setShowSub(true)} 
       />
+
+      {/* Betalningsvarning ligger utanför <main> så den syns direkt under
+         headern på varje inloggad sida, inte bara på dashboarden. */}
+      {user && <PaymentAlertBanner />}
 
       <main className={`flex-grow ${user ? 'pb-20 md:pb-0' : ''}`}>
         {children}

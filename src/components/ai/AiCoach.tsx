@@ -12,6 +12,7 @@ import Modal from '../ui/Modal';
 import BreathingExercise from '../breathing/BreathingExercise';
 import { renderInsightCard } from '../../utils/insightCard';
 import { ReportFormat } from '../../utils/shareCanvas';
+import { creditPackPrice, CREDITS_PER_PACK } from '../../utils/pricing';
 
 interface AiCoachProps {
   playerStats: any;
@@ -74,6 +75,10 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
   };
   const lowOnCredits = displayCredits <= 1;
   const playerName: string = playerStats?.player || '';
+  // Priset skrivs ut i knapptexten, inte bara i Stripes kassa — annars är
+  // beloppet en överraskning för den som klickar, oavsett om hen läser
+  // sidan på svenska eller engelska.
+  const creditPriceParams = { count: CREDITS_PER_PACK, price: creditPackPrice(language) };
 
   const handleShareWithPlayer = async (messageIndex: number, analysisText: string) => {
     setSharingIndex(messageIndex);
@@ -309,7 +314,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             className="mt-3 inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-200 text-sm font-medium disabled:opacity-60 transition-colors"
           >
             <ShoppingCart size={14} />
-            {buyingCredits ? t('ai.buyingCredits') : t('ai.buyCreditsInstead')}
+            {buyingCredits ? t('ai.buyingCredits') : t('ai.buyCreditsInstead', creditPriceParams)}
           </button>
         </div>
       </div>
@@ -355,7 +360,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
           <button
             onClick={handleBuyCredits}
             disabled={buyingCredits}
-            title={t('ai.buyCredits')}
+            title={t('ai.buyCredits', creditPriceParams)}
             className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-colors disabled:opacity-60 ${
               lowOnCredits
                 ? 'bg-red-500/10 border-red-500/40 animate-pulse hover:bg-red-500/20'
@@ -528,7 +533,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
                   className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 disabled:opacity-60 text-white font-bold text-sm py-2 px-5 rounded-xl transition-colors"
                 >
                   <ShoppingCart size={16} />
-                  {buyingCredits ? t('ai.buyingCredits') : t('ai.buyCredits')}
+                  {buyingCredits ? t('ai.buyingCredits') : t('ai.buyCredits', creditPriceParams)}
                 </button>
                 {/* Elite har inget högre steg att uppgradera till — bara
                     krediter är ett meningsfullt köp för dem här. */}

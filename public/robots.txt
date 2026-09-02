@@ -1,10 +1,17 @@
-# Säg till alla sökmotorer att de får indexera sajten
+# Startsidan och de publika sidorna får indexeras.
 User-agent: *
 Allow: /
 
-# Blockera känsliga sidor (valfritt)
-Disallow: /admin
-Disallow: /settings
+# Spelarlänkar: token:en i URL:en ÄR hela behörigheten (se PlayerLinkPage.tsx
+# och getPlayerLinkData i functions/index.js) och sidan innehåller ett barns
+# namn och matchstatistik. En sådan adress ska aldrig hamna i ett sökresultat.
+Disallow: /p/
 
-# Länk till din sitemap
+# Inloggade vyer och kvittosidan. De renderar ändå bara en inloggningsvägg
+# eller ett tomt tillstånd för en crawler, och blir dubbletter av startsidan
+# eftersom SPA:n serverar samma index.html på alla adresser.
+Disallow: /dashboard
+Disallow: /match
+Disallow: /success
+
 Sitemap: https://iceiq.app/sitemap.xml

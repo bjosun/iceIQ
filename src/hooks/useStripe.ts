@@ -9,7 +9,14 @@ export function useStripe() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createCheckoutSession = useCallback(async (interval: 'monthly' | 'yearly') => {
+  // plan saknades här och intervallet skickades in på planens plats, vilket
+  // hade gett fel produkt i kassan. Kroken används inte just nu (köpflödet går
+  // via SubscriptionContext), men en trasig signatur i betalvägen är inget att
+  // lämna kvar när valutan nu också hänger på argumenten.
+  const createCheckoutSession = useCallback(async (
+    plan: 'premium' | 'elite' | 'credits',
+    interval: 'monthly' | 'yearly'
+  ) => {
     if (!user) {
       setError('User must be logged in');
       return null;
@@ -19,7 +26,7 @@ export function useStripe() {
     setError(null);
 
     try {
-      const result = await stripeService.createCheckoutSession(interval, language);
+      const result = await stripeService.createCheckoutSession(plan, interval, language);
       return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create checkout session');

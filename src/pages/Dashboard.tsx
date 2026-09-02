@@ -8,6 +8,7 @@ import { useAiCredits } from '../hooks/useAiCredits';
 import { getDemoPlayerName, getDemoHistory, DEMO_STATS } from '../utils/demoData';
 import { pickMatchHighlight, MatchHighlight } from '../utils/matchHighlight';
 import { MatchReportStats } from '../utils/matchReport';
+import { moneyModeUnit } from '../utils/pricing';
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
 // Komponenter
@@ -708,7 +709,7 @@ export default function Dashboard() {
                 {t('totalPointsMatch')}
               </p>
               <p className="text-xl font-black text-white leading-none truncate">
-                {totals.matchTotal}{isMoneyMode ? ' kr' : ' p'}
+                {totals.matchTotal}{isMoneyMode ? ` ${moneyModeUnit(language)}` : ' p'}
               </p>
             </div>
             <button

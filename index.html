@@ -1,4 +1,3 @@
-<!-- index.html placeholder -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -7,9 +6,34 @@
     <link rel="apple-touch-icon" href="/iceiq.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#00ADEF">
+
+    <!-- Appen är en SPA: alla adresser serveras från den här filen (se
+         rewrites i firebase.json), så det finns bara EN titel och EN
+         beskrivning för hela sajten. De ska därför beskriva startsidan —
+         det är den enda sidan som är värd att ranka.
+
+         Språket sätts om i LanguageContext vid start (document.documentElement.lang).
+         "en" här är default och det som sökmotorn ser: den indexerade texten
+         är engelsk, vilket också är därför nästan all organisk trafik kommer
+         från engelskspråkiga marknader. Ingen hreflang — det finns ingen
+         separat svensk URL att peka på, språket byts i klienten. -->
     <link rel="canonical" href="https://iceiq.app/" />
-    <meta name="description" content="Ice IQ - Hockey Scouting and Analytics App">
-    <title>Ice IQ - Hockey Analytics</title>
+    <title>Ice IQ — Hockey Stats &amp; AI Coach for Young Players</title>
+    <meta name="description" content="Log a hockey game in two minutes and let the AI coach turn the stats into concrete advice. Built for parents, players, and coaches. Free to start.">
+
+    <!-- Delningskort. Saknades helt tidigare, vilket gjorde att en länk i en
+         laggrupp eller på Facebook visades som naken URL utan bild. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ice IQ">
+    <meta property="og:url" content="https://iceiq.app/">
+    <meta property="og:title" content="Ice IQ — Hockey Stats &amp; AI Coach for Young Players">
+    <meta property="og:description" content="Log a hockey game in two minutes and let the AI coach turn the stats into concrete advice. Built for parents, players, and coaches. Free to start.">
+    <meta property="og:image" content="https://iceiq.app/iceiq.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Ice IQ — Hockey Stats &amp; AI Coach for Young Players">
+    <meta name="twitter:description" content="Log a hockey game in two minutes and let the AI coach turn the stats into concrete advice. Built for parents, players, and coaches. Free to start.">
+    <meta name="twitter:image" content="https://iceiq.app/iceiq.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   </head>
   <body>

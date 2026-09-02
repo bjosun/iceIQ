@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import { currencyForLanguage, formatPrice, priceFor } from '../../utils/pricing';
 
 interface SubscriptionModalProps {
   isOpen: boolean;
@@ -50,12 +51,19 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
     }
   };
 
+  // Priserna kommer från src/utils/pricing.ts. Tidigare stod de hårdkodade
+  // här också, och hade hunnit glida isär från startsidan: Elite år låg som
+  // 899 här och 890 där (och 890 i Stripe).
+  const currency = currencyForLanguage(language);
+  const shownPrice = (plan: 'premium' | 'elite', interval: 'monthly' | 'yearly') =>
+    formatPrice(priceFor(plan, interval, currency), currency, language);
+
   // Data för planerna
   const plansData = {
     premium: {
       name: 'Premium',
-      priceMonthly: language === 'en' ? '29 SEK' : '29 kr',
-      priceYearly: language === 'en' ? '299 SEK' : '299 kr',
+      priceMonthly: shownPrice('premium', 'monthly'),
+      priceYearly: shownPrice('premium', 'yearly'),
       features: [
         { icon: Check, text: t('premiumFeaturePlus') || "Everything in Free", included: true },
         { icon: Users, text: t('premiumFeature3') || "Unlimited players", included: true },
@@ -66,8 +74,8 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
     },
     elite: {
       name: 'Elite',
-      priceMonthly: language === 'en' ? '89 SEK' : '89 kr',
-      priceYearly: language === 'en' ? '899 SEK' : '899 kr',
+      priceMonthly: shownPrice('elite', 'monthly'),
+      priceYearly: shownPrice('elite', 'yearly'),
       features: [
         { icon: Check, text: language === 'sv' ? "Allt i Premium" : "Everything in Premium", included: true },
         { icon: BrainCircuit, text: t('plans.elite.f3'), included: true },

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Search, Shield, Wallet, Trash2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { FREE_PLAYER_LIMIT } from '../../utils/constants';
+import { moneyModeUnit } from '../../utils/pricing';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayerData } from '../../hooks/usePlayerData'; 
 import Modal from '../ui/Modal';
@@ -42,7 +43,7 @@ export default function PlayerSelectModal({
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const currencySymbol = language === 'en' ? 'USD' : 'SEK';
+  const currencySymbol = moneyModeUnit(language);
 
   useEffect(() => {
     if (isOpen && user) {

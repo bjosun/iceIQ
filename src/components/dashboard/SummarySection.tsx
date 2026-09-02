@@ -15,6 +15,7 @@ import {
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { moneyModeUnit } from '../../utils/pricing';
 
 interface SummarySectionProps {
   actionCounts: Record<string, number>;
@@ -59,8 +60,8 @@ export default function SummarySection({
   const hasData = totalActionsRegistered > 0;
 
   // 3. Bestäm valuta och etiketter
-  const currencySymbol = isMoneyMode 
-    ? (language === 'en' ? 'USD' : 'SEK') 
+  const currencySymbol = isMoneyMode
+    ? moneyModeUnit(language)
     : 'Pts';
 
   const balanceLabel = isMoneyMode 

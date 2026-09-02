@@ -157,8 +157,7 @@ export const translations = {
       moneyMode: "Money Mode",
       support: "Priority support",
       price: "Price",
-      unlimited: "Unlimited",
-      freePrice: "0 SEK"
+      unlimited: "Unlimited"
     },
 
     // Money Mode Section
@@ -167,13 +166,13 @@ export const translations = {
       title: "Money Mode",
       heading: "Turn performance into pocket money — on your terms",
       desc: "For parents and coaches: attach a small reward to the actions you want to encourage, and Ice IQ keeps track of the balance between games. You decide what counts, how much, and when it is settled.",
-      example: "10 kr per goal, 5 kr per assist — watch the balance grow after every game.",
+      example: "$1 per goal, $0.50 per assist — watch the balance grow after every game.",
       point1Title: "You set the rules",
       point1Desc: "Reward effort and attitude, not just goals — a solid backcheck can be worth as much as a scored goal.",
       point2Title: "The balance carries over",
       point2Desc: "Ice IQ keeps the running balance between games until you choose to settle it.",
       point3Title: "Built for development",
-      point3Desc: "Nothing is left to chance — every krona is tied to real actions on the ice that you have defined yourself.",
+      point3Desc: "Nothing is left to chance — every dollar is tied to real actions on the ice that you have defined yourself.",
       note: "Money Mode is a tool for the adult, and always optional. Prefer points only? Switch mode with one tap.",
       mockTitle: "Tonight's game",
       mockGoal: "Goal",
@@ -186,8 +185,10 @@ export const translations = {
     pricing: {
       title: "Simple, Transparent Pricing",
       desc: "Choose the plan that fits your needs. No hidden fees.",
-      perMonth: "SEK/month",
-      perYear: "SEK/year",
+      // {currency} fylls i av currencyLabel() i src/utils/pricing.ts — tom
+      // sträng för USD, eftersom beloppet då redan bär sitt $.
+      perMonth: "{currency}/month",
+      perYear: "{currency}/year",
       popular: "Popular"
     },
 
@@ -257,10 +258,10 @@ export const translations = {
       loading2: "Analyzing patterns…",
       loading3: "Writing your advice…",
       upgradeCta: "Upgrade for more credits",
-      buyCredits: "Buy credits",
+      buyCredits: "Buy {count} credits for {price}",
       buyingCredits: "Opening checkout…",
       lowCreditsWarning: "Almost out of credits",
-      buyCreditsInstead: "Or buy credits instead",
+      buyCreditsInstead: "Or buy {count} credits for {price} instead",
       shareWithPlayer: "Share with player",
       sharing: "Sending…",
       sharedWithPlayer: "Sent to the player's email",
@@ -408,7 +409,6 @@ export const translations = {
     freeFeature3: "Simple match history",
     premiumFeature1: "Cloud sync",
     premiumFeature2: "Advanced statistics",
-    orYearlySimple: "or $29/year",
     premiumFeaturePlus: "Everything in Free, plus:",
     premiumFeature3: "Unlimited players",
     premiumFeature4: "Customizable templates",
@@ -451,6 +451,14 @@ export const translations = {
     pointDevelopment: "Point Development",
     mostCommonPositive: "Most Common Positive Actions",
     mostCommonNegative: "Most Common Negative Actions",
+
+    // Billing
+    billing: {
+      pastDueTitle: "The payment didn't go through",
+      pastDueBody: "We couldn't charge your subscription — usually an expired card. Update your details and everything carries on as before.",
+      pastDueAction: "Update payment details",
+      pastDueOpening: "Opening…"
+    },
 
     // Navigation
     nav: {
@@ -618,8 +626,7 @@ export const translations = {
       moneyMode: "Money Mode",
       support: "Prioriterad support",
       price: "Pris",
-      unlimited: "Obegränsat",
-      freePrice: "0 SEK"
+      unlimited: "Obegränsat"
     },
 
     // Money Mode Section
@@ -647,8 +654,8 @@ export const translations = {
     pricing: {
       title: "Enkel och tydlig prissättning",
       desc: "Välj den plan som passar dina behov. Inga dolda avgifter.",
-      perMonth: "SEK/mån",
-      perYear: "SEK/år",
+      perMonth: "{currency}/mån",
+      perYear: "{currency}/år",
       popular: "Populärast"
     },
 
@@ -718,10 +725,10 @@ export const translations = {
       loading2: "Analyserar mönster…",
       loading3: "Formulerar dina råd…",
       upgradeCta: "Uppgradera för fler krediter",
-      buyCredits: "Köp krediter",
+      buyCredits: "Köp {count} krediter för {price}",
       buyingCredits: "Öppnar kassan…",
       lowCreditsWarning: "Nästan slut på krediter",
-      buyCreditsInstead: "Eller köp krediter istället",
+      buyCreditsInstead: "Eller köp {count} krediter för {price} istället",
       shareWithPlayer: "Dela med spelaren",
       sharing: "Skickar…",
       sharedWithPlayer: "Skickat till spelarens e-post",
@@ -860,7 +867,6 @@ export const translations = {
     freeFeature3: "Enkel matchhistorik",
     premiumFeature1: "Molnsynkronisering",
     premiumFeature2: "Avancerad statistik",
-    orYearlySimple: "eller 299 SEK/år",
     premiumFeaturePlus: "Allt i Gratis, plus:",
     premiumFeature3: "Obegränsade spelare",
     premiumFeature4: "Anpassningsbara mallar",
@@ -903,6 +909,14 @@ export const translations = {
     pointDevelopment: "Poängutveckling",
     mostCommonPositive: "Vanligaste Positiva Aktioner",
     mostCommonNegative: "Vanligaste Negativa Aktioner",
+
+    // Billing
+    billing: {
+      pastDueTitle: "Betalningen gick inte igenom",
+      pastDueBody: "Vi kunde inte dra betalningen för din prenumeration — oftast ett kort som gått ut. Uppdatera uppgifterna så fortsätter allt som vanligt.",
+      pastDueAction: "Uppdatera betalsätt",
+      pastDueOpening: "Öppnar…"
+    },
 
     // Navigation
     nav: {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { useLanguage } from './LanguageContext';
 import { firestore } from '../services/firebase';
 import { stripeService, checkPaymentStatus, cleanPaymentUrl } from '../services/stripe';
 
@@ -28,6 +29,9 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(u
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  // LanguageProvider ligger utanför SubscriptionProvider i App.tsx, så det här
+  // är säkert att läsa här.
+  const { language } = useLanguage();
   const [subscription, setSubscription] = useState<Subscription>({ 
     plan: 'free', 
     status: 'active' 
@@ -89,11 +93,10 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
 
     try {
-      // Hämta aktuellt språk om du har det sparat någonstans
-      const language = 'en'; 
-      
-      // OBS: Du måste uppdatera din stripeService.createCheckoutSession 
-      // för att ta emot 'plan'-argumentet och välja rätt Price ID (Premium vs Elite)
+      // Språket avgör valutan i kassan (se currencyForLang i functions/index.js).
+      // Det låg hårdkodat till 'en' här, vilket var ofarligt så länge allt
+      // debiterades i SEK ändå — men med två valutor styr det vad kunden faktiskt
+      // betalar, och måste vara samma språk som priset hen just läste.
       const { id: sessionId } = await stripeService.createCheckoutSession(plan, interval, language);
       
       await stripeService.redirectToCheckout(sessionId);

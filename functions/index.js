@@ -28,6 +28,13 @@ const reportsToken = defineSecret('REPORTS_TOKEN');
 const APP_URL = "https://iceiq.app";
 const APP_ID = "default-app-id";
 const FREE_MONTHLY_CREDITS = 3; // Gratisplanens AI-krediter per månad
+
+// Betalplanernas månadspott. Låg tidigare hårdkodad som 50/500 på två ställen
+// (nyteckning och förnyelse) — de måste vara samma siffra, annars får kunden
+// en annan pott månad 2 än månad 1.
+const PLAN_MONTHLY_CREDITS = { premium: 50, elite: 500 };
+const creditsForPlan = (planType) =>
+  PLAN_MONTHLY_CREDITS[planType] ?? PLAN_MONTHLY_CREDITS.premium;
 const PROJECT_ID = "squareverse-36179";
 
 // focusTags i askCoach: en fast, liten v1-lista, grundad i två källor —
@@ -55,23 +62,89 @@ const FOCUS_TAGS = [
 
 // --- PRIS IDn ---
 // Produkterna i Stripe: Premium Subscription (prod_TCPEqrpZtAFK5e) och
-// Ice IQ Elite (prod_TyKsZ0OH6O3w6B). Elite har även två USD-priser som
-// appen INTE använder. Kontrollen i createStripeCheckoutSession ser till att
-// en felpekning stoppar köpet i stället för att debitera fel valuta/intervall.
-const monthlyPriceId = "price_1SG0PzG6k6tU2YpwlL1sRjxo";       // Premium 29 kr/mån
-const yearlyPriceId = "price_1SG0R0G6k6tU2Ypw8v1wALpq";        // Premium 299 kr/år
-const eliteMonthlyPriceId = "price_1T0OCgG6k6tU2YpwHLrOYeHV";  // Elite 89 kr/mån
-const eliteYearlyPriceId = "price_1T0ODTG6k6tU2YpwZUMoaXzE";   // Elite 890 kr/år
-const EXPECTED_CURRENCY = "sek";
+// Ice IQ Elite (prod_TyKsZ0OH6O3w6B).
+//
+// Priserna ligger per valuta. Svenskspråkiga kunder debiteras i SEK, alla
+// andra i USD — merparten av den organiska söktrafiken kommer från Kanada
+// och USA, och ett SEK-pris i kassan är där ett skäl att stänga fliken.
+// Valet görs i currencyForLang() nedan och speglas i src/utils/pricing.ts,
+// som styr vilket pris kunden SER. Beloppen här är alltså inte bara
+// dokumentation: de kontrolleras mot Stripe innan kassan öppnas, så att en
+// avvikelse mellan visat och debiterat pris stoppar köpet i stället för att
+// tyst dra fel summa.
+//
+// amount = belopp i minsta enhet (öre/cent), samma som Stripes unit_amount.
+const SEK_TABLE = {
+  premium: {
+    monthly: { id: "price_1SG0PzG6k6tU2YpwlL1sRjxo", amount: 2900 },
+    yearly: { id: "price_1SG0R0G6k6tU2Ypw8v1wALpq", amount: 29900 },
+  },
+  elite: {
+    monthly: { id: "price_1T0OCgG6k6tU2YpwHLrOYeHV", amount: 8900 },
+    yearly: { id: "price_1T0ODTG6k6tU2YpwZUMoaXzE", amount: 89000 },
+  },
+  // Engångspris, 15 krediter. Se ENGÅNGSKÖP AV KREDITER nedan.
+  // 49 kr (upp från 29 kr) — till 29 kr låg paketet i sticker-pris-paritet
+  // med en hel månad Premium (50 krediter + allt annat), vilket inte
+  // signalerade att prenumeration är den bättre dealen.
+  credits: { id: "price_1UAtG8G6k6tU2YpwP8ZDhdfj", amount: 4900 },
+};
+
+// USD-priserna i Stripe. Både premium och elite finns, så USD är påslaget
+// (se PRICES nedan). Halva tabellen duger inte: en engelsk pristabell med
+// "Premium 29 SEK/month" bredvid "Elite $9.90/month" vore sämre än att visa
+// allt i kronor — därför är det Premium-postens existens, inte en separat
+// flagga, som utgör på/av.
+const USD_TABLE = {
+  premium: {
+    monthly: { id: "price_1UAsTCG6k6tU2YpwtVADGY8L", amount: 299 },
+    yearly: { id: "price_1UAsTYG6k6tU2Ypw1WhUcr0G", amount: 2900 },
+  },
+  elite: {
+    monthly: { id: "price_1T0OE2G6k6tU2Ypw15nq67ZP", amount: 990 },
+    yearly: { id: "price_1T0OEQG6k6tU2YpwhF5OxyjV", amount: 9900 },
+  },
+  // 15 krediter, $4.99 (upp från $2.90 — samma motivering som SEK ovan).
+  credits: { id: "price_1UAtGUG6k6tU2YpwvcN4oIxN", amount: 499 },
+};
+
+const PRICES = {
+  sek: SEK_TABLE,
+  // Både premium och elite måste finnas för att USD ska kunna erbjudas alls.
+  usd: USD_TABLE.premium && USD_TABLE.elite ? USD_TABLE : null,
+};
+
+// Vilken valuta en kund ska debiteras i. Samma regel som i
+// src/utils/pricing.ts: svenska = SEK, allt annat = USD. Faller tillbaka
+// till SEK så länge USD-tabellen ovan inte är ifylld.
+function currencyForLang(lang) {
+  if (lang === "sv") return "sek";
+  return PRICES.usd ? "usd" : "sek";
+}
+
+// Slår upp vilken plan ett pris-ID hör till, oavsett valuta. Webhooken kan
+// inte jämföra mot ett enskilt ID längre: med två valutor finns det fyra
+// giltiga Elite-priser, och ett missat ID skulle ge en Elite-kund Premiums
+// kreditpott vid varje förnyelse.
+function planForPriceId(priceId) {
+  for (const table of Object.values(PRICES)) {
+    if (!table) continue;
+    for (const [plan, entry] of Object.entries(table)) {
+      if (plan === "credits") continue;
+      if (entry.monthly?.id === priceId || entry.yearly?.id === priceId) return plan;
+    }
+  }
+  return null;
+}
 
 // --- ENGÅNGSKÖP AV KREDITER ---
-// Ett enda engångspris i Stripe (mode: payment, INTE prenumeration). Kunden
-// justerar antalet paket själv i kassan via adjustable_quantity, så vi slipper
-// underhålla en pristrappa. Priset per paket är platt — ingen mängdrabatt —
-// vilket gör att prenumerationen förblir det bättre valet ju mer man köper.
-// Ändra siffrorna här om du vill ha ett annat upplägg; de följer med i
-// köpets metadata och styr hur många krediter som delas ut.
-const creditPackPriceId = "price_1U4KoDG6k6tU2YpwYPphw4RD"; // 15 krediter, 29 kr
+// Ett enda engångspris per valuta i Stripe (mode: payment, INTE
+// prenumeration). Kunden justerar antalet paket själv i kassan via
+// adjustable_quantity, så vi slipper underhålla en pristrappa. Priset per
+// paket är platt — ingen mängdrabatt — vilket gör att prenumerationen
+// förblir det bättre valet ju mer man köper. Ändra siffrorna här om du vill
+// ha ett annat upplägg; de följer med i köpets metadata och styr hur många
+// krediter som delas ut.
 const CREDITS_PER_PACK = 15;
 const MAX_CREDIT_PACKS = 10;
 
@@ -156,6 +229,91 @@ const buildWelcomeEmail = (lang, displayName) => {
         ${en
           ? "Questions or feedback? Just reply to this email — we read everything."
           : "Frågor eller feedback? Svara bara på det här mejlet — vi läser allt."}
+      </p>
+      <p style="color:#9ca3af;font-size:12px;margin-top:24px;">
+        ${en
+          ? "Ice IQ is part of SquareVerse Group, which is why this email arrives from squareversegroup.com."
+          : "Ice IQ är en del av SquareVerse Group, därför kommer det här mejlet från squareversegroup.com."}
+      </p>
+    </div>`;
+
+  return { subject, html };
+};
+
+// Ett mejlfel får ALDRIG fälla stripeWebhook: kastar vi där svarar funktionen
+// 500, och då levererar Stripe om händelsen och kör hela kredit- och
+// planlogiken en gång till. Att betalningen bokförs rätt är viktigare än att
+// mejlet går fram, så ett fel loggas och släpps.
+const sendPurchaseEmailSafely = async (userId, payload) => {
+  try {
+    const userDoc = await getUsersCollection().doc(userId).get();
+    const userData = userDoc.data();
+    if (!userData?.email) {
+      console.warn(`Köpmejl hoppades över för ${userId} — ingen e-postadress.`);
+      return;
+    }
+    const { subject, html } = buildPurchaseEmail(userData.language, payload);
+    await sendEmail(userData.email, subject, html, SUPPORT_REPLY_TO);
+    console.log(`✅ Köpmejl (${payload.kind}) skickat till ${userData.email}`);
+  } catch (err) {
+    console.error(`Köpmejl misslyckades för ${userId}:`, err);
+  }
+};
+
+// Skickas när ett köp gått igenom. Medvetet INTE ett kvitto — Stripe skickar
+// redan ett sådant, och ett sämre andrakvitto från oss hjälper ingen. Det här
+// mejlet svarar på "vad har jag nu, och vad gör jag härnäst", eftersom den
+// stora risken efter ett köp är att kunden aldrig kommer igång och säger upp
+// nästa månad. Därför också ingen merförsäljning: de har just köpt.
+const buildPurchaseEmail = (lang, { kind, planType, credits }) => {
+  const en = lang === 'en';
+  const isSubscription = kind === 'subscription';
+  const planName = planType === 'elite' ? 'Elite' : 'Premium';
+
+  const subject = isSubscription
+    ? (en ? `${planName} is active` : `${planName} är igång`)
+    : (en ? "Your credits are ready" : "Dina krediter är påfyllda");
+
+  const headline = isSubscription
+    ? (en ? `${planName} is active.` : `${planName} är igång.`)
+    : (en ? "Credits added." : "Krediterna är påfyllda.");
+
+  const creditLine = isSubscription
+    ? (en
+        ? `You have ${credits} AI credits this month, and they refill automatically every renewal.`
+        : `Du har ${credits} AI-krediter den här månaden, och de fylls på automatiskt vid varje förnyelse.`)
+    : (en
+        ? `You have ${credits} more AI credits. They don't expire — unused credits stay on the account.`
+        : `Du har ${credits} nya AI-krediter. De går inte ut — oanvända krediter ligger kvar på kontot.`);
+
+  const html = `
+    <div style="font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
+      <h2 style="margin:24px 0 4px;">Ice <span style="color:#0891b2;">IQ</span></h2>
+      <p style="margin:0 0 20px;color:#6b7280;">${headline}</p>
+      <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">${creditLine}</p>
+      <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
+        ${en
+          ? "The best next step is to log a match and ask the coach to read it — that's where the difference shows up."
+          : "Bästa nästa steg är att logga en match och be coachen läsa den — det är där skillnaden syns."}
+      </p>
+      <p style="margin:28px 0;">
+        <a href="${APP_URL}/dashboard" style="background:#0891b2;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:bold;">
+          ${en ? "Open Ice IQ" : "Öppna Ice IQ"}
+        </a>
+      </p>
+      <p style="color:#6b7280;font-size:14px;line-height:1.6;">
+        ${isSubscription
+          ? (en
+              ? "Your receipt comes separately from Stripe, who handle the payment. You can change or cancel the subscription at any time under My Account."
+              : "Ditt kvitto kommer separat från Stripe, som sköter betalningen. Du kan ändra eller säga upp prenumerationen när som helst under Mitt konto.")
+          : (en
+              ? "Your receipt comes separately from Stripe, who handle the payment."
+              : "Ditt kvitto kommer separat från Stripe, som sköter betalningen.")}
+      </p>
+      <p style="color:#6b7280;font-size:14px;line-height:1.6;">
+        ${en
+          ? "Something not working as expected? Just reply to this email."
+          : "Är det något som inte fungerar som det ska? Svara bara på det här mejlet."}
       </p>
       <p style="color:#9ca3af;font-size:12px;margin-top:24px;">
         ${en
@@ -303,7 +461,7 @@ function computeRoutineStreak(games, completions) {
   return streak;
 }
 
-const getOrCreateCustomer = async (userId, email) => {
+const getOrCreateCustomer = async (userId, email, lang) => {
   const stripeInstance = getStripe();
   const userRef = getUsersCollection().doc(userId);
   const userDoc = await userRef.get();
@@ -332,7 +490,12 @@ const getOrCreateCustomer = async (userId, email) => {
   console.log(`Creating new Stripe customer for: ${email}`);
   const customer = await stripeInstance.customers.create({
     email: email,
-    metadata: { firebaseUID: userId }
+    metadata: { firebaseUID: userId },
+    // Utan detta faller Stripes egna mejl (kvitton, dunning) tillbaka på
+    // kontots Standardspråk i Dashboarden — samma `lang` som redan avgör
+    // valutan (currencyForLang) styr här språket, så en svensk kund inte
+    // får sitt kvitto på samma språk som majoriteten (Kanada/USA, engelska).
+    ...(lang === 'sv' ? { preferred_locales: ['sv'] } : {}),
   });
 
   await userRef.set({ stripeCustomerId: customer.id }, { merge: true });
@@ -410,7 +573,7 @@ exports.askCoach = functions
   // det är produktens "prova på"-upplevelse, så free får INTE blockeras här.
   let monthlyCredits = userData.aiCredits;
   if (monthlyCredits === undefined) {
-      monthlyCredits = isSubscribed ? (plan === 'elite' ? 500 : 50) : FREE_MONTHLY_CREDITS;
+      monthlyCredits = isSubscribed ? creditsForPlan(plan) : FREE_MONTHLY_CREDITS;
       // set + merge så nya konton utan användardokument också fungerar.
       // subscriptionPlan sätts så att månadspåfyllnaden hittar gratisanvändaren.
       await userRef.set({ aiCredits: monthlyCredits, subscriptionPlan: plan }, { merge: true });
@@ -945,25 +1108,39 @@ exports.createStripeCheckoutSession = functions
   .https.onCall(async (data, context) => {
     if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
 
-    const { interval, plan } = data;
+    const { interval, plan, lang } = data;
     const userId = context.auth.uid;
     const userEmail = context.auth.token.email;
+    // Valutan följer språket kunden faktiskt har i appen — det är samma regel
+    // som bestämde priset hen just läste på sidan.
+    const currency = currencyForLang(lang);
+    const priceTable = PRICES[currency];
 
     try {
       const stripeInstance = getStripe();
-      const customerId = await getOrCreateCustomer(userId, userEmail);
+      const customerId = await getOrCreateCustomer(userId, userEmail, lang);
 
       // Engångsköp av krediter: eget läge (payment) och eget pris. Kunden får
       // justera antalet paket i kassan; webhooken läser slutgiltig kvantitet.
       if (plan === 'credits') {
-        const packPrice = await stripeInstance.prices.retrieve(creditPackPriceId);
+        // Kreditpaketet är ett engångsköp och kan mycket väl sakna USD-pris
+        // även när prenumerationerna har ett. Då säljs det i SEK i stället för
+        // att knappen går sönder — beloppet syns i Stripes kassa innan kunden
+        // betalar, så ingen debiteras något hen inte fått se.
+        const packCurrency = priceTable.credits ? currency : "sek";
+        const expectedPack = priceTable.credits || PRICES.sek.credits;
+        const packPrice = await stripeInstance.prices.retrieve(expectedPack.id);
         // Engångspriser saknar 'recurring' — ett prenumerationspris här skulle
         // binda kunden till en månadsdebitering hen aldrig bad om.
-        if (packPrice.recurring || packPrice.currency !== EXPECTED_CURRENCY) {
+        if (
+          packPrice.recurring ||
+          packPrice.currency !== packCurrency ||
+          packPrice.unit_amount !== expectedPack.amount
+        ) {
           console.error(
-            `Prisfel: ${creditPackPriceId} är ${packPrice.currency}` +
+            `Prisfel: ${expectedPack.id} är ${packPrice.unit_amount} ${packPrice.currency}` +
             `${packPrice.recurring ? `/${packPrice.recurring.interval} (återkommande)` : ' (engång)'} ` +
-            `— förväntade ett engångspris i ${EXPECTED_CURRENCY}.`
+            `— förväntade ett engångspris på ${expectedPack.amount} ${packCurrency}.`
           );
           throw new functions.https.HttpsError(
             "failed-precondition",
@@ -981,7 +1158,7 @@ exports.createStripeCheckoutSession = functions
           client_reference_id: userId,
           customer: customerId,
           line_items: [{
-            price: creditPackPriceId,
+            price: expectedPack.id,
             quantity: 1,
             adjustable_quantity: { enabled: true, minimum: 1, maximum: MAX_CREDIT_PACKS },
           }],
@@ -996,23 +1173,27 @@ exports.createStripeCheckoutSession = functions
         return { id: creditSession.id };
       }
 
-      let priceId;
-      if (plan === 'elite') {
-        priceId = interval === "yearly" ? eliteYearlyPriceId : eliteMonthlyPriceId;
-       } else {
-        priceId = interval === "yearly" ? yearlyPriceId : monthlyPriceId;
-      }
-      
+      const planKey = plan === 'elite' ? 'elite' : 'premium';
+      const intervalKey = interval === "yearly" ? "yearly" : "monthly";
+      const expected = priceTable[planKey][intervalKey];
+
       // Kontrollera att pris-ID:t verkligen är det vi tror innan kunden debiteras.
-      // Ett hopblandat ID (fel intervall eller USD i stället för SEK) ska stoppa
-      // köpet, inte tyst dra fel belopp. Kräver Prices:read på API-nyckeln.
-      const price = await stripeInstance.prices.retrieve(priceId);
+      // Ett hopblandat ID (fel intervall, fel valuta eller fel belopp) ska stoppa
+      // köpet, inte tyst dra fel summa. Beloppkontrollen är också skyddet mot att
+      // src/utils/pricing.ts och den här tabellen glider isär: då ser kunden ett
+      // pris och debiteras ett annat, och det ska bli ett fel — inte en tvist.
+      // Kräver Prices:read på API-nyckeln.
+      const price = await stripeInstance.prices.retrieve(expected.id);
       const expectedInterval = interval === "yearly" ? "year" : "month";
-      if (price.recurring?.interval !== expectedInterval || price.currency !== EXPECTED_CURRENCY) {
+      if (
+        price.recurring?.interval !== expectedInterval ||
+        price.currency !== currency ||
+        price.unit_amount !== expected.amount
+      ) {
         console.error(
-          `Prisfel: ${priceId} är ${price.unit_amount / 100} ${price.currency}/` +
-          `${price.recurring?.interval} — förväntade ${EXPECTED_CURRENCY}/${expectedInterval}. ` +
-          `Kontrollera pris-ID:na i functions/index.js.`
+          `Prisfel: ${expected.id} är ${price.unit_amount} ${price.currency}/` +
+          `${price.recurring?.interval} — förväntade ${expected.amount} ${currency}/${expectedInterval}. ` +
+          `Kontrollera PRICES i functions/index.js mot Stripe.`
         );
         throw new functions.https.HttpsError(
           "failed-precondition",
@@ -1027,9 +1208,12 @@ exports.createStripeCheckoutSession = functions
         cancel_url: `${APP_URL}/dashboard`,
         client_reference_id: userId,
         customer: customerId,
-        line_items: [{ price: priceId, quantity: 1 }],
+        line_items: [{ price: expected.id, quantity: 1 }],
         metadata: {
-            planType: plan || 'premium'
+            planType: plan || 'premium',
+            // Vilken valuta kunden faktiskt köpte i — syns i Stripe och gör att
+            // en felanmälan går att härleda utan att gissa utifrån pris-ID:t.
+            currency,
         }
       });
 
@@ -1093,7 +1277,7 @@ exports.deleteUserStripeAccount = functions
   });
 
 exports.stripeWebhook = functions
-  .runWith({ secrets: [stripeSecretKey, stripeWebhookSecret], memory: "512MB" })
+  .runWith({ secrets: [stripeSecretKey, stripeWebhookSecret, resendApiKey], memory: "512MB" })
   .https.onRequest(async (req, res) => {
     const stripeInstance = getStripe();
     const signature = req.headers["stripe-signature"];
@@ -1149,25 +1333,50 @@ exports.stripeWebhook = functions
             ? `✅ ${bought} krediter (${packs} paket) till ${userId}`
             : `↩️ Köp ${data.id} redan behandlat — hoppar över`);
 
+          // Bara vid faktisk tilldelning: en omleverans från Stripe ska inte
+          // ge kunden ett andra mejl om krediter den redan fått.
+          if (granted) {
+            await sendPurchaseEmailSafely(userId, { kind: 'credits', credits: bought });
+          }
+
         } else if (userId) {
           const subscription = await stripeInstance.subscriptions.retrieve(subscriptionId);
           const interval = subscription.items.data[0].plan.interval;
-          
-          const planType = data.metadata?.planType || "premium";
-          
-          // --- HÄR ÄR DINA NYA VÄRDEN: 50 och 500 ---
-          const creditAmount = planType === 'elite' ? 500 : 50;
 
-          await usersRef.doc(userId).set({
+          const planType = data.metadata?.planType || "premium";
+          const creditAmount = creditsForPlan(planType);
+
+          const userRef = usersRef.doc(userId);
+          await userRef.set({
             stripeCustomerId: customerId,
             subscriptionStatus: "active",
             subscriptionId: subscriptionId,
             subscriptionPlan: planType,
             subscriptionInterval: interval,
             subscriptionEnd: new Date(subscription.current_period_end * 1000).toISOString(),
-            aiCredits: creditAmount 
+            aiCredits: creditAmount
           }, { merge: true });
           console.log(`✅ ${planType} activated for ${userId} with ${creditAmount} AI credits`);
+
+          // Skrivningen ovan tål att upprepas (absoluta värden, inga
+          // increments) — men det gör inte mejlet. Utan den här spärren får
+          // kunden ett nytt aktiveringsmejl varje gång Stripe levererar om
+          // händelsen. Sessions-ID:t som dokumentnamn följer samma mönster
+          // som creditPurchases ovan.
+          const activationRef = userRef.collection('subscriptionActivations').doc(data.id);
+          const firstActivation = await db.runTransaction(async (tx) => {
+            if ((await tx.get(activationRef)).exists) return false;
+            tx.set(activationRef, {
+              planType,
+              interval,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            return true;
+          });
+
+          if (firstActivation) {
+            await sendPurchaseEmailSafely(userId, { kind: 'subscription', planType, credits: creditAmount });
+          }
         }
       }
 
@@ -1181,9 +1390,10 @@ exports.stripeWebhook = functions
             const subscription = await stripeInstance.subscriptions.retrieve(subscriptionId);
             const priceId = subscription.items.data[0].price.id;
             
-            // Kolla om det är Elite eller Premium baserat på Pris-ID
-            const isElite = priceId === eliteMonthlyPriceId || priceId === eliteYearlyPriceId;
-            const creditAmount = isElite ? 500 : 50;
+            // Kolla om det är Elite eller Premium baserat på Pris-ID. Slås upp
+            // över alla valutor — en Elite-kund som betalat i USD ska förstås
+            // förnyas som Elite, inte falla tillbaka på Premiums kreditpott.
+            const creditAmount = creditsForPlan(planForPriceId(priceId) || 'premium');
 
             const snapshot = await usersRef.where("stripeCustomerId", "==", customerId).get();
             if (!snapshot.empty) {
@@ -1209,10 +1419,19 @@ exports.stripeWebhook = functions
         const customerId = data.customer;
         const snapshot = await usersRef.where("stripeCustomerId", "==", customerId).get();
         if (!snapshot.empty) {
+          // Planen skrivs över till "free" i samma anrop — utan att spara
+          // den gamla planen här kan ops-digesten aldrig säga VAD som sades
+          // upp, bara ATT något gjorde det.
+          const cancelledPlan = snapshot.docs[0].data().subscriptionPlan || null;
           await snapshot.docs[0].ref.update({
             subscriptionStatus: "cancelled",
             subscriptionPlan: "free",
-            aiCredits: 0 
+            aiCredits: 0,
+            cancelledPlan,
+            // Utan tidsstämpel här går det inte att skilja "sa upp i morse"
+            // från "sa upp för tre månader sen" — ops-digesten (se runOpsDigest)
+            // behöver den för att bara räkna veckans uppsägningar.
+            subscriptionCancelledAt: admin.firestore.FieldValue.serverTimestamp(),
           });
           console.log(`❌ Subscription deleted for ${customerId}`);
         }
@@ -1482,6 +1701,190 @@ exports.acquisitionReport = functions
       res.json(report);
     } catch (err) {
       console.error('acquisitionReport misslyckades:', err);
+      res.status(500).json({ error: 'Failed', message: err.message });
+    }
+  });
+
+// ==========================================
+//  OPS-DIGEST (VECKORAPPORT TILL BJORN)
+// ==========================================
+// Svarar på "vad hände den här veckan" över hela användarbasen —
+// inklusive gratisanvändarna, som Stripe aldrig ser eftersom de inte har
+// någon betalning att visa upp. Skickas bara till en person (dig), inte
+// till kunder, så listorna nedan innehåller riktiga e-postadresser —
+// till skillnad från acquisitionReport ovan, som är en publik JSON-endpoint
+// och därför medvetet håller sig till aggregat.
+//
+// Samma N+1-läsmönster som runWeeklyDigest (en fråga per användare, ibland
+// per spelare) — rimligt för en veckovis cron-körning vid den här
+// användarvolymen, men första stället att optimera om användarbasen växer
+// mycket.
+const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekAgoISO = weekAgo.toISOString();
+  const weekAgoTs = admin.firestore.Timestamp.fromDate(weekAgo);
+
+  // 14 dagar, inte 7 — matchar produktens egen matchrytm (1-3 matcher/vecka,
+  // se computeRoutineStreak ovan). En 7-dagarsgräns hade flaggat helt
+  // normala familjer som "inaktiva" bara för att de hade en vilovecka.
+  const inactiveCutoffDate = new Date();
+  inactiveCutoffDate.setDate(inactiveCutoffDate.getDate() - 14);
+  const inactiveCutoffISO = inactiveCutoffDate.toISOString().split('T')[0];
+
+  const usersSnap = await getUsersCollection().get();
+
+  const newSignups = [];
+  const purchases = [];
+  const cancellations = [];
+  let activePremium = 0;
+  let activeElite = 0;
+  let pastDue = 0;
+  let notPaying = 0;
+  let inactive14d = 0;
+
+  for (const userDoc of usersSnap.docs) {
+    const u = userDoc.data();
+    const email = u.email || `(${userDoc.id})`;
+    const isNewThisWeek = typeof u.createdAt === 'string' && u.createdAt >= weekAgoISO;
+
+    if (isNewThisWeek) newSignups.push({ email, lang: u.language || 'en' });
+
+    if (u.subscriptionStatus === 'active' && u.subscriptionPlan === 'elite') activeElite++;
+    else if (u.subscriptionStatus === 'active' && u.subscriptionPlan === 'premium') activePremium++;
+    else if (u.subscriptionStatus === 'past_due') pastDue++;
+    else notPaying++;
+
+    const cancelledAt = u.subscriptionCancelledAt?.toDate?.();
+    if (cancelledAt && cancelledAt >= weekAgo) {
+      cancellations.push({ email, plan: u.cancelledPlan || '?' });
+    }
+
+    const [subsSnap, creditsSnap] = await Promise.all([
+      userDoc.ref.collection('subscriptionActivations').where('createdAt', '>=', weekAgoTs).get(),
+      userDoc.ref.collection('creditPurchases').where('createdAt', '>=', weekAgoTs).get(),
+    ]);
+    subsSnap.forEach((d) => {
+      const p = d.data();
+      purchases.push({ email, detail: `${p.planType || '?'} (${p.interval || '?'})` });
+    });
+    creditsSnap.forEach((d) => {
+      const p = d.data();
+      const amount = typeof p.amountTotal === 'number'
+        ? ` — ${(p.amountTotal / 100).toFixed(2)} ${(p.currency || '').toUpperCase()}`
+        : '';
+      purchases.push({ email, detail: `${p.credits || '?'} krediter${amount}` });
+    });
+
+    // Inaktivitet är bara en meningsfull siffra för konton som redan hunnit
+    // använda appen — annars räknar den bara upp den här veckans nya konton
+    // en gång till, vilket redan syns i "Nya konton" ovan.
+    if (!isNewThisWeek) {
+      const playersSnap = await userDoc.ref.collection('players').get();
+      if (!playersSnap.empty) {
+        let hasRecentGame = false;
+        for (const playerDoc of playersSnap.docs) {
+          const recentGame = await playerDoc.ref.collection('games')
+            .where('date', '>=', inactiveCutoffISO)
+            .limit(1)
+            .get();
+          if (!recentGame.empty) { hasRecentGame = true; break; }
+        }
+        if (!hasRecentGame) inactive14d++;
+      }
+    }
+  }
+
+  const cap = (arr, n) => arr.length > n ? [...arr.slice(0, n), null] : arr; // null = "+X fler"
+  const listRows = (arr, n, render) => {
+    const shown = cap(arr, n);
+    const rows = shown.map((item) => item === null
+      ? `<tr><td style="padding:4px 12px;color:#9ca3af;font-style:italic;" colspan="2">+ ${arr.length - n} till</td></tr>`
+      : render(item));
+    return rows.join('');
+  };
+
+  const html = `
+    <div style="font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;">
+      <h2 style="margin:24px 0 4px;">Ice <span style="color:#0891b2;">IQ</span> — veckorapport</h2>
+      <p style="margin:0 0 20px;color:#6b7280;font-size:13px;">${weekAgo.toISOString().split('T')[0]} → idag</p>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:14px;">
+        <tr style="background:#f3f4f6;">
+          <td style="padding:8px 12px;">Nya konton</td><td style="padding:8px 12px;text-align:right;font-weight:bold;">${newSignups.length}</td>
+        </tr>
+        <tr><td style="padding:8px 12px;">Köp den här veckan</td><td style="padding:8px 12px;text-align:right;font-weight:bold;">${purchases.length}</td></tr>
+        <tr style="background:#f3f4f6;"><td style="padding:8px 12px;">Uppsägningar den här veckan</td><td style="padding:8px 12px;text-align:right;font-weight:bold;">${cancellations.length}</td></tr>
+        <tr><td style="padding:8px 12px;">Aktiva — Premium / Elite</td><td style="padding:8px 12px;text-align:right;font-weight:bold;">${activePremium} / ${activeElite}</td></tr>
+        <tr style="background:#f3f4f6;"><td style="padding:8px 12px;">Betalning misslyckad just nu (past_due)</td><td style="padding:8px 12px;text-align:right;font-weight:bold;${pastDue > 0 ? 'color:#c2410c;' : ''}">${pastDue}</td></tr>
+        <tr><td style="padding:8px 12px;">Inaktiva 14+ dagar (av de med spelare)</td><td style="padding:8px 12px;text-align:right;font-weight:bold;">${inactive14d}</td></tr>
+      </table>
+
+      ${newSignups.length ? `
+        <h3 style="font-size:14px;margin:0 0 8px;">Nya konton</h3>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">${listRows(newSignups, 20, (s) => `<tr><td style="padding:4px 12px;">${s.email}</td><td style="padding:4px 12px;color:#9ca3af;">${s.lang}</td></tr>`)}</table>
+      ` : ''}
+
+      ${purchases.length ? `
+        <h3 style="font-size:14px;margin:0 0 8px;">Köp</h3>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">${listRows(purchases, 20, (p) => `<tr><td style="padding:4px 12px;">${p.email}</td><td style="padding:4px 12px;color:#6b7280;">${p.detail}</td></tr>`)}</table>
+      ` : ''}
+
+      ${cancellations.length ? `
+        <h3 style="font-size:14px;margin:0 0 8px;">Uppsägningar</h3>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">${listRows(cancellations, 20, (c) => `<tr><td style="padding:4px 12px;">${c.email}</td><td style="padding:4px 12px;color:#6b7280;">${c.plan}</td></tr>`)}</table>
+      ` : ''}
+
+      <p style="color:#9ca3af;font-size:11px;margin-top:32px;">Automatiskt genererad, mottagare: ${SUPPORT_REPLY_TO}.</p>
+    </div>`;
+
+  const stats = {
+    newSignups: newSignups.length,
+    purchases: purchases.length,
+    cancellations: cancellations.length,
+    activePremium,
+    activeElite,
+    pastDue,
+    notPaying,
+    inactive14d,
+  };
+
+  if (dryRun) return { dryRun: true, stats };
+
+  await sendEmail(redirectTo || SUPPORT_REPLY_TO, `Ice IQ — veckorapport (${weekAgo.toISOString().split('T')[0]} →)`, html);
+  return { dryRun: false, sentTo: redirectTo || SUPPORT_REPLY_TO, stats };
+};
+
+exports.opsDigest = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey] })
+  .pubsub.schedule('30 7 * * 1') // Måndagar 07:30 — en halvtimme före kundernas weeklyDigest
+  .timeZone('Europe/Stockholm')
+  .onRun(async () => {
+    const result = await runOpsDigest();
+    console.log(`📊 Ops-digest skickad. ${JSON.stringify(result.stats)}`);
+    return null;
+  });
+
+// Manuell testtrigger, samma säkerhetsmönster som runWeeklyDigestNow:
+//   (inget)      -> torrkörning, returnerar bara siffrorna, skickar inget
+//   ?live=true   -> skickar skarpt till SUPPORT_REPLY_TO
+//   ?to=adress   -> skickar riktigt innehåll till en annan adress istället
+exports.runOpsDigestNow = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey, digestTestToken] })
+  .https.onRequest(async (req, res) => {
+    if (req.get('x-digest-token') !== digestTestToken.value()) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const to = typeof req.query.to === 'string' ? req.query.to : null;
+    const live = req.query.live === 'true';
+
+    try {
+      const result = await runOpsDigest({ dryRun: !to && !live, redirectTo: to });
+      res.json(result);
+    } catch (err) {
+      console.error('runOpsDigestNow misslyckades:', err);
       res.status(500).json({ error: 'Failed', message: err.message });
     }
   });

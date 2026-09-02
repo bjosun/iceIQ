@@ -6,6 +6,14 @@ import heroBg from '../assets/images/hero-bg.jpg';
 import RinkLines from '../components/ui/RinkLines';
 import HeroPreview from '../components/home/HeroPreview';
 import {
+  currencyForLanguage,
+  currencyLabel,
+  formatAmount,
+  formatPrice,
+  priceFor,
+  type Interval,
+} from '../utils/pricing';
+import {
   BarChart3,
   Cloud,
   Users,
@@ -24,7 +32,7 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
 
   // State för att växla mellan månad och år
@@ -32,14 +40,36 @@ export default function Home() {
   const isYearly = billingCycle === 'yearly';
 
   // --- PRISER & DATA ---
+  // Beloppen kommer från src/utils/pricing.ts, inte härifrån: samma siffror
+  // låg tidigare även i SubscriptionModal och hade redan glidit isär.
+  const currency = currencyForLanguage(language);
+  const interval: Interval = isYearly ? 'yearly' : 'monthly';
+  const label = currencyLabel(currency, language);
+  const period = isYearly
+    ? t('pricing.perYear', { currency: label })
+    : t('pricing.perMonth', { currency: label });
+  // "29 SEK/mån" behöver luft mellan belopp och valuta; "$4.99/month" gör det
+  // inte — där sitter valutan redan i beloppet, och ett mellanslag före
+  // snedstrecket ser ut som ett tryckfel.
+  const periodClass = label ? 'text-gray-400 ml-2' : 'text-gray-400';
+  const priceLine = (price: string) => (label ? `${price} ${period}` : `${price}${period}`);
+
+  // Siffrorna i Money Mode-mockupen nedan. Det är ett exempel, inget vi tar
+  // betalt — men de måste följa exempeltexten ovanför rutan ("10 kr per mål"
+  // respektive "$1 per goal"), annars ser rutan ut som ett räknefel. Saldot
+  // innehåller överfört värde från tidigare matcher, precis som i appen.
+  const moneyMock = language === 'sv'
+    ? { goal: '+20 kr', assist: '+5 kr', backcheck: '+20 kr', balance: '145 kr' }
+    : { goal: '+$2', assist: '+$0.50', backcheck: '+$2', balance: '$14.50' };
+
   const plans = {
     premium: {
-      price: isYearly ? '299' : '29',
-      period: isYearly ? t('pricing.perYear') : t('pricing.perMonth'),
+      price: formatAmount(priceFor('premium', interval, currency), currency),
+      period,
     },
     elite: {
-      price: isYearly ? '890' : '89',
-      period: isYearly ? t('pricing.perYear') : t('pricing.perMonth'),
+      price: formatAmount(priceFor('elite', interval, currency), currency),
+      period,
     }
   };
 
@@ -266,21 +296,21 @@ export default function Home() {
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3">
                     <span className="text-gray-300 text-sm">{t('moneyMode.mockGoal')} × 2</span>
-                    <span className="text-green-400 font-bold text-sm">+20 kr</span>
+                    <span className="text-green-400 font-bold text-sm">{moneyMock.goal}</span>
                   </div>
                   <div className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3">
                     <span className="text-gray-300 text-sm">{t('moneyMode.mockAssist')} × 1</span>
-                    <span className="text-green-400 font-bold text-sm">+5 kr</span>
+                    <span className="text-green-400 font-bold text-sm">{moneyMock.assist}</span>
                   </div>
                   <div className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3">
                     <span className="text-gray-300 text-sm">{t('moneyMode.mockBackcheck')} × 4</span>
-                    <span className="text-green-400 font-bold text-sm">+20 kr</span>
+                    <span className="text-green-400 font-bold text-sm">{moneyMock.backcheck}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between border-t border-gray-700 pt-4">
                   <span className="text-gray-400 text-sm">{t('moneyMode.mockBalance')}</span>
-                  <span className="text-2xl font-black text-yellow-400">145 kr</span>
+                  <span className="text-2xl font-black text-yellow-400">{moneyMock.balance}</span>
                 </div>
               </div>
             </div>
@@ -329,8 +359,8 @@ export default function Home() {
               <h3 className="text-xl font-bold text-white mb-2">{t('plans.free.name')}</h3>
               <p className="text-gray-400 text-xs mb-6">{t('plans.free.tagline')}</p>
               <div className="mb-6">
-                <span className="text-4xl font-bold text-white">0</span>
-                <span className="text-gray-400 ml-2">SEK</span>
+                <span className="text-4xl font-bold text-white">{formatAmount(0, currency)}</span>
+                {label && <span className={periodClass}>{label}</span>}
               </div>
               <ul className="space-y-4 mb-8 flex-grow">
                 {freeFeatures.map(({ key, highlight }) => (
@@ -357,7 +387,7 @@ export default function Home() {
               <p className="text-yellow-500/80 text-xs mb-6">{t('plans.premium.tagline')}</p>
               <div className="mb-6">
                 <span className="text-4xl font-bold text-white">{plans.premium.price}</span>
-                <span className="text-gray-400 ml-2">{plans.premium.period}</span>
+                <span className={periodClass}>{plans.premium.period}</span>
               </div>
               <ul className="space-y-4 mb-8 flex-grow">
                 {premiumFeatures.map(({ key, highlight }) => (
@@ -391,7 +421,7 @@ export default function Home() {
 
               <div className="mb-6">
                 <span className="text-4xl font-bold text-white">{plans.elite.price}</span>
-                <span className="text-gray-400 ml-2">{plans.elite.period}</span>
+                <span className={periodClass}>{plans.elite.period}</span>
               </div>
 
               <ul className="space-y-4 mb-8 flex-grow relative z-10">
@@ -438,7 +468,7 @@ export default function Home() {
                     { label: t('compare.cloud'), free: false, premium: true, elite: true },
                     { label: t('compare.charts'), free: false, premium: true, elite: true },
                     { label: t('compare.support'), free: false, premium: false, elite: true },
-                    { label: t('compare.price'), free: t('compare.freePrice'), premium: `${plans.premium.price} ${plans.premium.period}`, elite: `${plans.elite.price} ${plans.elite.period}` },
+                    { label: t('compare.price'), free: formatPrice(0, currency, language), premium: priceLine(plans.premium.price), elite: priceLine(plans.elite.price) },
                   ] as { label: string; free: string | boolean; premium: string | boolean; elite: string | boolean }[]).map((row) => (
                     <tr key={row.label} className="border-b border-gray-800 last:border-0">
                       <td className="py-3.5 px-4 text-gray-300">{row.label}</td>
