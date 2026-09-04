@@ -1,0 +1,100 @@
+name: Deploy iceIQ to Firebase
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FIREBASE_PROJECT_ID: squareverse-36179
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # --- STEG 1: BESTÄMM SITE-URL (SEO + IndexNow) ---
+      # NEXT_PUBLIC_SITE_URL sätts som GitHub-secret (https://iceiq.app).
+      # Fall-back: {repo}.squareversegroup.com för ventures utan egen domän.
+      - name: Resolve site URL
+        id: site
+        run: |
+          if [ -n "${{ secrets.NEXT_PUBLIC_SITE_URL }}" ]; then
+            echo "url=${{ secrets.NEXT_PUBLIC_SITE_URL }}" >> $GITHUB_OUTPUT
+          else
+            echo "url=https://${{ github.event.repository.name }}.squareversegroup.com" >> $GITHUB_OUTPUT
+          fi
+
+      # --- STEG 2: SETUP NODE.JS ---
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # --- STEG 3: INSTALLERA BEROENDEN ---
+      - name: Install root dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      # --- STEG 4: BYGG VITE-APPLIKATIONEN ---
+      # Firebase-config är hårdkodad i src/ (services/firebase.ts + firebase.js),
+      # så endast Stripe publishable key och site-URL behöver injiceras.
+      - name: Build Application (Vite)
+        run: npm run build
+        env:
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          VITE_SITE_URL: ${{ steps.site.outputs.url }}
+
+      # --- STEG 5: GOOGLE CLOUD-AUTENTISERING ---
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+
+      # --- STEG 6: INSTALLERA FUNCTIONS-BEROENDEN ---
+      - name: Install Cloud Functions dependencies
+        working-directory: functions
+        run: npm ci --legacy-peer-deps
+
+      # --- STEG 7: DEPLOYA TILL FIREBASE ---
+      # Deployar: hosting:prod (iceiq.app), firestore:rules, functions.
+      # hosting:v2 (iceiq-v2.web.app) är ett testmål — deploya separat vid behov.
+      - name: Deploy to Firebase
+        run: |
+          DEPLOY_TARGETS="hosting:prod,firestore:rules,functions"
+          echo "🚀 Deploying targets: $DEPLOY_TARGETS"
+          npx firebase-tools deploy \
+            --only "$DEPLOY_TARGETS" \
+            --project ${{ env.FIREBASE_PROJECT_ID }} \
+            --non-interactive
+
+      # --- STEG 8: INDEXNOW-PING (SEO — Bing/Yandex/Seznam/Naver) ---
+      # Google deltar INTE i IndexNow — Google-indexering sköts via GSC.
+      # Nyckelfilen public/{key}.txt skapas vid scaffolding; om den saknas
+      # hoppar steget över tyst.
+      - name: Notify IndexNow of updated URLs
+        if: always()
+        continue-on-error: true
+        run: |
+          KEY_FILE=$(ls public/*.txt 2>/dev/null | head -1 || true)
+          if [ -z "$KEY_FILE" ]; then
+            echo "ℹ️ Ingen IndexNow-nyckelfil i public/ — hoppar över ping"
+            exit 0
+          fi
+          INDEXNOW_KEY=$(basename "$KEY_FILE" .txt)
+          SITE_URL="${{ steps.site.outputs.url }}"
+          SITE_HOST=$(echo "$SITE_URL" | sed 's|https\?://||; s|/$||')
+          echo "🔔 IndexNow-ping: $SITE_URL/ (nyckel ${INDEXNOW_KEY:0:8}…)"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.indexnow.org/indexnow" \
+            -H "Content-Type: application/json" \
+            -d "{\"host\":\"$SITE_HOST\",\"key\":\"$INDEXNOW_KEY\",\"keyLocation\":\"$SITE_URL/$INDEXNOW_KEY.txt\",\"urlList\":[\"$SITE_URL/\"]}")
+          echo "IndexNow svar: HTTP $HTTP_CODE (200=OK, 202=validering väntar)"
