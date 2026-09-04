@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Shield, Lock, Eye, Database } from 'lucide-react';
+import { PRIVACY_EMAIL, COMPANY_NAME, COMPANY_COUNTRY, COMPANY_URL, COMPANY_ORG_NR } from '../utils/contact';
 
 export default function Privacy() {
   const { t } = useLanguage();
@@ -136,10 +137,20 @@ export default function Privacy() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">Contact Us</h2>
               <p className="text-gray-300">
-                If you have any questions about this Privacy Policy, please contact our Data Protection Officer at{' '}
-                <a href="mailto:privacy@iceiq.app" className="text-cyan-400 hover:text-cyan-300">
-                  privacy@iceiq.app
+                The data controller for Ice IQ is {COMPANY_NAME}, company reg. no. {COMPANY_ORG_NR}, registered in {COMPANY_COUNTRY} (
+                <a
+                  href={COMPANY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:text-cyan-300"
+                >
+                  {COMPANY_URL.replace('https://', '')}
                 </a>
+                ). If you have any questions about this Privacy Policy, or want to exercise any of the rights above, contact us at{' '}
+                <a href={`mailto:${PRIVACY_EMAIL}`} className="text-cyan-400 hover:text-cyan-300">
+                  {PRIVACY_EMAIL}
+                </a>
+                .
               </p>
             </section>
           </div>

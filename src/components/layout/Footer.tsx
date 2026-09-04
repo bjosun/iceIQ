@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { Github, Mail, Shield, FileText } from 'lucide-react';
+import { Github, Mail, Shield, FileText, Building2 } from 'lucide-react';
+import { SUPPORT_EMAIL, COMPANY_NAME, COMPANY_COUNTRY, COMPANY_URL, COMPANY_ORG_NR } from '../../utils/contact';
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -24,6 +25,18 @@ export default function Footer() {
             </div>
             <p className="text-gray-400 text-sm">
               Advanced hockey analytics and player development tools for coaches and scouts.
+            </p>
+            <p className="text-gray-500 text-sm mt-3">
+              {t('footerDeveloper')}{' '}
+              <a
+                href={COMPANY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-cyan-400 transition-colors underline decoration-gray-600 underline-offset-2"
+              >
+                {COMPANY_NAME}
+              </a>
+              .
             </p>
           </div>
 
@@ -74,11 +87,17 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="mailto:support@iceiq.app"
-                  className="flex items-center text-gray-400 hover:text-cyan-400 transition-colors"
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="flex items-start text-gray-400 hover:text-cyan-400 transition-colors"
                 >
-                  <Mail size={16} className="mr-2" />
-                  {t('supportContact')}
+                  <Mail size={16} className="mr-2 mt-1 shrink-0" />
+                  <span>
+                    {t('supportContact')}
+                    {/* Adressen skrivs ut, inte bara gömd i href:en — den
+                        ligger på squareversegroup.com och ser annars ut som
+                        fel avsändare när svaret kommer. */}
+                    <span className="block text-xs text-gray-500 break-all">{SUPPORT_EMAIL}</span>
+                  </span>
                 </a>
               </li>
               <li>
@@ -98,7 +117,20 @@ export default function Footer() {
 
         <div className="border-t border-gray-700 mt-8 pt-6 text-center">
           <p className="text-gray-500 text-sm">
-            © {currentYear} Ice IQ by SquareVerse Group. All rights reserved.
+            <Building2 size={14} className="inline-block mr-2 -mt-0.5" />
+            © {currentYear} Ice IQ — a product of{' '}
+            <a
+              href={COMPANY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-cyan-400 transition-colors underline decoration-gray-600 underline-offset-2"
+            >
+              {COMPANY_NAME}
+            </a>
+            , {COMPANY_COUNTRY}. All rights reserved.
+          </p>
+          <p className="text-gray-500 text-xs mt-1">
+            Swedish company reg. no. {COMPANY_ORG_NR}
           </p>
           <p className="text-gray-500 text-xs mt-2">
             Made with ❤️ for the hockey community

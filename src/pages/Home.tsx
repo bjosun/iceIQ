@@ -39,6 +39,14 @@ export default function Home() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const isYearly = billingCycle === 'yearly';
 
+  // Sidans "kom igång"-knappar ska landa i REGISTRERINGEN, inte i
+  // inloggningen. Dashboard visar LoginForm som default (showSignup i
+  // Dashboard.tsx) och byter bara till SignupForm om den får isSignup:true
+  // via router-state — utan det här mötte en förstagångsbesökare som klickat
+  // "Testa AI-coachen" en lösenordsruta. Inloggade behöver inget state alls,
+  // de går rakt in i dashboarden.
+  const startState = user ? undefined : { isSignup: true };
+
   // --- PRISER & DATA ---
   // Beloppen kommer från src/utils/pricing.ts, inte härifrån: samma siffror
   // låg tidigare även i SubscriptionModal och hade redan glidit isär.
@@ -166,6 +174,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in-up delay-300">
             <Link
               to="/dashboard"
+              state={startState}
               className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg shadow-indigo-500/25"
             >
               {user ? t('home.goToDashboard') : t('home.tryAiCoach')}
@@ -373,7 +382,7 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <Link to="/dashboard" className="block text-center py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-all">
+              <Link to="/dashboard" state={startState} className="block text-center py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-all">
                 {user ? t('common.open') : t('common.getStarted')}
               </Link>
             </div>
@@ -505,6 +514,7 @@ export default function Home() {
               </p>
               <Link
                 to="/dashboard"
+                state={startState}
                 className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg"
               >
                 {user ? t('common.openDashboard') : t('common.startFreeTrial')}

@@ -38,9 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // consumeUtmParams() töms samtidigt (engångsläsning) — täcker både
         // e-post- och Google-signup, eftersom båda går via den här funktionen.
         const acquisition = consumeUtmParams();
+        // Ingen `email` här: adressen bor i Firebase Auth, och ett fält som
+        // bara skrivs vid signup blir tyst fel den dag användaren byter
+        // adress. Alla utskick slår upp den i Auth i stället (getUserEmail i
+        // functions/index.js).
         await setDoc(userRef, {
           uid: user.uid,
-          email: user.email,
           displayName: user.displayName || '',
           language: localStorage.getItem('iceiq-language') || 'en',
           createdAt: new Date().toISOString(),

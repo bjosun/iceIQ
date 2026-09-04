@@ -1,5 +1,13 @@
 export const translations = {
   en: {
+    // Footer & legal — saknades tidigare helt, vilket gjorde att footern och
+    // rubrikerna på villkors- och policysidorna renderade själva nyckeln
+    // ("termsLink", "privacyLink", "supportContact") rakt av.
+    termsLink: "Terms of Service",
+    privacyLink: "Privacy Policy",
+    supportContact: "Contact support",
+    footerDeveloper: "Developed and operated by",
+
     // App & Nav
     appTitle: "Ice IQ",
     appSubtitle: "Cloud-synced with player history and graphs.",
@@ -470,6 +478,12 @@ export const translations = {
     }
   },
   sv: {
+    // Footer & juridik — se kommentaren i en-blocket.
+    termsLink: "Användarvillkor",
+    privacyLink: "Integritetspolicy",
+    supportContact: "Kontakta supporten",
+    footerDeveloper: "Utvecklas och drivs av",
+
     // App & Nav
     appTitle: "Ice IQ",
     appSubtitle: "Moln-synkroniserad med spelarhistorik och grafer.",

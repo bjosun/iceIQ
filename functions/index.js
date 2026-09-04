@@ -159,9 +159,19 @@ const portalConfigurationId = "bpc_1SzOInG6k6tU2Ypwxr85tQu4";
 // squareversegroup.com. Byt bara denna rad när iceiq.app är klar.
 const FROM_EMAIL = "Ice IQ <noreply@squareversegroup.com>";
 
-// Tills support@iceiq.app är verifierad går svar hit istället för till
-// noreply-adressen (som inte tar emot något).
-const SUPPORT_REPLY_TO = "bjorn.sundberg@squareverse.se";
+// reply_to på allt kundvänt vi skickar — noreply-adressen ovan tar inte emot
+// något. Svaren går in via en Cloudflare-worker och triageras av
+// Ice IQ-agenten. Adressen ligger på squareversegroup.com tills iceiq.app
+// ligger hos Cloudflare och support@iceiq.app kan ta över samma väg. Den
+// dagen: byt den här raden och SUPPORT_EMAIL i src/utils/contact.ts — de två
+// ska alltid vara samma adress, annars ber mejlen om svar på ett ställe medan
+// sajten pekar på ett annat.
+const SUPPORT_REPLY_TO = "support-iceiq@squareversegroup.com";
+
+// Interna rapporter (veckans ops-digest) går till en personlig adress, inte
+// till supportinkorgen — kundmejl och driftrapporter ska inte samsas i samma
+// tråd-flöde.
+const OPS_EMAIL = "bjorn.sundberg@squareverse.se";
 
 let resend;
 const getResend = () => {
@@ -178,6 +188,37 @@ const sendEmail = async (to, subject, html, replyTo) => {
     ...(replyTo ? { reply_to: replyTo } : {}),
   });
   if (error) throw new Error(`Resend: ${error.message || JSON.stringify(error)}`);
+};
+
+// Firebase Auth är enda sanningen för en användares e-postadress. Tidigare
+// låg den även som fältet `email` på users-dokumentet, skrivet en enda gång
+// vid signup och aldrig uppdaterat — byter någon adress i Auth blev
+// dokumentet tyst fel, och då gick välkomst- och köpmejl till den gamla
+// adressen medan veckomejlet (som redan läste från Auth) gick till den nya.
+// Alla utskick går numera genom den här.
+const getUserEmail = async (uid) => {
+  try {
+    return (await admin.auth().getUser(uid)).email || null;
+  } catch (err) {
+    // Kontot kan vara raderat i Auth men ha ett kvarlämnat dokument.
+    return null;
+  }
+};
+
+// Samma sak för många uid på en gång (ops-digesten listar adresser för hela
+// veckans händelser). getUsers tar max 100 identifierare per anrop.
+const getUserEmails = async (uids) => {
+  const byUid = new Map();
+  for (let i = 0; i < uids.length; i += 100) {
+    const chunk = uids.slice(i, i + 100).map((uid) => ({ uid }));
+    try {
+      const { users } = await admin.auth().getUsers(chunk);
+      users.forEach((u) => byUid.set(u.uid, u.email || null));
+    } catch (err) {
+      console.error('getUsers misslyckades för ett block:', err);
+    }
+  }
+  return byUid;
 };
 
 const buildWelcomeEmail = (lang, displayName) => {
@@ -246,15 +287,17 @@ const buildWelcomeEmail = (lang, displayName) => {
 // mejlet går fram, så ett fel loggas och släpps.
 const sendPurchaseEmailSafely = async (userId, payload) => {
   try {
-    const userDoc = await getUsersCollection().doc(userId).get();
-    const userData = userDoc.data();
-    if (!userData?.email) {
+    const email = await getUserEmail(userId);
+    if (!email) {
       console.warn(`Köpmejl hoppades över för ${userId} — ingen e-postadress.`);
       return;
     }
-    const { subject, html } = buildPurchaseEmail(userData.language, payload);
-    await sendEmail(userData.email, subject, html, SUPPORT_REPLY_TO);
-    console.log(`✅ Köpmejl (${payload.kind}) skickat till ${userData.email}`);
+    // Dokumentet behövs fortfarande för språkvalet — bara adressen kommer
+    // numera från Auth.
+    const userDoc = await getUsersCollection().doc(userId).get();
+    const { subject, html } = buildPurchaseEmail(userDoc.data()?.language, payload);
+    await sendEmail(email, subject, html, SUPPORT_REPLY_TO);
+    console.log(`✅ Köpmejl (${payload.kind}) skickat till ${email}`);
   } catch (err) {
     console.error(`Köpmejl misslyckades för ${userId}:`, err);
   }
@@ -1485,14 +1528,20 @@ exports.sendWelcomeEmail = functions
   .firestore.document('artifacts/{appId}/users/{userId}')
   .onCreate(async (snap) => {
     const data = snap.data();
-    if (!data.email) return null;
+    // Dokumentet skapas först efter att Auth-kontot finns (AuthContext kör i
+    // onAuthStateChanged), så uppslaget hittar alltid användaren här.
+    const email = await getUserEmail(snap.id);
+    if (!email) {
+      console.warn(`Välkomstmejl hoppades över för ${snap.id} — ingen e-postadress i Auth.`);
+      return null;
+    }
 
     const { subject, html } = buildWelcomeEmail(data.language, data.displayName);
     try {
-      await sendEmail(data.email, subject, html, SUPPORT_REPLY_TO);
-      console.log(`✅ Välkomstmejl skickat till ${data.email}`);
+      await sendEmail(email, subject, html, SUPPORT_REPLY_TO);
+      console.log(`✅ Välkomstmejl skickat till ${email}`);
     } catch (err) {
-      console.error(`Välkomstmejl misslyckades för ${data.email}:`, err);
+      console.error(`Välkomstmejl misslyckades för ${email}:`, err);
     }
     return null;
   });
@@ -1542,12 +1591,7 @@ const runWeeklyDigest = async ({ dryRun = false, redirectTo = null, limit = 0 } 
     if (summaries.length === 0) continue;
 
     // E-postadressen bor i Auth, inte i Firestore-dokumentet
-    let email;
-    try {
-      email = (await admin.auth().getUser(userDoc.id)).email;
-    } catch (err) {
-      continue;
-    }
+    const email = await getUserEmail(userDoc.id);
     if (!email) continue;
 
     recipients.push({ uid: userDoc.id, email, players: summaries.length });
@@ -1599,7 +1643,9 @@ const runWeeklyDigest = async ({ dryRun = false, redirectTo = null, limit = 0 } 
       </div>`;
 
     try {
-      await sendEmail(redirectTo || email, subject, html);
+      // Samma svarsadress som övriga kundmejl — utan den går svar till
+      // noreply-adressen och försvinner.
+      await sendEmail(redirectTo || email, subject, html, SUPPORT_REPLY_TO);
       sent++;
     } catch (err) {
       console.error(`Veckomejl misslyckades för ${userDoc.id}:`, err);
@@ -1742,13 +1788,21 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
   let pastDue = 0;
   let notPaying = 0;
   let inactive14d = 0;
+  // Aktiveringstratten: var i kedjan konto -> spelare -> första matchen som
+  // folk faktiskt fastnar. Utan de här siffrorna syns bara "hur många
+  // registrerade sig" och "hur många betalar" — aldrig steget däremellan,
+  // som är där de flesta nya konton tar slut.
+  let noPlayers = 0;
+  let playersNoGames = 0;
+  let activated = 0;
 
   for (const userDoc of usersSnap.docs) {
     const u = userDoc.data();
-    const email = u.email || `(${userDoc.id})`;
+    // Bara uid här — adresserna slås upp i Auth i ett svep när loopen är
+    // klar (getUserEmails nedan), så rapporten inte bygger på ett fält som
+    // kan vara inaktuellt eller saknas helt på nyare konton.
+    const uid = userDoc.id;
     const isNewThisWeek = typeof u.createdAt === 'string' && u.createdAt >= weekAgoISO;
-
-    if (isNewThisWeek) newSignups.push({ email, lang: u.language || 'en' });
 
     if (u.subscriptionStatus === 'active' && u.subscriptionPlan === 'elite') activeElite++;
     else if (u.subscriptionStatus === 'active' && u.subscriptionPlan === 'premium') activePremium++;
@@ -1757,7 +1811,7 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
 
     const cancelledAt = u.subscriptionCancelledAt?.toDate?.();
     if (cancelledAt && cancelledAt >= weekAgo) {
-      cancellations.push({ email, plan: u.cancelledPlan || '?' });
+      cancellations.push({ uid, plan: u.cancelledPlan || '?' });
     }
 
     const [subsSnap, creditsSnap] = await Promise.all([
@@ -1766,34 +1820,59 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
     ]);
     subsSnap.forEach((d) => {
       const p = d.data();
-      purchases.push({ email, detail: `${p.planType || '?'} (${p.interval || '?'})` });
+      purchases.push({ uid, detail: `${p.planType || '?'} (${p.interval || '?'})` });
     });
     creditsSnap.forEach((d) => {
       const p = d.data();
       const amount = typeof p.amountTotal === 'number'
         ? ` — ${(p.amountTotal / 100).toFixed(2)} ${(p.currency || '').toUpperCase()}`
         : '';
-      purchases.push({ email, detail: `${p.credits || '?'} krediter${amount}` });
+      purchases.push({ uid, detail: `${p.credits || '?'} krediter${amount}` });
     });
 
-    // Inaktivitet är bara en meningsfull siffra för konton som redan hunnit
-    // använda appen — annars räknar den bara upp den här veckans nya konton
-    // en gång till, vilket redan syns i "Nya konton" ovan.
-    if (!isNewThisWeek) {
-      const playersSnap = await userDoc.ref.collection('players').get();
-      if (!playersSnap.empty) {
-        let hasRecentGame = false;
-        for (const playerDoc of playersSnap.docs) {
-          const recentGame = await playerDoc.ref.collection('games')
-            .where('date', '>=', inactiveCutoffISO)
-            .limit(1)
-            .get();
-          if (!recentGame.empty) { hasRecentGame = true; break; }
-        }
-        if (!hasRecentGame) inactive14d++;
-      }
+    // Senaste matchdatumet över kontots alla spelare. Ett dokument per
+    // spelare räcker (sorterat fallande), och vi slutar leta så fort vi
+    // hittat en match som ändå är färsk nog — samma tak på antalet läsningar
+    // som den tidigare varianten, men svaret räcker nu till både
+    // "har aldrig loggat en match" och "har slutat logga".
+    const playersSnap = await userDoc.ref.collection('players').get();
+    let latestGameDate = null;
+    for (const playerDoc of playersSnap.docs) {
+      const lastGame = await playerDoc.ref.collection('games')
+        .orderBy('date', 'desc')
+        .limit(1)
+        .get();
+      if (lastGame.empty) continue;
+      const date = lastGame.docs[0].data().date;
+      if (typeof date !== 'string') continue;
+      if (!latestGameDate || date > latestGameDate) latestGameDate = date;
+      if (latestGameDate >= inactiveCutoffISO) break;
+    }
+
+    if (playersSnap.empty) noPlayers++;
+    else if (!latestGameDate) playersNoGames++;
+    else {
+      activated++;
+      // Inaktivitet är bara en meningsfull siffra för konton som redan hunnit
+      // använda appen — annars räknar den bara upp den här veckans nya konton
+      // en gång till, vilket redan syns i "Nya konton" ovan.
+      if (!isNewThisWeek && latestGameDate < inactiveCutoffISO) inactive14d++;
+    }
+
+    // Sist i loopen: nu vet vi om kontot hunnit logga något, och veckans
+    // kohort kan redovisas med sin egen aktiveringsgrad i stället för att
+    // blandas ihop med hela basen.
+    if (isNewThisWeek) {
+      newSignups.push({ uid, lang: u.language || 'en', activated: latestGameDate !== null });
     }
   }
+
+  // Ett uppslag för alla uid som faktiskt hamnade i rapporten. Konton som
+  // hunnit raderas i Auth visas som uid:t — bättre än en tom rad.
+  const emailByUid = await getUserEmails([
+    ...new Set([...newSignups, ...purchases, ...cancellations].map((r) => r.uid)),
+  ]);
+  const label = (uid) => emailByUid.get(uid) || `(${uid})`;
 
   const cap = (arr, n) => arr.length > n ? [...arr.slice(0, n), null] : arr; // null = "+X fler"
   const listRows = (arr, n, render) => {
@@ -1803,6 +1882,12 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
       : render(item));
     return rows.join('');
   };
+
+  const totalUsers = usersSnap.size;
+  const newActivated = newSignups.filter((n) => n.activated).length;
+  // Andelen skrivs bara ut när den betyder något — "0 av 0 = 0 %" ser ut som
+  // ett resultat, men är bara ett tomt underlag.
+  const share = (n) => (totalUsers > 0 ? ` (${Math.round((n / totalUsers) * 100)} %)` : '');
 
   const html = `
     <div style="font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;">
@@ -1820,22 +1905,39 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
         <tr><td style="padding:8px 12px;">Inaktiva 14+ dagar (av de med spelare)</td><td style="padding:8px 12px;text-align:right;font-weight:bold;">${inactive14d}</td></tr>
       </table>
 
+      <h3 style="font-size:14px;margin:0 0 8px;">Aktivering</h3>
+      <p style="margin:0 0 10px;color:#6b7280;font-size:13px;">
+        Var kedjan konto &rarr; spelare &rarr; f&ouml;rsta matchen tar slut. Hela basen, inte bara den h&auml;r veckan.
+      </p>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:14px;">
+        <tr style="background:#f3f4f6;">
+          <td style="padding:8px 12px;">Konton totalt</td><td style="padding:8px 12px;text-align:right;font-weight:bold;">${totalUsers}</td>
+        </tr>
+        <tr><td style="padding:8px 12px;">— utan spelare (kom aldrig ig&aring;ng)</td><td style="padding:8px 12px;text-align:right;font-weight:bold;">${noPlayers}${share(noPlayers)}</td></tr>
+        <tr style="background:#f3f4f6;"><td style="padding:8px 12px;">— spelare, men aldrig loggat en match</td><td style="padding:8px 12px;text-align:right;font-weight:bold;">${playersNoGames}${share(playersNoGames)}</td></tr>
+        <tr><td style="padding:8px 12px;">— har loggat minst en match</td><td style="padding:8px 12px;text-align:right;font-weight:bold;color:#047857;">${activated}${share(activated)}</td></tr>
+        <tr style="background:#f3f4f6;">
+          <td style="padding:8px 12px;">Nya konton denna vecka som loggat en match</td>
+          <td style="padding:8px 12px;text-align:right;font-weight:bold;">${newActivated} av ${newSignups.length}</td>
+        </tr>
+      </table>
+
       ${newSignups.length ? `
         <h3 style="font-size:14px;margin:0 0 8px;">Nya konton</h3>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">${listRows(newSignups, 20, (s) => `<tr><td style="padding:4px 12px;">${s.email}</td><td style="padding:4px 12px;color:#9ca3af;">${s.lang}</td></tr>`)}</table>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">${listRows(newSignups, 20, (s) => `<tr><td style="padding:4px 12px;">${label(s.uid)}</td><td style="padding:4px 12px;color:#9ca3af;">${s.lang} · ${s.activated ? 'loggat match' : 'ingen match än'}</td></tr>`)}</table>
       ` : ''}
 
       ${purchases.length ? `
         <h3 style="font-size:14px;margin:0 0 8px;">Köp</h3>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">${listRows(purchases, 20, (p) => `<tr><td style="padding:4px 12px;">${p.email}</td><td style="padding:4px 12px;color:#6b7280;">${p.detail}</td></tr>`)}</table>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">${listRows(purchases, 20, (p) => `<tr><td style="padding:4px 12px;">${label(p.uid)}</td><td style="padding:4px 12px;color:#6b7280;">${p.detail}</td></tr>`)}</table>
       ` : ''}
 
       ${cancellations.length ? `
         <h3 style="font-size:14px;margin:0 0 8px;">Uppsägningar</h3>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">${listRows(cancellations, 20, (c) => `<tr><td style="padding:4px 12px;">${c.email}</td><td style="padding:4px 12px;color:#6b7280;">${c.plan}</td></tr>`)}</table>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">${listRows(cancellations, 20, (c) => `<tr><td style="padding:4px 12px;">${label(c.uid)}</td><td style="padding:4px 12px;color:#6b7280;">${c.plan}</td></tr>`)}</table>
       ` : ''}
 
-      <p style="color:#9ca3af;font-size:11px;margin-top:32px;">Automatiskt genererad, mottagare: ${SUPPORT_REPLY_TO}.</p>
+      <p style="color:#9ca3af;font-size:11px;margin-top:32px;">Automatiskt genererad, mottagare: ${OPS_EMAIL}.</p>
     </div>`;
 
   const stats = {
@@ -1847,12 +1949,17 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
     pastDue,
     notPaying,
     inactive14d,
+    totalUsers,
+    noPlayers,
+    playersNoGames,
+    activated,
+    newActivated,
   };
 
   if (dryRun) return { dryRun: true, stats };
 
-  await sendEmail(redirectTo || SUPPORT_REPLY_TO, `Ice IQ — veckorapport (${weekAgo.toISOString().split('T')[0]} →)`, html);
-  return { dryRun: false, sentTo: redirectTo || SUPPORT_REPLY_TO, stats };
+  await sendEmail(redirectTo || OPS_EMAIL, `Ice IQ — veckorapport (${weekAgo.toISOString().split('T')[0]} →)`, html);
+  return { dryRun: false, sentTo: redirectTo || OPS_EMAIL, stats };
 };
 
 exports.opsDigest = functions
@@ -1867,7 +1974,7 @@ exports.opsDigest = functions
 
 // Manuell testtrigger, samma säkerhetsmönster som runWeeklyDigestNow:
 //   (inget)      -> torrkörning, returnerar bara siffrorna, skickar inget
-//   ?live=true   -> skickar skarpt till SUPPORT_REPLY_TO
+//   ?live=true   -> skickar skarpt till OPS_EMAIL
 //   ?to=adress   -> skickar riktigt innehåll till en annan adress istället
 exports.runOpsDigestNow = functions
   .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey, digestTestToken] })

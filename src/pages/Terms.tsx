@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { LEGAL_EMAIL, COMPANY_NAME, COMPANY_COUNTRY, COMPANY_URL, COMPANY_ORG_NR } from '../utils/contact';
 
 export default function Terms() {
   const { t } = useLanguage();
@@ -20,7 +21,7 @@ export default function Terms() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold text-white mb-4">1. Acceptance of Terms</h2>
               <p className="text-gray-300 mb-4">
-                By accessing and using Ice IQ ("the Service"), you accept and agree to be bound by the terms and provision of this agreement.
+                Ice IQ ("the Service") is provided by {COMPANY_NAME}, a company registered in {COMPANY_COUNTRY} under company reg. no. {COMPANY_ORG_NR} ("we", "us"). By accessing and using the Service, you accept and agree to be bound by the terms and provisions of this agreement.
               </p>
             </section>
 
@@ -69,10 +70,20 @@ export default function Terms() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold text-white mb-4">8. Contact</h2>
               <p className="text-gray-300">
-                For questions about these Terms of Service, please contact us at{' '}
-                <a href="mailto:legal@iceiq.app" className="text-cyan-400 hover:text-cyan-300">
-                  legal@iceiq.app
+                For questions about these Terms of Service, please contact {COMPANY_NAME} at{' '}
+                <a href={`mailto:${LEGAL_EMAIL}`} className="text-cyan-400 hover:text-cyan-300">
+                  {LEGAL_EMAIL}
+                </a>{' '}
+                or visit{' '}
+                <a
+                  href={COMPANY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:text-cyan-300"
+                >
+                  {COMPANY_URL.replace('https://', '')}
                 </a>
+                .
               </p>
             </section>
           </div>
