@@ -80,7 +80,8 @@ jobs:
       # --- STEG 8: INDEXNOW-PING (SEO — Bing/Yandex/Seznam/Naver) ---
       # Google deltar INTE i IndexNow — Google-indexering sköts via GSC.
       # Nyckelfilen public/{key}.txt skapas vid scaffolding; om den saknas
-      # hoppar steget över tyst.
+      # hoppar steget över tyst. Skickar alla <loc>-URL:er från sitemap.xml,
+      # inte bara startsidan, så nya/ändrade sidor faktiskt om-indexeras.
       - name: Notify IndexNow of updated URLs
         if: always()
         continue-on-error: true
@@ -93,8 +94,18 @@ jobs:
           INDEXNOW_KEY=$(basename "$KEY_FILE" .txt)
           SITE_URL="${{ steps.site.outputs.url }}"
           SITE_HOST=$(echo "$SITE_URL" | sed 's|https\?://||; s|/$||')
-          echo "🔔 IndexNow-ping: $SITE_URL/ (nyckel ${INDEXNOW_KEY:0:8}…)"
+
+          if [ -f public/sitemap.xml ]; then
+            URL_JSON=$(grep -oE '<loc>[^<]+</loc>' public/sitemap.xml \
+              | sed -e 's#<loc>##' -e 's#</loc>##' \
+              | python3 -c "import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))")
+          else
+            URL_JSON="[\"$SITE_URL/\"]"
+          fi
+
+          URL_COUNT=$(echo "$URL_JSON" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))")
+          echo "🔔 IndexNow-ping: $URL_COUNT URL(er) från sitemap.xml (nyckel ${INDEXNOW_KEY:0:8}…)"
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.indexnow.org/indexnow" \
             -H "Content-Type: application/json" \
-            -d "{\"host\":\"$SITE_HOST\",\"key\":\"$INDEXNOW_KEY\",\"keyLocation\":\"$SITE_URL/$INDEXNOW_KEY.txt\",\"urlList\":[\"$SITE_URL/\"]}")
+            -d "{\"host\":\"$SITE_HOST\",\"key\":\"$INDEXNOW_KEY\",\"keyLocation\":\"$SITE_URL/$INDEXNOW_KEY.txt\",\"urlList\":$URL_JSON}")
           echo "IndexNow svar: HTTP $HTTP_CODE (200=OK, 202=validering väntar)"
