@@ -66,14 +66,27 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       # --- STEG 7: DEPLOYA TILL FIREBASE ---
-      # Deployar: hosting:prod (iceiq.app), firestore:rules, functions.
+      # Hosting deployas separat från firestore/functions för att SEO-ändringar
+      # i index.html/sitemap/robots ska gå live även om firestore-IAM ändras.
       # hosting:v2 (iceiq-v2.web.app) är ett testmål — deploya separat vid behov.
-      - name: Deploy to Firebase
+      - name: Deploy Hosting to Firebase
         run: |
-          DEPLOY_TARGETS="hosting:prod,firestore:rules,functions"
-          echo "🚀 Deploying targets: $DEPLOY_TARGETS"
+          echo "🚀 Deploying target: hosting:prod"
           npx firebase-tools deploy \
-            --only "$DEPLOY_TARGETS" \
+            --only hosting:prod \
+            --project ${{ env.FIREBASE_PROJECT_ID }} \
+            --non-interactive
+
+      # Firestore rules + functions deployas separat. Om IAM-behörigheter
+      # saknas (t.ex. serviceusage.services.get) misslyckas detta steg utan
+      # att blockera hosting-deployen ovan.
+      - name: Deploy Firestore rules & Functions
+        if: always()
+        continue-on-error: true
+        run: |
+          echo "� Deploying targets: firestore:rules,functions"
+          npx firebase-tools deploy \
+            --only firestore:rules,functions \
             --project ${{ env.FIREBASE_PROJECT_ID }} \
             --non-interactive
 
