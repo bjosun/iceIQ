@@ -64,7 +64,7 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
                 ICE <span className="text-cyan-400">IQ</span>
                 {isPremium && <span className="text-yellow-500 ml-1 text-sm not-italic font-black uppercase">PRO</span>}
               </span>
-              <span className="text-[0.6rem] uppercase tracking-widest text-gray-500 font-bold">
+              <span className="text-[0.6rem] uppercase tracking-widest text-gray-400 font-bold">
                 {t('header.tagline')}
               </span>
             </div>
@@ -161,7 +161,8 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
           <div className="md:hidden flex items-center gap-3">
              <button
               onClick={toggleLanguage}
-              className="text-gray-500 text-xs font-bold uppercase"
+              aria-label={language === 'sv' ? 'Switch to English' : 'Byt till Svenska'}
+              className="text-gray-400 text-xs font-bold uppercase"
             >
               {language}
             </button>

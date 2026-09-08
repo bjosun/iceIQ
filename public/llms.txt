@@ -1,0 +1,51 @@
+# Ice IQ — Hockey IQ App with AI Hockey Coach
+
+Ice IQ is a hockey IQ app that helps parents, players, and coaches log a game
+in under two minutes and get concrete advice from an AI hockey coach. Track
+stats, visualize progress, and develop hockey IQ — from grassroots youth
+hockey to competitive teams. Available in English and Swedish.
+
+## Features
+
+- AI hockey coach with tactical advice after each game
+- Match logging in under two minutes
+- Advanced hockey analytics and visualizations
+- Cloud sync across devices
+- Team and player management
+- Money Mode — turn performance into pocket money
+- Mental training routines for pre-game preparation
+
+## Pricing
+
+Free to start. The free plan includes up to 3 saved players, match scoring,
+match history, and a few AI credits per month. Premium and Elite plans add
+more AI credits, deeper stats, cloud sync, and priority support.
+
+## Links
+
+- [Ice IQ — Homepage](https://www.iceiq.app/)
+- [Terms of Service](https://www.iceiq.app/terms)
+- [Privacy Policy](https://www.iceiq.app/privacy)
+- [Sitemap](https://www.iceiq.app/sitemap.xml)
+
+## FAQ
+
+- **What is hockey IQ?** A player's ability to read the game, make quick
+  decisions, and position themselves effectively on the ice. Ice IQ helps
+  you build it by tracking game stats and getting AI-generated feedback.
+- **How does the AI hockey coach work?** After you log a game, the AI
+  analyzes the stats and gives personalized, tactical advice.
+- **Is Ice IQ free?** Yes — free plan with 3 players and a few AI credits
+  per month. Premium and Elite add more.
+- **Who is Ice IQ for?** Hockey parents, players, and coaches at every
+  level, from grassroots to competitive teams.
+
+## Languages
+
+- English (default)
+- Svenska (Swedish)
+
+## Publisher
+
+SquareVerse Group AB, Sweden. Reg. no. 559341-1829.
+Contact: support-iceiq@squareversegroup.com

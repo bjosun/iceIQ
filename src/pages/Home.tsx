@@ -286,7 +286,7 @@ export default function Home() {
                 </li>
               </ul>
 
-              <p className="text-gray-500 text-xs italic">
+              <p className="text-gray-400 text-xs italic">
                 {t('moneyMode.note')}
               </p>
             </div>
@@ -342,16 +342,19 @@ export default function Home() {
 
             {/* Toggle Switch */}
             <div className="flex items-center justify-center space-x-4 mt-8">
-              <span className={`text-sm ${!isYearly ? 'text-white font-bold' : 'text-gray-500'}`}>
+              <span className={`text-sm ${!isYearly ? 'text-white font-bold' : 'text-gray-400'}`}>
                 {t('monthly')}
               </span>
               <button
                 onClick={() => setBillingCycle(isYearly ? 'monthly' : 'yearly')}
-                className="w-14 h-7 bg-gray-700 rounded-full relative p-1 transition-colors hover:bg-gray-600 focus:outline-none"
+                aria-label={isYearly ? t('monthly') : t('yearly')}
+                aria-pressed={isYearly}
+                role="switch"
+                className="w-14 h-7 bg-gray-700 rounded-full relative p-1 transition-colors hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-800"
               >
                 <div className={`w-5 h-5 bg-cyan-400 rounded-full transition-transform duration-200 transform ${isYearly ? 'translate-x-7' : 'translate-x-0'}`} />
               </button>
-              <span className={`text-sm flex items-center ${isYearly ? 'text-white font-bold' : 'text-gray-500'}`}>
+              <span className={`text-sm flex items-center ${isYearly ? 'text-white font-bold' : 'text-gray-400'}`}>
                 {t('yearly')}
                 <span className="ml-2 bg-green-500/20 text-green-400 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
                   -15%
@@ -376,7 +379,7 @@ export default function Home() {
                   <li key={key} className="flex items-center text-gray-300 text-sm">
                     {highlight
                         ? <Sparkles className="text-cyan-400 mr-3 shrink-0" size={18} />
-                        : <CheckCircle className="text-gray-500 mr-3 shrink-0" size={18} />
+                        : <CheckCircle className="text-gray-400 mr-3 shrink-0" size={18} />
                     }
                     <span className={highlight ? "text-white font-bold" : ""}>{t(key)}</span>
                   </li>

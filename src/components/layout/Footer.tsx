@@ -26,7 +26,7 @@ export default function Footer() {
             <p className="text-gray-400 text-sm">
               Advanced hockey analytics and player development tools for coaches and scouts.
             </p>
-            <p className="text-gray-500 text-sm mt-3">
+            <p className="text-gray-400 text-sm mt-3">
               {t('footerDeveloper')}{' '}
               <a
                 href={COMPANY_URL}
@@ -96,7 +96,7 @@ export default function Footer() {
                     {/* Adressen skrivs ut, inte bara gömd i href:en — den
                         ligger på squareversegroup.com och ser annars ut som
                         fel avsändare när svaret kommer. */}
-                    <span className="block text-xs text-gray-500 break-all">{SUPPORT_EMAIL}</span>
+                    <span className="block text-xs text-gray-400 break-all">{SUPPORT_EMAIL}</span>
                   </span>
                 </a>
               </li>
@@ -116,7 +116,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-700 mt-8 pt-6 text-center">
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-400 text-sm">
             <Building2 size={14} className="inline-block mr-2 -mt-0.5" />
             © {currentYear} Ice IQ — a product of{' '}
             <a
@@ -129,10 +129,10 @@ export default function Footer() {
             </a>
             , {COMPANY_COUNTRY}. All rights reserved.
           </p>
-          <p className="text-gray-500 text-xs mt-1">
+          <p className="text-gray-400 text-xs mt-1">
             Swedish company reg. no. {COMPANY_ORG_NR}
           </p>
-          <p className="text-gray-500 text-xs mt-2">
+          <p className="text-gray-400 text-xs mt-2">
             Made with ❤️ for the hockey community
           </p>
         </div>

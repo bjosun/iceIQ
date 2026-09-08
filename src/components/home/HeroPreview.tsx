@@ -48,7 +48,7 @@ export default function HeroPreview() {
           <div key={label} className="bg-gray-800/80 rounded-xl p-2.5 sm:p-3 text-center border border-gray-700/50">
             <div className="flex justify-center mb-1">{icon}</div>
             <p className="text-white font-bold text-sm sm:text-lg leading-none">{value}</p>
-            <p className="text-gray-500 text-[9px] sm:text-[10px] mt-1 truncate">{label}</p>
+            <p className="text-gray-400 text-[9px] sm:text-[10px] mt-1 truncate">{label}</p>
           </div>
         ))}
       </div>
