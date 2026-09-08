@@ -14,4 +14,4 @@ Disallow: /dashboard
 Disallow: /match
 Disallow: /success
 
-Sitemap: https://iceiq.app/sitemap.xml
+Sitemap: https://www.iceiq.app/sitemap.xml

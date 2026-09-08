@@ -16,21 +16,21 @@
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://iceiq.app/</loc>
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://www.iceiq.app/</loc>
+    <lastmod>2026-09-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://iceiq.app/terms</loc>
-    <lastmod>2026-09-01</lastmod>
+    <loc>https://www.iceiq.app/terms</loc>
+    <lastmod>2026-09-08</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
 
   <url>
-    <loc>https://iceiq.app/privacy</loc>
+    <loc>https://www.iceiq.app/privacy</loc>
     <lastmod>2026-09-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

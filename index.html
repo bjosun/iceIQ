@@ -16,28 +16,353 @@
          "en" här är default och det som sökmotorn ser: den indexerade texten
          är engelsk, vilket också är därför nästan all organisk trafik kommer
          från engelskspråkiga marknader. Ingen hreflang — det finns ingen
-         separat svensk URL att peka på, språket byts i klienten. -->
-    <link rel="canonical" href="https://iceiq.app/" />
-    <title>Ice IQ — Hockey Stats &amp; AI Coach for Young Players</title>
-    <meta name="description" content="Log a hockey game in two minutes and let the AI coach turn the stats into concrete advice. Built for parents, players, and coaches. Free to start.">
+         separat svensk URL att peka på, språket byts i klienten.
+
+         Canonical pekar på www eftersom Firebase Hosting redirectar
+         iceiq.app → www.iceiq.app (301). Tidigare stod canonical på
+         iceiq.app, vilket skapade en canonical↔redirect-loop och splittrade
+         ranking-signaler. Sitemap och OG-URL pekar också på www för att
+         allt ska vara konsekvent. -->
+    <link rel="canonical" href="https://www.iceiq.app/" />
+    <title>Hockey IQ — AI Hockey Coach & Stats for Players, Parents & Coaches | Ice IQ</title>
+    <meta name="description" content="Ice IQ is a hockey IQ app with an AI hockey coach that turns game stats into concrete advice. Log a game in two minutes. Built for parents, players, and coaches. Free to start.">
+    <meta name="keywords" content="hockey iq, hockey ai coach, hockey coach app, hockey stats app, ice iq, hockey analytics, youth hockey, player development, hockey training app, hockey iq app, ai hockey coach svenska, hockey coach sverige, hockeystatistik, spelarutveckling">
+    <!-- Svensk beskrivning för sökmotorer som matchar på språk -->
+    <meta name="description" lang="sv" content="Ice IQ är en hockey IQ-app med en AI-hockeycoach som gör om matchstatistik till konkreta råd. Registrera en match på två minuter. För föräldrar, spelare och tränare. Gratis att börja.">
 
     <!-- Delningskort. Saknades helt tidigare, vilket gjorde att en länk i en
          laggrupp eller på Facebook visades som naken URL utan bild. -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ice IQ">
-    <meta property="og:url" content="https://iceiq.app/">
-    <meta property="og:title" content="Ice IQ — Hockey Stats &amp; AI Coach for Young Players">
-    <meta property="og:description" content="Log a hockey game in two minutes and let the AI coach turn the stats into concrete advice. Built for parents, players, and coaches. Free to start.">
-    <meta property="og:image" content="https://iceiq.app/iceiq.png">
+    <meta property="og:url" content="https://www.iceiq.app/">
+    <meta property="og:title" content="Hockey IQ — AI Hockey Coach & Stats for Young Players">
+    <meta property="og:description" content="Log a hockey game in two minutes and let the AI hockey coach turn the stats into concrete advice. Built for parents, players, and coaches. Free to start.">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="sv_SE">
+    <meta property="og:image" content="https://www.iceiq.app/iceiq.png">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Ice IQ — Hockey Stats &amp; AI Coach for Young Players">
-    <meta name="twitter:description" content="Log a hockey game in two minutes and let the AI coach turn the stats into concrete advice. Built for parents, players, and coaches. Free to start.">
-    <meta name="twitter:image" content="https://iceiq.app/iceiq.png">
+    <meta name="twitter:title" content="Hockey IQ — AI Hockey Coach & Stats for Young Players">
+    <meta name="twitter:description" content="Log a hockey game in two minutes and let the AI hockey coach turn the stats into concrete advice. Built for parents, players, and coaches. Free to start.">
+    <meta name="twitter:image" content="https://www.iceiq.app/iceiq.png">
+
+    <!-- Structured data (JSON-LD) — låter Google AI Overview och andra
+         AI-chattar förstå och citera Ice IQ som en programvaruprodukt.
+         Utan denna markup fanns ingen maskinläsbar entitet att rekommendera. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Ice IQ",
+      "url": "https://www.iceiq.app/",
+      "description": "Ice IQ is a hockey IQ app with an AI hockey coach that turns game stats into concrete advice for player development. Built for parents, players, and coaches.",
+      "applicationCategory": "SportsApplication",
+      "applicationSubCategory": "Hockey",
+      "operatingSystem": "Web",
+      "browserRequirements": "Requires JavaScript",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "AI hockey coach with tactical advice after each game",
+        "Match logging in under two minutes",
+        "Advanced hockey analytics and visualizations",
+        "Cloud sync across devices",
+        "Team and player management",
+        "Money Mode — turn performance into pocket money",
+        "Mental training routines for pre-game preparation"
+      ],
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Hockey parents, players, and coaches"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "SquareVerse",
+        "url": "https://www.iceiq.app/"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is hockey IQ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Hockey IQ is a player's ability to read the game, make quick decisions, and position themselves effectively on the ice. Ice IQ is an app that helps you build hockey IQ by tracking game stats and getting AI-generated feedback after every game."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the AI hockey coach work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "After you log a game in under two minutes, Ice IQ's AI hockey coach analyzes the stats and gives you concrete, personalized advice — for example, focusing on breakout passes or defensive positioning in the next period."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Ice IQ free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Ice IQ has a free plan with up to 3 saved players, match scoring, match history, and a few AI credits per month. Premium and Elite plans add more AI credits, deeper stats, and cloud sync."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Who is Ice IQ for?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ice IQ is built for hockey parents, players, and coaches at every level — from grassroots youth hockey to competitive teams. It works for both individuals tracking a single player and coaches managing multiple players."
+          }
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Ice IQ",
+      "alternateName": "Ice IQ — Hockey IQ-app med AI-coach",
+      "url": "https://www.iceiq.app/",
+      "description": "Ice IQ är en hockey IQ-app med en AI-hockeycoach som gör om matchstatistik till konkreta råd för spelarutveckling. Byggd för föräldrar, spelare och tränare.",
+      "applicationCategory": "SportsApplication",
+      "applicationSubCategory": "Hockey",
+      "operatingSystem": "Web",
+      "browserRequirements": "Requires JavaScript",
+      "inLanguage": ["en", "sv"],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "SEK"
+      },
+      "featureList": [
+        "AI-hockeycoach med taktiska råd efter varje match",
+        "Matchregistrering på under två minuter",
+        "Avancerad hockeystatistik och visualiseringar",
+        "Molnsynk mellan enheter",
+        "Hantering av spelare och lag",
+        "Money Mode — förvandla prestation till fickpengar",
+        "Mental träning och rutiner inför match"
+      ],
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Hockeyföräldrar, spelare och tränare"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "SquareVerse",
+        "url": "https://www.iceiq.app/"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Vad är hockey IQ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Hockey IQ är en spelares förmåga att läsa spelet, fatta snabba beslut och positionera sig effektivt på isen. Ice IQ är en app som hjälper dig bygga hockey IQ genom att spara matchstatistik och få AI-genererad feedback efter varje match."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Hur fungerar AI-hockeycoachen?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "När du registrerat en match på under två minuter analyserar Ice IQs AI-hockeycoach statistiken och ger dig konkreta, personliga råd — till exempel att fokusera på uppspel eller defensiv positionering i nästa period."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Är Ice IQ gratis?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja. Ice IQ har en gratisplan med upp till 3 sparade spelare, matchregistrering, matchhistorik och några AI-krediter per månad. Premium- och Elite-planerna ger fler AI-krediter, djupare statistik och molnsynk."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Vem är Ice IQ för?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ice IQ är byggt för hockeyföräldrar, spelare och tränare på alla nivåer — från gräsrot till tävlande lag. Det fungerar både för den som följer en enskild spelare och för tränare som hanterar flera spelare."
+          }
+        }
+      ]
+    }
+    </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      Statiskt SEO-innehåll inuti #root. React ersätter hela detta block när
+      appen mountas, men crawlers som inte exekverar JavaScript (Googlebots
+      första indexeringsvåg, de flesta sociala crawlern) ser fullständig,
+      nyckelordsrik text istället för en tom sida. Detta är den snabbaste
+      vägen till SEO för en Vite SPA utan att migrera till SSR.
+
+      Texten speglar startsidans faktiska innehåll (Home.tsx) och innehåller
+      de söktermer vi vill ranka för: hockey IQ, AI hockey coach, hockey
+      coach, hockey stats, player development.
+    -->
+    <div id="root">
+      <main>
+        <h1>Hockey IQ — Your Personal AI Hockey Coach</h1>
+        <p>
+          Ice IQ is a hockey IQ app that helps parents, players, and coaches
+          log a game in under two minutes and get concrete advice from an AI
+          hockey coach. Track stats, visualize progress, and develop hockey
+          IQ — from grassroots youth hockey to competitive teams.
+        </p>
+
+        <section>
+          <h2>Build Hockey IQ with an AI Hockey Coach</h2>
+          <p>
+            After every game, the AI hockey coach analyzes your stats and
+            gives personalized, tactical feedback — like focusing on breakout
+            passes or improving defensive positioning. No more guessing what
+            to work on next. The coach tells you.
+          </p>
+        </section>
+
+        <section>
+          <h2>Everything You Need for Player Development</h2>
+          <ul>
+            <li><strong>AI Hockey Coach</strong> — tactical advice and feedback after each game.</li>
+            <li><strong>Advanced Hockey Analytics</strong> — track player performance with detailed statistics and visualizations.</li>
+            <li><strong>Cloud Sync</strong> — access your data anywhere, on any device. Always backed up.</li>
+            <li><strong>Team Management</strong> — manage multiple players and teams with ease.</li>
+            <li><strong>Mental Training</strong> — short routines that help players prepare and stay calm. Free for everyone.</li>
+            <li><strong>Money Mode</strong> — turn performance into pocket money on your own terms, unique to Ice IQ.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Simple, Transparent Pricing</h2>
+          <p>
+            Ice IQ is free to start. The free plan includes up to 3 saved
+            players, match scoring, match history, and a few AI credits per
+            month. Premium and Elite plans add more AI credits, deeper stats,
+            cloud sync, and priority support.
+          </p>
+        </section>
+
+        <section>
+          <h2>Frequently Asked Questions</h2>
+          <h3>What is hockey IQ?</h3>
+          <p>
+            Hockey IQ is a player's ability to read the game, make quick
+            decisions, and position themselves effectively on the ice. Ice IQ
+            is an app that helps you build hockey IQ by tracking game stats
+            and getting AI-generated feedback after every game.
+          </p>
+          <h3>How does the AI hockey coach work?</h3>
+          <p>
+            After you log a game in under two minutes, Ice IQ's AI hockey
+            coach analyzes the stats and gives you concrete, personalized
+            advice — for example, focusing on breakout passes or defensive
+            positioning in the next period.
+          </p>
+          <h3>Is Ice IQ free?</h3>
+          <p>
+            Yes. Ice IQ has a free plan with up to 3 saved players, match
+            scoring, match history, and a few AI credits per month. Premium
+            and Elite plans add more AI credits, deeper stats, and cloud sync.
+          </p>
+          <h3>Who is Ice IQ for?</h3>
+          <p>
+            Ice IQ is built for hockey parents, players, and coaches at every
+            level — from grassroots youth hockey to competitive teams.
+          </p>
+        </section>
+      </main>
+      <!-- Svensk version av samma innehåll. Språket sätts med lang="sv"
+           så sökmotorer kan matcha på svenska söktermer. React ersätter
+           hela #root vid mount, så besökare ser bara ett språk i taget. -->
+      <main lang="sv">
+        <h2 lang="sv">Hockey IQ — Din personliga AI-hockeycoach</h2>
+        <p lang="sv">
+          Ice IQ är en hockey IQ-app som hjälper föräldrar, spelare och
+          tränare att registrera en match på under två minuter och få
+          konkreta råd från en AI-hockeycoach. Följ statistik, visualisera
+          framsteg och utveckla hockey IQ — från gräsrot till tävlande lag.
+        </p>
+
+        <section lang="sv">
+          <h3 lang="sv">Bygg hockey IQ med en AI-hockeycoach</h3>
+          <p lang="sv">
+            Efter varje match analyserar AI-hockeycoachen din statistik och
+            ger personlig, taktisk feedback — som att fokusera på uppspel
+            eller förbättra defensiv positionering. Sluta gissa vad du ska
+            öva på nästa gång. Coachen säger det åt dig.
+          </p>
+        </section>
+
+        <section lang="sv">
+          <h3 lang="sv">Allt du behöver för spelarutveckling</h3>
+          <ul lang="sv">
+            <li lang="sv"><strong>AI-hockeycoach</strong> — taktiska råd och feedback efter varje match.</li>
+            <li lang="sv"><strong>Avancerad hockeystatistik</strong> — följ spelarprestationer med detaljerad statistik och visualiseringar.</li>
+            <li lang="sv"><strong>Molnsynk</strong> — kom åt din data överallt, på valfri enhet. Alltid säkerhetskopierat.</li>
+            <li lang="sv"><strong>Laghantering</strong> — hantera flera spelare och lag med enkelhet.</li>
+            <li lang="sv"><strong>Mental träning</strong> — korta rutiner som hjälper spelare förbereda sig och hålla lugnet. Gratis för alla.</li>
+            <li lang="sv"><strong>Money Mode</strong> — förvandla prestation till fickpengar på egna villkor, unikt för Ice IQ.</li>
+          </ul>
+        </section>
+
+        <section lang="sv">
+          <h3 lang="sv">Enkla, tydliga priser</h3>
+          <p lang="sv">
+            Ice IQ är gratis att börja med. Gratisplanen inkluderar upp till
+            3 sparade spelare, matchregistrering, matchhistorik och några
+            AI-krediter per månad. Premium- och Elite-planerna ger fler
+            AI-krediter, djupare statistik, molnsynk och prioriterad support.
+          </p>
+        </section>
+
+        <section lang="sv">
+          <h3 lang="sv">Vanliga frågor</h3>
+          <h4 lang="sv">Vad är hockey IQ?</h4>
+          <p lang="sv">
+            Hockey IQ är en spelares förmåga att läsa spelet, fatta snabba
+            beslut och positionera sig effektivt på isen. Ice IQ är en app
+            som hjälper dig bygga hockey IQ genom att spara matchstatistik
+            och få AI-genererad feedback efter varje match.
+          </p>
+          <h4 lang="sv">Hur fungerar AI-hockeycoachen?</h4>
+          <p lang="sv">
+            När du registrerat en match på under två minuter analyserar
+            Ice IQs AI-hockeycoach statistiken och ger dig konkreta,
+            personliga råd — till exempel att fokusera på uppspel eller
+            defensiv positionering i nästa period.
+          </p>
+          <h4 lang="sv">Är Ice IQ gratis?</h4>
+          <p lang="sv">
+            Ja. Ice IQ har en gratisplan med upp till 3 sparade spelare,
+            matchregistrering, matchhistorik och några AI-krediter per
+            månad. Premium- och Elite-planerna ger fler AI-krediter,
+            djupare statistik och molnsynk.
+          </p>
+          <h4 lang="sv">Vem är Ice IQ för?</h4>
+          <p lang="sv">
+            Ice IQ är byggt för hockeyföräldrar, spelare och tränare på
+            alla nivåer — från gräsrot till tävlande lag.
+          </p>
+        </section>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

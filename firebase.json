@@ -26,8 +26,8 @@
       ],
       "redirects": [
         {
-          "source": "www.iceiq.app",
-          "destination": "https://iceiq.app",
+          "source": "iceiq.app",
+          "destination": "https://www.iceiq.app",
           "type": 301
         }
       ],
