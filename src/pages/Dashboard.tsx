@@ -597,9 +597,9 @@ export default function Dashboard() {
         {/* AI-krediter + Mode Toggle (Money vs Points) */}
         <div className="flex justify-between items-center mb-6 gap-3 flex-wrap">
           {/* Synlig innan chatten öppnas, så krediterna aldrig överraskar */}
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-indigo-500/40 bg-indigo-500/10">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary-500/30 bg-primary-500/10">
             <Sparkles size={14} className="text-yellow-400" />
-            <span className="text-xs font-bold text-indigo-200 uppercase tracking-wider">
+            <span className="text-xs font-bold text-primary-200 uppercase tracking-wider">
               {aiCredits} {t('ai.credits')}
             </span>
           </div>

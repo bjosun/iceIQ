@@ -33,7 +33,7 @@ export default function HeroPreview() {
           ICE <span className="text-cyan-400">IQ</span>
         </span>
         <div className="flex items-center gap-2">
-          <span className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-indigo-500/40 bg-indigo-500/10 text-indigo-200 text-[10px] font-bold uppercase tracking-wider">
+          <span className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-primary-500/30 bg-primary-500/10 text-primary-200 text-[10px] font-bold uppercase tracking-wider">
             <Sparkles size={10} className="text-yellow-400" /> 3 {t('ai.credits')}
           </span>
           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-yellow-500/50 bg-yellow-500/10 text-yellow-500 text-[10px] font-bold uppercase tracking-wider">

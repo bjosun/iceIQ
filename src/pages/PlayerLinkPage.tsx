@@ -170,7 +170,7 @@ export default function PlayerLinkPage() {
 
         <div className="bg-gray-800 rounded-2xl p-6">
           <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-            <Sparkles size={18} className="text-indigo-400" />
+            <Sparkles size={18} className="text-primary-400" />
             {t('playerLink.coachNoteTitle')}
           </h2>
           <p className="text-gray-300 whitespace-pre-wrap leading-relaxed">

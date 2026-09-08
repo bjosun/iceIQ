@@ -133,7 +133,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             onClick={() => setSelectedPlan('elite')}
             className={`flex-1 py-3 rounded-lg font-bold transition-all text-sm flex items-center justify-center gap-2 ${
               selectedPlan === 'elite'
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md border border-indigo-400'
+                ? 'bg-gradient-to-r from-primary-600 to-cyan-600 text-white shadow-md border border-primary-400'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -143,7 +143,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
         </div>
 
         {/* MAIN CARD */}
-        <Card className={`relative border-2 transition-colors ${selectedPlan === 'elite' ? 'border-indigo-500 bg-indigo-900/10' : 'border-yellow-500'}`}>
+        <Card className={`relative border-2 transition-colors ${selectedPlan === 'elite' ? 'border-primary-500 bg-primary-900/10' : 'border-yellow-500'}`}>
           
           {/* Recommended Badge (Endast för Premium) */}
           {selectedPlan === 'premium' && (
@@ -160,7 +160,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
               {currentPlanData.name}
             </h3>
             <div className="flex items-baseline justify-center mb-2">
-              <span className={`text-4xl font-black ${selectedPlan === 'elite' ? 'text-indigo-400' : 'text-yellow-400'}`}>
+              <span className={`text-4xl font-black ${selectedPlan === 'elite' ? 'text-primary-400' : 'text-yellow-400'}`}>
                 {price}
               </span>
               <span className="text-gray-400 ml-1 font-medium">{period}</span>
@@ -186,7 +186,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
           <ul className="space-y-4 mb-8 max-w-sm mx-auto">
             {currentPlanData.features.map((feature, index) => (
               <li key={index} className="flex items-center">
-                <div className={`p-1 rounded-full mr-3 ${feature.included ? (selectedPlan === 'elite' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-yellow-500/20 text-yellow-400') : 'bg-gray-700 text-gray-500'}`}>
+                <div className={`p-1 rounded-full mr-3 ${feature.included ? (selectedPlan === 'elite' ? 'bg-primary-500/20 text-primary-400' : 'bg-yellow-500/20 text-yellow-400') : 'bg-gray-700 text-gray-500'}`}>
                   <feature.icon size={14} />
                 </div>
                 <span className={feature.included ? 'text-gray-200' : 'text-gray-500'}>
@@ -200,7 +200,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             variant="primary" // Standard-variant så vi inte får fel
             className={
               selectedPlan === 'elite' 
-                ? 'bg-indigo-600 hover:bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
+                ? 'bg-primary-600 hover:bg-primary-500 border-primary-500 text-white shadow-lg shadow-primary-500/20'
                 : 'bg-yellow-500 hover:bg-yellow-400 border-yellow-500 text-black shadow-lg shadow-yellow-500/20'
             }
             loading={processing}

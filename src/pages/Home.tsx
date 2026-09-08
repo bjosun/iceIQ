@@ -83,7 +83,7 @@ export default function Home() {
 
   const features = [
     {
-      icon: <BrainCircuit className="text-indigo-400" size={24} />,
+      icon: <BrainCircuit className="text-primary-400" size={24} />,
       title: t('features.ai.title'),
       description: t('features.ai.desc')
     },
@@ -151,9 +151,9 @@ export default function Home() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center">
 
           {/* AI Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/20 border border-indigo-500/40 backdrop-blur-md mb-8 animate-fade-in-up">
-            <Sparkles size={16} className="text-indigo-400" />
-            <span className="text-indigo-200 text-sm font-semibold tracking-wide">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/15 border border-primary-400/30 backdrop-blur-md mb-8 animate-fade-in-up">
+            <Sparkles size={16} className="text-primary-300" />
+            <span className="text-primary-100 text-sm font-semibold tracking-wide">
               {t('home.badge')}
             </span>
           </div>
@@ -161,7 +161,7 @@ export default function Home() {
           {/* Rubrik */}
           <h1 className="text-5xl sm:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl animate-fade-in-up delay-100">
             {t('home.heroTitle1')}
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400">
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-primary-400">
               {t('home.heroTitle2')}
             </span>
           </h1>
@@ -175,7 +175,7 @@ export default function Home() {
             <Link
               to="/dashboard"
               state={startState}
-              className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg shadow-indigo-500/25"
+              className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-primary-600 to-cyan-600 hover:from-primary-500 hover:to-cyan-500 text-white rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25"
             >
               {user ? t('home.goToDashboard') : t('home.tryAiCoach')}
               <ArrowRight className="ml-2" size={20} />
@@ -190,14 +190,14 @@ export default function Home() {
 
           {/* Dashboard Preview */}
           <div className="relative mx-auto w-full max-w-5xl animate-fade-in-up delay-500 group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary-500 to-cyan-500 rounded-2xl blur opacity-10 group-hover:opacity-25 transition-opacity duration-500"></div>
             <div className="relative rounded-2xl border border-white/10 bg-gray-900/80 backdrop-blur-sm p-2 shadow-2xl">
               <HeroPreview />
 
               {/* Flytande AI-kort (Visuell effekt) */}
-              <div className="absolute bottom-4 right-4 md:bottom-10 md:right-10 bg-gray-900/90 backdrop-blur-xl border border-indigo-500/50 p-4 rounded-xl shadow-2xl max-w-xs text-left hidden sm:block animate-bounce-slow">
+              <div className="absolute bottom-4 right-4 md:bottom-10 md:right-10 bg-gray-900/90 backdrop-blur-xl border border-primary-500/40 p-4 rounded-xl shadow-2xl max-w-xs text-left hidden sm:block animate-bounce-slow">
                 <div className="flex items-center gap-2 mb-2">
-                    <div className="p-1.5 bg-indigo-500/20 rounded-lg"><Bot size={16} className="text-indigo-400"/></div>
+                    <div className="p-1.5 bg-primary-500/15 rounded-lg"><Bot size={16} className="text-primary-300"/></div>
                     <span className="text-white font-bold text-sm">Ice IQ Coach</span>
                 </div>
                 <p className="text-gray-300 text-xs leading-relaxed">
@@ -421,15 +421,15 @@ export default function Home() {
             </div>
 
             {/* 3. ELITE PLAN (AI POWERHOUSE) */}
-            <div className="bg-gradient-to-b from-indigo-900/50 to-gray-800 rounded-3xl p-8 border border-indigo-500/50 flex flex-col relative overflow-hidden group">
+            <div className="bg-gradient-to-b from-primary-900/40 to-gray-800 rounded-3xl p-8 border border-primary-500/40 flex flex-col relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <BrainCircuit size={100} className="text-indigo-400" />
+                <BrainCircuit size={100} className="text-primary-400" />
               </div>
 
               <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                Elite <span className="bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded uppercase">{t('plans.elite.badge')}</span>
+                Elite <span className="bg-primary-500 text-white text-[10px] px-2 py-0.5 rounded uppercase">{t('plans.elite.badge')}</span>
               </h3>
-              <p className="text-indigo-300 text-xs mb-6">{t('plans.elite.tagline')}</p>
+              <p className="text-primary-300 text-xs mb-6">{t('plans.elite.tagline')}</p>
 
               <div className="mb-6">
                 <span className="text-4xl font-bold text-white">{plans.elite.price}</span>
@@ -440,8 +440,8 @@ export default function Home() {
                 {eliteFeatures.map(({ key, highlight }) => (
                   <li key={key} className="flex items-center text-gray-200 text-sm">
                     {highlight
-                        ? <BrainCircuit className="text-indigo-400 mr-3 shrink-0" size={18} />
-                        : <CheckCircle className="text-indigo-500 mr-3 shrink-0" size={18} />
+                        ? <BrainCircuit className="text-primary-400 mr-3 shrink-0" size={18} />
+                        : <CheckCircle className="text-primary-500 mr-3 shrink-0" size={18} />
                     }
                     <span className={highlight ? "text-white font-bold" : ""}>{t(key)}</span>
                   </li>
@@ -449,7 +449,7 @@ export default function Home() {
               </ul>
               <Link
                 to={isYearly ? "/dashboard?upgrade=true&plan=elite&interval=yearly" : "/dashboard?upgrade=true&plan=elite"}
-                className="block text-center py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/25 relative z-10"
+                className="block text-center py-3 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary-500/25 relative z-10"
               >
                 {t('plans.elite.cta')}
               </Link>
@@ -467,7 +467,7 @@ export default function Home() {
                     <th className="py-4 px-4 text-gray-400 font-medium">{t('compare.feature')}</th>
                     <th className="py-4 px-4 text-white font-bold text-center">{t('plans.free.name')}</th>
                     <th className="py-4 px-4 text-yellow-400 font-bold text-center">Premium</th>
-                    <th className="py-4 px-4 text-indigo-400 font-bold text-center">Elite</th>
+                    <th className="py-4 px-4 text-primary-400 font-bold text-center">Elite</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -506,7 +506,7 @@ export default function Home() {
       <section className="py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-12 border border-gray-700 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-primary-500 to-accent-gold"></div>
             <div className="relative z-10">
               <Zap className="text-yellow-400 mx-auto mb-6" size={48} />
               <h2 className="text-3xl font-bold text-white mb-4">

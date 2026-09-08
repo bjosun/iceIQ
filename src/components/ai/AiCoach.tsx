@@ -288,7 +288,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
   if (isLocked) {
     return (
       <div className="relative overflow-hidden bg-gray-900/50 rounded-2xl p-6 border border-gray-700 text-center mt-8 group hover:border-cyan-500/50 transition-colors">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/10 to-purple-900/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/10 to-primary-900/10 pointer-events-none" />
         <div className="relative z-10 flex flex-col items-center">
           <div className="bg-gray-800 p-3 rounded-full mb-3 shadow-lg">
             <Lock className="text-cyan-400" size={24} />
@@ -323,17 +323,17 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
 
   // --- CHATT VY (PREMIUM/ELITE) ---
   return (
-    <div className="mt-8 bg-gradient-to-br from-indigo-900/40 to-purple-900/40 rounded-2xl border border-indigo-500/30 overflow-hidden shadow-2xl relative flex flex-col min-h-[300px]">
+    <div className="mt-8 bg-gradient-to-br from-primary-900/40 to-cyan-900/30 rounded-2xl border border-primary-500/30 overflow-hidden shadow-2xl relative flex flex-col min-h-[300px]">
 
       {/* Header */}
       <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/20 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 bg-indigo-500/20 rounded-lg border border-indigo-500/30">
-            <BrainCircuit className="text-indigo-300" size={20} />
+          <div className="p-1.5 bg-primary-500/20 rounded-lg border border-primary-500/30">
+            <BrainCircuit className="text-primary-300" size={20} />
           </div>
           <div>
             <h3 className="text-white font-bold text-sm leading-none">Ice IQ Coach</h3>
-            <span className="text-[10px] text-indigo-300 uppercase tracking-wider font-semibold">
+            <span className="text-[10px] text-primary-300 uppercase tracking-wider font-semibold">
               {t('ai.engineName')}{isElite ? ' Pro' : ''}
             </span>
           </div>
@@ -351,7 +351,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             title={t('ai.history')}
             className={`p-2 rounded-full border transition-colors ${
               showHistory
-                ? 'border-indigo-400 text-indigo-200 bg-indigo-500/20'
+                ? 'border-primary-400 text-primary-200 bg-primary-500/20'
                 : 'border-white/5 text-gray-400 hover:text-white bg-black/40'
             }`}
           >
@@ -397,7 +397,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
                 key={chat.id}
                 onClick={() => handleLoadChat(chat)}
                 className={`flex items-center justify-between gap-3 px-4 py-3 cursor-pointer border-b border-white/5 last:border-0 transition-colors ${
-                  chat.id === chatId ? 'bg-indigo-500/15' : 'hover:bg-white/5'
+                  chat.id === chatId ? 'bg-primary-500/15' : 'hover:bg-white/5'
                 }`}
               >
                 <div className="min-w-0">
@@ -435,7 +435,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
                   key={question}
                   onClick={() => handleAskCoach(question)}
                   disabled={loading || displayCredits <= 0}
-                  className="px-4 py-2 rounded-full border border-indigo-500/40 bg-indigo-500/10 text-indigo-200 text-xs font-medium hover:bg-indigo-500/25 hover:border-indigo-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-full border border-primary-500/40 bg-primary-500/10 text-primary-200 text-xs font-medium hover:bg-primary-500/25 hover:border-primary-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {question}
                 </button>
@@ -448,7 +448,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
               className={`relative group flex items-center justify-center gap-2 mx-auto px-8 py-3 rounded-xl font-bold text-white transition-all ${
                 loading || displayCredits <= 0
                   ? 'bg-gray-700 cursor-not-allowed opacity-70'
-                  : 'bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50'
+                  : 'bg-primary-600 hover:bg-primary-500 shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50'
               }`}
             >
               <Sparkles size={18} className="group-hover:animate-pulse" />
@@ -464,7 +464,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             <div
               className={`max-w-[85%] rounded-2xl p-4 text-sm whitespace-pre-wrap leading-relaxed shadow-sm ${
                 msg.role === 'user'
-                  ? 'bg-indigo-600 text-white rounded-br-none'
+                  ? 'bg-primary-600 text-white rounded-br-none'
                   : 'bg-black/30 border border-white/10 text-gray-200 rounded-bl-none'
               }`}
             >
@@ -514,7 +514,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
         {loading && (
           <div className="flex justify-start">
              <div className="bg-black/30 border border-white/10 text-gray-200 rounded-2xl rounded-bl-none p-4 flex items-center gap-3">
-                <Loader2 size={16} className="animate-spin text-indigo-400" />
+                <Loader2 size={16} className="animate-spin text-primary-400" />
                 <span className="text-xs text-gray-400 italic">
                   {loadingSteps[loadingStep]}
                 </span>
@@ -562,13 +562,13 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
                value={inputQuestion}
                onChange={(e) => setInputQuestion(e.target.value)}
                placeholder={t('ai.followUpPlaceholder')}
-               className="flex-1 bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+               className="flex-1 bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                onKeyDown={(e) => e.key === 'Enter' && inputQuestion.trim() && handleAskCoach(inputQuestion)}
              />
              <button
                onClick={() => handleAskCoach(inputQuestion)}
                disabled={!inputQuestion.trim() || loading || displayCredits <= 0}
-               className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
+               className="bg-primary-600 hover:bg-primary-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors shadow-lg shadow-primary-500/20"
              >
                <Send size={18} />
              </button>

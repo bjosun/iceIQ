@@ -134,15 +134,15 @@ export default function SummarySection({
         </Card>
 
         {/* 3. Överfört Saldo */}
-        <Card border={false} className={`text-center p-4 bg-gray-800/40 border relative group ${isMoneyMode ? 'border-yellow-500/20' : 'border-purple-500/20'}`}>
+        <Card border={false} className={`text-center p-4 bg-gray-800/40 border relative group ${isMoneyMode ? 'border-yellow-500/20' : 'border-primary-500/20'}`}>
           <div className="flex items-center justify-center mb-2">
-            <TrendingUp className={isMoneyMode ? "text-yellow-500 mr-2" : "text-purple-400 mr-2"} size={20} />
+            <TrendingUp className={isMoneyMode ? "text-yellow-500 mr-2" : "text-primary-400 mr-2"} size={20} />
             <h3 className="text-sm font-medium text-gray-300">
               {carriedOverLabel}
             </h3>
           </div>
           <div className="flex flex-col items-center justify-center">
-            <div className={`text-2xl font-bold mb-2 ${isMoneyMode ? 'text-yellow-500' : 'text-purple-400'}`}>
+            <div className={`text-2xl font-bold mb-2 ${isMoneyMode ? 'text-yellow-500' : 'text-primary-400'}`}>
               {carriedOverBalance} <span className="text-xs font-normal opacity-70">{currencySymbol}</span>
             </div>
             
