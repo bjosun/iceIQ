@@ -35,4 +35,35 @@
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
+
+  <!-- Engelska nyckelordslandningssidor (se src/pages/landing/). Egna
+       title/description/canonical sätts client-side via useSEO, så det här
+       är rätt plats trots att index.html i sig delar taggar mellan routes. -->
+  <url>
+    <loc>https://www.iceiq.app/hockey-tracking-app</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://www.iceiq.app/youth-hockey-stats</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://www.iceiq.app/hockey-scouting-template</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://www.iceiq.app/measure-corsi-youth-hockey</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
 </urlset>

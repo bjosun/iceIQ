@@ -37,7 +37,15 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginF
     try {
       await loginWithGoogle();
     } catch (err: any) {
-      setError(err.message || 'Google login failed.');
+      // Se motsvarande kommentar i SignupForm: Google blockerar OAuth i
+      // in-app-webbläsare, vilket annars visar ett kryptiskt generiskt fel.
+      if (err?.code === 'auth/operation-not-supported-in-this-environment') {
+        setError('Google sign-in isn\'t available in this in-app browser. Tap the menu and choose "Open in Safari/Chrome", or log in with email instead.');
+      } else if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/popup-closed-by-user') {
+        setError('The Google sign-in popup was blocked or closed. Try again, or log in with email instead.');
+      } else {
+        setError(err.message || 'Google login failed.');
+      }
     }
   };
 
@@ -65,6 +73,7 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginF
             placeholder="your@email.com"
             required
             icon={Mail}
+            autoComplete="email"
           />
         </div>
 
@@ -77,6 +86,7 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginF
             placeholder="••••••••"
             required
             icon={Lock}
+            autoComplete="current-password"
           />
           <button
             type="button"

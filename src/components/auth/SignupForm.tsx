@@ -50,7 +50,17 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     try {
       await loginWithGoogle();
     } catch (err: any) {
-      setError(err.message || 'Google signup failed.');
+      // Google blockerar OAuth i in-app-webbläsare (Facebook/Instagram m.fl.)
+      // med "auth/operation-not-supported-in-this-environment" — vanligt
+      // för trafik som kommer från en länk delad i en Facebook-grupp.
+      // Popup-blockering ger ett liknande, förvirrande fel utan kontext.
+      if (err?.code === 'auth/operation-not-supported-in-this-environment') {
+        setError('Google sign-in isn\'t available in this in-app browser. Tap the menu and choose "Open in Safari/Chrome", or sign up with email instead.');
+      } else if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/popup-closed-by-user') {
+        setError('The Google sign-in popup was blocked or closed. Try again, or sign up with email instead.');
+      } else {
+        setError(err.message || 'Google signup failed.');
+      }
     }
   };
 
@@ -81,6 +91,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             placeholder="your@email.com"
             required
             icon={Mail}
+            autoComplete="email"
           />
         </div>
 
@@ -93,6 +104,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             placeholder="At least 6 characters"
             required
             icon={Lock}
+            autoComplete="new-password"
           />
         </div>
 
@@ -105,6 +117,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             placeholder="Repeat your password"
             required
             icon={Lock}
+            autoComplete="new-password"
           />
         </div>
 

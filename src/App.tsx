@@ -16,6 +16,10 @@ import Privacy from './pages/Privacy'
 import Success from './pages/Success'
 import MatchTracker from './pages/MatchTracker'
 import PlayerLinkPage from './pages/PlayerLinkPage'
+import HockeyTrackingApp from './pages/landing/HockeyTrackingApp'
+import YouthHockeyStats from './pages/landing/YouthHockeyStats'
+import HockeyScoutingTemplate from './pages/landing/HockeyScoutingTemplate'
+import CorsiYouthHockey from './pages/landing/CorsiYouthHockey'
 
 import Layout from './components/layout/Layout'
 import './index.css'
@@ -68,6 +72,13 @@ function AppContent() {
             <Route path="/match" element={<MatchTracker />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            {/* Engelska nyckelordslandningssidor. Egna title/description/canonical
+               sätts via useSEO (se LandingPage.tsx) eftersom index.html annars
+               delar samma tre taggar för alla routes. */}
+            <Route path="/hockey-tracking-app" element={<HockeyTrackingApp />} />
+            <Route path="/youth-hockey-stats" element={<YouthHockeyStats />} />
+            <Route path="/hockey-scouting-template" element={<HockeyScoutingTemplate />} />
+            <Route path="/measure-corsi-youth-hockey" element={<CorsiYouthHockey />} />
           </Routes>
         </Layout>
       )}

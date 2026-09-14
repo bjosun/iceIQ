@@ -33,6 +33,22 @@
       ],
       "rewrites": [
         {
+          "source": "/hockey-tracking-app",
+          "destination": "/hockey-tracking-app.html"
+        },
+        {
+          "source": "/youth-hockey-stats",
+          "destination": "/youth-hockey-stats.html"
+        },
+        {
+          "source": "/hockey-scouting-template",
+          "destination": "/hockey-scouting-template.html"
+        },
+        {
+          "source": "/measure-corsi-youth-hockey",
+          "destination": "/measure-corsi-youth-hockey.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -47,6 +63,22 @@
         "**/node_modules/**"
       ],
       "rewrites": [
+        {
+          "source": "/hockey-tracking-app",
+          "destination": "/hockey-tracking-app.html"
+        },
+        {
+          "source": "/youth-hockey-stats",
+          "destination": "/youth-hockey-stats.html"
+        },
+        {
+          "source": "/hockey-scouting-template",
+          "destination": "/hockey-scouting-template.html"
+        },
+        {
+          "source": "/measure-corsi-youth-hockey",
+          "destination": "/measure-corsi-youth-hockey.html"
+        },
         {
           "source": "**",
           "destination": "/index.html"

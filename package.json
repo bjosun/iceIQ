@@ -8,7 +8,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "check:i18n": "node scripts/check-i18n.mjs",
     "report:acquisition": "node --env-file=.env scripts/acquisition-report.mjs",
-    "build": "vite build",
+    "build": "vite build && node scripts/generate-landing-pages.mjs",
     "preview": "vite preview",
     "deploy:functions": "npx --yes firebase-tools deploy --only functions",
     "deploy:prod": "npm run build && npx --yes firebase-tools deploy --only hosting:prod",
