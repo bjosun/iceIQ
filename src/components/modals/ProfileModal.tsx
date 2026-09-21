@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, CreditCard, Trash2, Shield, User, Mail } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { db } from '../../services/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { usePlayerData } from '../../hooks/usePlayerData'; // För att rensa data
-import { createStripePortalSession } from '../../services/firebase'; // Från din städade firebase.ts
+import { createStripePortalSession } from '../../services/firestore'; // Från din städade firebase.ts
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Card from '../ui/Card';

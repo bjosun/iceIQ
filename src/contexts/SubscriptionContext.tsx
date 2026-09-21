@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useLanguage } from './LanguageContext';
-import { firestore } from '../services/firebase';
 import { stripeService, checkPaymentStatus, cleanPaymentUrl } from '../services/stripe';
 
 // Definiera planen separat så vi kan använda den i andra filer
@@ -64,6 +63,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     try {
       setLoading(true);
+      // Dynamisk import: se motsvarande kommentar i AuthContext.
+      const { firestore } = await import('../services/firestore');
       const userData = await firestore.getUserData(user.uid);
       
       if (userData) {

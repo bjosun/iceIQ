@@ -15,7 +15,7 @@ import toast from 'react-hot-toast';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTemplates } from '../../contexts/TemplateContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
-import { euFunctions } from '../../services/firebase';
+import { euFunctions } from '../../services/firestore';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 import Button from '../ui/Button';

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 // Importera firestore-objektet och din Cloud Function för Stripe
-import { firestore, deleteUserStripeAccount } from '../services/firebase'; 
+import { firestore, deleteUserStripeAccount } from '../services/firestore'; 
 
 interface GameRecord {
   id?: string;

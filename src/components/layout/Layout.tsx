@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import Header from './Header';
 import MobileBottomNav from './MobileBottomNav';
 import Footer from './Footer';
 import PaymentAlertBanner from './PaymentAlertBanner';
-import ProfileModal from '../modals/ProfileModal';
-import SubscriptionModal from '../modals/SubscriptionModal';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAuth } from '../../contexts/AuthContext';
+
+// Lazy: Layout wrap:ar hela appen (även den utloggade startsidan), och
+// ProfileModal drar in hela Firestore-SDK:t via services/firestore. De
+// renderas ändå bara när user finns, så statisk import här skulle tvinga in
+// det i huvudbundlen igen (se services/firestore.ts).
+const ProfileModal = lazy(() => import('../modals/ProfileModal'));
+const SubscriptionModal = lazy(() => import('../modals/SubscriptionModal'));
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -51,18 +56,18 @@ export default function Layout({ children }: LayoutProps) {
          de triggas från Headern (Desktop/Mobil).
       */}
       {user && (
-        <>
-          <ProfileModal 
-            isOpen={showProfile} 
-            onClose={() => setShowProfile(false)} 
-            isPremium={isPremium} 
+        <Suspense fallback={null}>
+          <ProfileModal
+            isOpen={showProfile}
+            onClose={() => setShowProfile(false)}
+            isPremium={isPremium}
           />
-          
-          <SubscriptionModal 
-            isOpen={showSub} 
-            onClose={() => setShowSub(false)} 
+
+          <SubscriptionModal
+            isOpen={showSub}
+            onClose={() => setShowSub(false)}
           />
-        </>
+        </Suspense>
       )}
     </div>
   );

@@ -370,6 +370,8 @@ export const translations = {
     showPlayerHistory: "Show Player History",
     positiveActions: "Positive Actions",
     negativeActions: "Negative Actions",
+    keepScreenOn: "Keep screen on",
+    keepScreenOnHint: "Prevents the screen from locking while you track the game",
     summaryAndControls: "Summary & Controls",
     totalPointsMatch: "Total Points (Match)",
     bonusFactor: "Bonus Factor ($/pt)",
@@ -475,6 +477,19 @@ export const translations = {
       upgrade: "Upgrade",
       login: "Login",
       logout: "Logout"
+    },
+
+    // Free game tracking template — lead magnet landing page (src/pages/landing/GameTrackingTemplate.tsx)
+    leadMagnet: {
+      badge: "Free Download",
+      h1: "A Free Game Tracking Template — Shot Chart, Faceoffs, Shift Chart",
+      intro: "Print one per game and track shots, faceoffs, and shifts by hand — no account needed. When you're ready to skip the paper, Ice IQ logs the same things automatically and adds AI coach feedback.",
+      downloadBtn: "Download the free PDF",
+      fileNote: "One page · PDF · print at home",
+      previewAlt: "Preview of the Ice IQ game tracking template",
+      ctaHeading: "Prefer logging it in an app?",
+      ctaDesc: "Ice IQ tracks goals, assists, shots, and faceoffs automatically as you tap through the game, and its AI coach turns the stats into concrete advice. Free to start.",
+      ctaBtn: "Try Ice IQ Free"
     }
   },
   sv: {
@@ -834,6 +849,8 @@ export const translations = {
     showPlayerHistory: "Visa Spelarhistorik",
     positiveActions: "Positiva Aktioner",
     negativeActions: "Negativa Aktioner",
+    keepScreenOn: "Håll skärmen tänd",
+    keepScreenOnHint: "Hindrar skärmen från att låsas medan du registrerar matchen",
     summaryAndControls: "Summering & Kontroller",
     totalPointsMatch: "Totalpoäng (Match)",
     bonusFactor: "Bonusfaktor (SEK/p)",
@@ -939,6 +956,19 @@ export const translations = {
       upgrade: "Uppgradera",
       login: "Logga in",
       logout: "Logga ut"
+    },
+
+    // Se motsvarande kommentar i en-blocket.
+    leadMagnet: {
+      badge: "Gratis nedladdning",
+      h1: "Gratis matchspårningsmall — skottkarta, tekningar, bytesschema",
+      intro: "Skriv ut en per match och för statistik för hand — inget konto behövs. Redo att slippa pappret? Ice IQ loggar samma saker automatiskt och lägger till feedback från AI-coachen.",
+      downloadBtn: "Ladda ner gratis PDF",
+      fileNote: "En sida · PDF · skriv ut hemma",
+      previewAlt: "Förhandsvisning av Ice IQs matchspårningsmall",
+      ctaHeading: "Vill du hellre logga det i en app?",
+      ctaDesc: "Ice IQ loggar mål, assist, skott och tekningar automatiskt medan du trycker dig igenom matchen, och AI-coachen omvandlar statistiken till konkreta råd. Gratis att börja.",
+      ctaBtn: "Testa Ice IQ Gratis"
     }
   }
 };

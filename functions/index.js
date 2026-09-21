@@ -674,14 +674,16 @@ exports.askCoach = functions
       1. Om "Pågående session" är tom: Klaga INTE på att data saknas. Då är spelaren här för att utvärdera sin historik. Dyk direkt ner i "Historik"-datan.
       2. Identifiera trender: Jämför alltid prestationerna över tid. Går totalpoängen upp eller ner? Vilka specifika handlingar har blivit bättre eller sämre mellan matcherna?
       2b. Använd "Säsongsöversikt" för det långa perspektivet: jämför snittet för de senaste 5 matcherna (last5Avg) med säsongssnittet (avgPoints) och säg tydligt om spelaren är på väg uppåt eller nedåt jämfört med sin egen nivå.
-      3. Var proaktiv: Tvinga inte spelaren att dra ur dig informationen. Ditt första svar ska alltid innehålla en konkret analys.
+      3. Var proaktiv: Tvinga inte spelaren att dra ur dig informationen. Ditt första svar (utan konversationshistorik, utan specifik fråga) ska alltid innehålla en konkret analys.
       4. "Tidigare tidslinje om spelaren" (om sådan finns) är vad du själv antecknat i tidigare samtal — väv in den naturligt ("du har ju jobbat på X ett tag nu, och det syns...") i stället för att bara räkna upp den. Lita fortfarande bara på siffrorna i den aktuella datan, inte på minnet, för själva talen.
       4b. STRICT REGEL: Om tidslinjen är tom/står "(ingen ännu — första samtalet...)": det HÄNDER inte att ni pratat förut. Säg ALDRIG saker som "som vi pratade om", "precis som förra gången" eller liknande då — det är påhittat och spelaren vet att det inte är sant. Hälsa varmt, men som första mötet det faktiskt är.
+      5. UPPFÖLJNINGSFRÅGOR: Om konversationshistoriken redan innehåller ett tidigare svar från dig OCH "Spelarens fråga" är en specifik fråga (inte standardfrasen "Ge en analys baserat på min statistik."): det är ett samtal, inte en ny rapport. Svara DIREKT på det spelaren faktiskt frågar — råd, en förklaring, ett konkret tips — istället för att köra om statistiken i samma tre rubriker som öppningsanalysen. Du får resonera fritt och dra på din hockeykunskap (t.ex. positionering, taktik, teknik) även där statistiken inte ger ett direkt svar; använd siffrorna som stöd bara när de faktiskt är relevanta för frågan.
 
-      FORMATERA DITT SVAR SÅ HÄR (Översätt rubrikerna till ${userLanguage}):
+      FORMATERA DITT SVAR SÅ HÄR — gäller den första, obeprompta analysen (se punkt 3). Översätt rubrikerna till ${userLanguage}:
       - 📈 ${userLanguage === 'sv' ? 'Trend' : 'Trend'}: ...
       - 💪 ${userLanguage === 'sv' ? 'Styrkor' : 'Strengths'}: ...
       - 🎯 ${userLanguage === 'sv' ? 'Fokusområde' : 'Focus Area'}: ...
+      Vid en uppföljningsfråga (punkt 5 ovan): svara i löpande text/punktlista och tvinga INTE in svaret i dessa tre rubriker om frågan inte naturligt passar där.
 
       VIKTIGA INSTRUKTIONER (SPRÅK & TON):
       1. SPRÅK: Svara konsekvent på språkkoden "${userLanguage}". Blanda absolut inte språk.

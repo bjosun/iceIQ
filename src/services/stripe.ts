@@ -1,8 +1,5 @@
 /// <reference types="vite/client" />
 import { loadStripe } from '@stripe/stripe-js';
-// Vi importerar funktionerna direkt här för att få rätt typer
-import { functions } from './firebase'; // Se till att sökvägen stämmer till din firebase config
-import { httpsCallable } from 'firebase/functions';
 
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 let stripePromise: Promise<any> | null = null;
@@ -18,9 +15,13 @@ export const stripeService = {
   // UPPDATERAD: Tar nu emot 'plan' som första argument
   async createCheckoutSession(plan: 'premium' | 'elite' | 'credits', interval: 'monthly' | 'yearly', language: string) {
     try {
-      // Anropa Cloud Function direkt här
+      // Dynamisk import: se motsvarande kommentar i AuthContext — stripe.ts
+      // importeras eagerly via SubscriptionContext, så firebase/functions
+      // ska inte laddas förrän man faktiskt trycker på uppgradera/hantera.
+      const { httpsCallable } = await import('firebase/functions');
+      const { functions } = await import('./firestore');
       const createStripeCheckoutSession = httpsCallable(functions, 'createStripeCheckoutSession');
-      
+
       const result = await createStripeCheckoutSession({ 
         plan,      // Skicka med 'premium' eller 'elite'
         interval, 
@@ -37,6 +38,8 @@ export const stripeService = {
 
   async createPortalSession() {
     try {
+      const { httpsCallable } = await import('firebase/functions');
+      const { functions } = await import('./firestore');
       const createStripePortalSession = httpsCallable(functions, 'createStripePortalSession');
       const result = await createStripePortalSession();
       return result.data as { url: string };

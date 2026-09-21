@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { SubscriptionProvider } from './contexts/SubscriptionContext'
@@ -9,17 +9,23 @@ import { captureUtmParams } from './utils/helpers'
 // 1. Importera Toaster och CSS
 import { Toaster } from 'react-hot-toast'
 
+// Home laddas eagerly eftersom det är sidan flest besökare landar på direkt
+// (och den statiska SEO-fallbacken i index.html speglar just den) — att
+// lazy-loada den skulle bara lägga till ännu en nätverksomgång för first paint.
+// Alla andra routes lazy-loadas så att t.ex. charts.js (Dashboard) och
+// firebase-tunga sidor inte blockerar den initiala bundlen.
 import Home from './pages/Home'
-import Dashboard from './pages/Dashboard'
-import Terms from './pages/Terms'
-import Privacy from './pages/Privacy'
-import Success from './pages/Success'
-import MatchTracker from './pages/MatchTracker'
-import PlayerLinkPage from './pages/PlayerLinkPage'
-import HockeyTrackingApp from './pages/landing/HockeyTrackingApp'
-import YouthHockeyStats from './pages/landing/YouthHockeyStats'
-import HockeyScoutingTemplate from './pages/landing/HockeyScoutingTemplate'
-import CorsiYouthHockey from './pages/landing/CorsiYouthHockey'
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Terms = lazy(() => import('./pages/Terms'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Success = lazy(() => import('./pages/Success'))
+const MatchTracker = lazy(() => import('./pages/MatchTracker'))
+const PlayerLinkPage = lazy(() => import('./pages/PlayerLinkPage'))
+const HockeyTrackingApp = lazy(() => import('./pages/landing/HockeyTrackingApp'))
+const YouthHockeyStats = lazy(() => import('./pages/landing/YouthHockeyStats'))
+const HockeyScoutingTemplate = lazy(() => import('./pages/landing/HockeyScoutingTemplate'))
+const CorsiYouthHockey = lazy(() => import('./pages/landing/CorsiYouthHockey'))
+const GameTrackingTemplate = lazy(() => import('./pages/landing/GameTrackingTemplate'))
 
 import Layout from './components/layout/Layout'
 import './index.css'
@@ -60,26 +66,33 @@ function AppContent() {
       />
       
       {hideLayout ? (
-        <Routes>
-          <Route path="/success" element={<Success />} />
-          <Route path="/p/:token" element={<PlayerLinkPage />} />
-        </Routes>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/success" element={<Success />} />
+            <Route path="/p/:token" element={<PlayerLinkPage />} />
+          </Routes>
+        </Suspense>
       ) : (
         <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/match" element={<MatchTracker />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            {/* Engelska nyckelordslandningssidor. Egna title/description/canonical
-               sätts via useSEO (se LandingPage.tsx) eftersom index.html annars
-               delar samma tre taggar för alla routes. */}
-            <Route path="/hockey-tracking-app" element={<HockeyTrackingApp />} />
-            <Route path="/youth-hockey-stats" element={<YouthHockeyStats />} />
-            <Route path="/hockey-scouting-template" element={<HockeyScoutingTemplate />} />
-            <Route path="/measure-corsi-youth-hockey" element={<CorsiYouthHockey />} />
-          </Routes>
+          <Suspense fallback={null}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/match" element={<MatchTracker />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              {/* Engelska nyckelordslandningssidor. Egna title/description/canonical
+                 sätts via useSEO (se LandingPage.tsx) eftersom index.html annars
+                 delar samma tre taggar för alla routes. */}
+              <Route path="/hockey-tracking-app" element={<HockeyTrackingApp />} />
+              <Route path="/youth-hockey-stats" element={<YouthHockeyStats />} />
+              <Route path="/hockey-scouting-template" element={<HockeyScoutingTemplate />} />
+              <Route path="/measure-corsi-youth-hockey" element={<CorsiYouthHockey />} />
+              {/* Bilingual lead-magnet page (not English-only like the ones above) —
+                 för FB-grupp-distribution i både engelska och svenska communities. */}
+              <Route path="/game-tracking-template" element={<GameTrackingTemplate />} />
+            </Routes>
+          </Suspense>
         </Layout>
       )}
     </>

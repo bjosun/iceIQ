@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { firestore } from '../services/firebase';
+import { firestore } from '../services/firestore';
 
 interface GameRecord {
   id: string;

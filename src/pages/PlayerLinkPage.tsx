@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { Loader2, AlertCircle, Sparkles, Backpack, PenLine, Moon, Check } from 'lucide-react';
-import { euFunctions } from '../services/firebase';
+import { euFunctions } from '../services/firestore';
 import { useLanguage } from '../contexts/LanguageContext';
 import BreathingExercise from '../components/breathing/BreathingExercise';
 import RoutineStack, { RoutineStep } from '../components/routines/RoutineStack';

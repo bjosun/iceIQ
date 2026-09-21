@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { 
+import {
   User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -9,8 +9,7 @@ import {
   onAuthStateChanged,
   deleteUser
 } from 'firebase/auth'
-import { doc, setDoc, getDoc } from 'firebase/firestore' // LÄGG TILL DESSA
-import { auth, db } from '../services/firebase' // SE TILL ATT db ÄR IMPORTERAD HÄR
+import { auth } from '../services/firebase'
 import { consumeUtmParams } from '../utils/helpers'
 
 interface AuthContextType {
@@ -30,6 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const saveNewUserToDatabase = async (user: User) => {
     try {
+      // Dynamisk import: Firestore-SDK:t (tungt, ~250 KB) ska bara laddas för
+      // besökare som faktiskt är inloggade, inte för alla som landar på
+      // startsidan (AuthProvider wrap:ar hela appen).
+      const { doc, setDoc, getDoc } = await import('firebase/firestore');
+      const { db } = await import('../services/firestore');
       const userRef = doc(db, 'artifacts', 'default-app-id', 'users', user.uid);
       const userDoc = await getDoc(userRef);
 

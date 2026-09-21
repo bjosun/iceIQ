@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { db } from '../services/firestore';
 import { useAuth } from '../contexts/AuthContext';
 
 // Lyssnar i realtid på användarens AI-krediter så att alla vyer

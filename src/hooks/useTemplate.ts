@@ -1,7 +1,7 @@
 // TODO: implement useTemplate hook
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { firestore } from '../services/firebase';
+import { firestore } from '../services/firestore';
 
 interface TemplateAction {
   id: string;

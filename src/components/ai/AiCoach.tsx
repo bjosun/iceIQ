@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
-import { functions, euFunctions } from '../../services/firebase';
+import { functions, euFunctions } from '../../services/firestore';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAiCredits } from '../../hooks/useAiCredits';

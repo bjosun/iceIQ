@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { db } from '../services/firebase';
+import { db } from '../services/firestore';
 import { collection, query, where, getDocs, addDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
 import { Users, Search, Plus, Trash2, User, TrendingUp } from 'lucide-react';
 import Card from '../components/ui/Card';

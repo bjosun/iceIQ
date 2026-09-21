@@ -68,17 +68,17 @@ export default function ShareImageModal({
     if (!isOpen) setFormat('square');
   }, [isOpen]);
 
-  const fileName = `${fileNameBase}${format === 'story' ? '-story' : ''}.png`;
+  const fileName = `${fileNameBase}${format === 'story' ? '-story' : ''}.jpg`;
 
   const canShareFiles = () => {
     if (!blob || typeof navigator.share !== 'function' || typeof navigator.canShare !== 'function') return false;
-    const file = new File([blob], fileName, { type: 'image/png' });
+    const file = new File([blob], fileName, { type: 'image/jpeg' });
     return navigator.canShare({ files: [file] });
   };
 
   const handleShare = async () => {
     if (!blob) return;
-    const file = new File([blob], fileName, { type: 'image/png' });
+    const file = new File([blob], fileName, { type: 'image/jpeg' });
     try {
       await navigator.share({ files: [file], title });
     } catch (err: any) {

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Minus } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Minus, Sun } from 'lucide-react';
 import { useTemplates } from '../../contexts/TemplateContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Card from '../ui/Card';
@@ -15,6 +15,46 @@ interface ActionGridProps {
 export default function ActionGrid({ actionCounts, onCountChange }: ActionGridProps) {
   const { currentTemplate } = useTemplates();
   const { t, language } = useLanguage();
+
+  // "Håll skärmen tänd" — avstängd som standard (samma mönster som
+  // receptsajter). Coachen slår på den själv innan matchen, precis som
+  // BreathingExercise gör automatiskt under en andningsövning.
+  const [keepAwake, setKeepAwake] = useState(false);
+  const wakeLockRef = useRef<any>(null);
+
+  useEffect(() => {
+    const nav = navigator as any;
+    if (!keepAwake || !nav.wakeLock?.request) return;
+    let released = false;
+
+    const requestLock = () => {
+      nav.wakeLock
+        .request('screen')
+        .then((lock: any) => {
+          if (released) lock.release?.();
+          else wakeLockRef.current = lock;
+        })
+        .catch(() => {
+          /* Nekas i bakgrundsflik eller av batterisparläge — registreringen fungerar ändå. */
+        });
+    };
+
+    requestLock();
+
+    // Låset släpps automatiskt när fliken göms — måste begäras igen när
+    // man kommer tillbaka (t.ex. efter att ha svarat i telefonen mitt i matchen).
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') requestLock();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      released = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      wakeLockRef.current?.release?.();
+      wakeLockRef.current = null;
+    };
+  }, [keepAwake]);
 
   if (!currentTemplate) {
     return (
@@ -103,8 +143,38 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
     </div>
   );
 
+  const wakeLockSupported = typeof navigator !== 'undefined' && 'wakeLock' in navigator;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {wakeLockSupported && (
+        <div className="lg:col-span-2 flex items-center justify-between gap-3 px-4 py-3 bg-gray-800/60 border border-gray-700 rounded-xl">
+          <div className="flex items-center gap-2 min-w-0">
+            <Sun size={18} className={keepAwake ? 'text-yellow-400' : 'text-gray-500'} />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-white">{t('keepScreenOn')}</p>
+              <p className="text-xs text-gray-400 truncate">{t('keepScreenOnHint')}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={keepAwake}
+            aria-label={t('keepScreenOn')}
+            onClick={() => setKeepAwake((prev) => !prev)}
+            className={`relative shrink-0 w-12 h-7 rounded-full transition-colors touch-manipulation ${
+              keepAwake ? 'bg-cyan-500' : 'bg-gray-600'
+            }`}
+          >
+            <span
+              className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                keepAwake ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+      )}
+
       {/* Positive Actions */}
       <Card>
         <div className="flex items-center justify-between mb-6">

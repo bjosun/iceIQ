@@ -165,12 +165,16 @@ export function drawFooter(
   ctx.textAlign = 'left';
 }
 
+// JPEG, inte PNG: bakgrunden målas alltid ogenomskinlig hela vägen ut, så
+// det finns ingen transparens att tappa. Delningsmottagare på iOS (bl.a.
+// Snapchats share-extension) visar annars canvas-PNG:er som en grå ruta —
+// de verkar inte hantera PNG:ns alfakanal, även när den är helt opak.
 export function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (blob) resolve(blob);
       else reject(new Error('Could not render image'));
-    }, 'image/png');
+    }, 'image/jpeg', 0.92);
   });
 }
 

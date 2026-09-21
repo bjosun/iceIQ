@@ -66,4 +66,15 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+
+  <!-- Bilingual lead-magnet page (src/pages/landing/GameTrackingTemplate.tsx),
+       not part of generate-landing-pages.mjs since its content depends on the
+       client-side language toggle rather than being one fixed English page —
+       served client-rendered like /dashboard etc., not statically prerendered. -->
+  <url>
+    <loc>https://www.iceiq.app/game-tracking-template</loc>
+    <lastmod>2026-09-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>

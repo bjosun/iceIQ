@@ -12,7 +12,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { db } from '../services/firestore';
 import { useAuth } from '../contexts/AuthContext';
 
 export interface CoachChatMessage {

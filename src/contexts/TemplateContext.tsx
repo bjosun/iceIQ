@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { firestore } from '../services/firebase';
 
 export interface TemplateAction {
   name: { sv: string; en: string };
@@ -123,6 +122,8 @@ export function TemplateProvider({ children }: TemplateProviderProps) {
 
       try {
         setLoading(true);
+        // Dynamisk import: se motsvarande kommentar i AuthContext.
+        const { firestore } = await import('../services/firestore');
         const userData = await firestore.getUserData(user.uid);
         const userCustomTemplates = userData?.customTemplates || {};
         
@@ -151,8 +152,9 @@ export function TemplateProvider({ children }: TemplateProviderProps) {
 
     try {
       setLoading(true);
-      
+
       // Save to Firestore
+      const { firestore } = await import('../services/firestore');
       await firestore.saveTemplate(user.uid, templateId, template);
       
       // Update local state
@@ -184,7 +186,8 @@ export function TemplateProvider({ children }: TemplateProviderProps) {
 
     try {
       setLoading(true);
-      
+
+      const { firestore } = await import('../services/firestore');
       await firestore.deleteTemplate(user.uid, templateId);
       
       // Update local state
