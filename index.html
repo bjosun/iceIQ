@@ -203,6 +203,11 @@
     }
     </script>
 
+    <!-- Det statiska SEO-blocket i #root ska inte blinka fram ostylat innan appen
+         hunnit ladda (tydligt på långsam mobil/Safari). Det ligger kvar i DOM:en
+         för crawlers; React ersätter det vid mount. -->
+    <style>html,body{background:#111827}#root>main{visibility:hidden}</style>
+    <noscript><style>#root>main{visibility:visible}</style></noscript>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   </head>
   <body>
