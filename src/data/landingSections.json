@@ -1,0 +1,117 @@
+{
+  "hockey-tracking-app": [
+    {
+      "heading": "What's worth tracking in a youth game",
+      "paragraphs": [
+        "You can't write down everything that happens in a hockey game, and you don't need to. Pick a handful of actions that match the player's position and track those the same way every game. Ice IQ starts every player on a position template — forward, defenseman, or goalie — so that list is already chosen for you.",
+        "The forward template covers shots on goal, missed shots, faceoff wins and losses, scoring chances created, controlled zone entries, forecheck and backcheck puck recoveries, and turnovers. The defenseman template covers passes, gap control, blocked shots, controlled clears, board battles, and turnovers. Goalies get saves, difficult saves, rebound control, and goals against."
+      ]
+    },
+    {
+      "heading": "Why consistency beats detail",
+      "paragraphs": [
+        "The most common way game tracking fails is that it's too ambitious. Someone starts with twenty categories, misses half the game writing things down, and quits after three weekends. Six things tracked every game for a season tell you far more than twenty things tracked for two games.",
+        "That's why logging in Ice IQ is one tap per action. You watch the game, tap when something happens, and the tally builds itself."
+      ]
+    },
+    {
+      "heading": "From a stat line to one thing to practice",
+      "paragraphs": [
+        "A stat line on its own doesn't tell a player what to do at Tuesday's practice. Say a forward finishes with five shots on goal, four missed shots, and three turnovers in the offensive zone. The shots show they're getting to scoring areas. The misses and turnovers point at the same habit: shooting or passing before they're set.",
+        "After each logged game, the AI coach reads the numbers and suggests a specific focus for the next practice or game — one clear takeaway rather than a report card."
+      ]
+    },
+    {
+      "heading": "Paper or app?",
+      "paragraphs": [
+        "If you'd rather start on paper, the free printable game tracking template puts a shot chart, a faceoff tally, and a shift chart on one page. It's a good way to find out which stats you actually care about. When the tallying starts to feel like homework, the app does the same counting and keeps the history for you."
+      ],
+      "link": { "text": "Get the free printable template", "path": "/game-tracking-template" }
+    }
+  ],
+  "youth-hockey-stats": [
+    {
+      "heading": "Why one game tells you almost nothing",
+      "paragraphs": [
+        "Youth hockey games swing on things a player can't control: the opponent, their linemates, how much ice time they got, whether the team was chasing the game in the third. A game with zero shots can mean a bad night, or it can mean the coach shortened the bench. One stat line can't tell those apart.",
+        "Across ten or fifteen games, that noise starts to cancel out, and that's when numbers become useful. A player whose shots on goal climb from one or two a game in October to three or four by January is doing something differently, even if the goal total hasn't moved yet."
+      ]
+    },
+    {
+      "heading": "Stats that fit the player's age",
+      "paragraphs": [
+        "For younger players, the most useful numbers are about involvement rather than outcomes. Are they getting shots off? Are they winning pucks on the forecheck? Goals and assists at that age depend heavily on who else is on the ice.",
+        "As players get older and roles become more defined, position-specific stats matter more: faceoffs for centers, gap control and clean zone exits for defensemen, rebound control for goalies.",
+        "Plus-minus deserves care at any youth level. It credits or blames a player for everything that happens while they're on the ice, including the play of four other skaters and a goalie. Ice IQ lets you log on-ice goals for and against, but read them over a long stretch and next to the player's own actions, never on their own."
+      ],
+      "link": { "text": "How to count shot attempts at the youth level", "path": "/measure-corsi-youth-hockey" }
+    },
+    {
+      "heading": "Talking about stats with a young player",
+      "paragraphs": [
+        "Numbers can help a young player, or they can turn every drive home into a performance review. What tends to work: look at trends instead of single games, pick one thing to build on instead of a list of problems, and read the numbers together with the player rather than about them.",
+        "That's the idea behind the AI coach's feedback: specific, practical things to work on next, rather than a verdict on the game."
+      ]
+    }
+  ],
+  "hockey-scouting-template": [
+    {
+      "heading": "What a good evaluation template covers",
+      "paragraphs": [
+        "Most hockey evaluation forms, whether they're used at tryouts or by a scout following a player, cover the same four areas: skating, puck skills, hockey sense, and compete level. Many add position-specific rows, like faceoffs for centers or gap control for defensemen.",
+        "The weak spot is that almost everything on those forms is a 1-to-5 rating filled in from memory after the game. Ratings are useful, but they're only as good as what the evaluator remembers — and people remember the last shift and the one big mistake."
+      ]
+    },
+    {
+      "heading": "Count during the game, rate after it",
+      "paragraphs": [
+        "The fix is to split the job in two. During the game, count things: shots on goal, puck recoveries, controlled zone entries, turnovers, faceoff wins. After the game, fill in your ratings with those counts in front of you.",
+        "A player you'd rate a 3 for compete level from memory looks different when you can see they recovered six pucks on the forecheck. The counts don't replace judgment; they keep it honest."
+      ]
+    },
+    {
+      "heading": "Keep notes short and specific",
+      "paragraphs": [
+        "In the notes column, specific beats general. \"Good hockey sense\" tells the next reader nothing. \"Moved the puck before pressure arrived on four of five breakouts\" does. If you're evaluating across several games, write down the date and the opponent so trends are visible later."
+      ]
+    },
+    {
+      "heading": "A printable sheet, or the app",
+      "paragraphs": [
+        "If you want something to print, the free game tracking template puts a shot chart, a faceoff tally, and a shift chart on one page — no account needed. If you're following the same player across a season, Ice IQ handles the counting in the app: tap each action as it happens, and it's organized into per-game and season stats automatically, so your ratings start from data instead of memory."
+      ],
+      "link": { "text": "Get the free printable template", "path": "/game-tracking-template" }
+    }
+  ],
+  "measure-corsi-youth-hockey": [
+    {
+      "heading": "Corsi, Fenwick, and individual shot attempts",
+      "paragraphs": [
+        "Corsi counts every shot attempt: shots on goal, shots that miss the net, and shots that get blocked. For a team, Corsi For (CF) is the attempts you take and Corsi Against (CA) is the attempts you allow, usually counted at even strength. Corsi For percentage (CF%) is CF divided by CF plus CA — above 50% generally means your team had the puck more than the opponent did.",
+        "Fenwick is the same idea without blocked shots. Individual Corsi (iCF) is simply the shot attempts one player takes, and that's the part that's realistic to track from the stands."
+      ]
+    },
+    {
+      "heading": "A worked example",
+      "paragraphs": [
+        "Say you're tracking one forward. In a game they have 4 shots on goal, 3 shots that miss the net, and 2 shots blocked by a defender. Their individual shot attempts are 4 + 3 + 2 = 9. Only 4 of those 9 reached the goalie — about 44% — which tells you something the goal column doesn't: they're getting plenty of looks, but more than half aren't getting through.",
+        "That split is where the coaching is. A lot of blocked shots usually means shooting into bodies; a lot of misses often means rushed shots or poor angles. Both are fixable, and both are invisible if you only count goals."
+      ]
+    },
+    {
+      "heading": "Why team Corsi is hard at the youth level",
+      "paragraphs": [
+        "Team Corsi needs every attempt for and against, for both teams, on every shift, usually split by game strength. NHL teams have staff and tracking systems for that. One parent in the stands can't do it reliably, and youth games are short enough that the sample is small anyway.",
+        "Individual shot attempts avoid both problems: one player, one set of numbers, and a sample that grows every game."
+      ]
+    },
+    {
+      "heading": "Tracking shot attempts in Ice IQ",
+      "paragraphs": [
+        "The default forward template already includes shots on goal and missed shots. To count shots that get blocked as well, add an action for it in the template editor (custom templates are a Premium feature). Don't reuse the defenseman template's \"Blocked Shot\" — that one counts shots the player blocked, not attempts of theirs that were blocked.",
+        "One note on scoring: Ice IQ subtracts a point from a forward's game score for a missed shot, since it usually gives the puck away. For shot-attempt counting, a missed shot still counts as an attempt, so look at the counts rather than the score when you're measuring volume."
+      ],
+      "link": { "text": "Why season trends matter more than single games", "path": "/youth-hockey-stats" }
+    }
+  ]
+}

@@ -19,7 +19,7 @@ export default function CorsiYouthHockey() {
         {
           icon: Zap,
           title: 'Shot-by-Shot Logging',
-          description: 'Log shots on goal, missed shots, and blocked shots for a player as the game happens — the same raw actions Corsi is built from.',
+          description: 'Log shots on goal and missed shots as the game happens, and add an action for blocked attempts with a custom template — the same raw actions Corsi is built from.',
         },
         {
           icon: BarChart3,
@@ -44,7 +44,7 @@ export default function CorsiYouthHockey() {
         },
         {
           question: 'Does Ice IQ calculate an official Corsi rating?',
-          answer: 'No. Ice IQ tracks the underlying actions — shots on goal, missed shots, and blocked shots — per player, which is the practical, youth-level version of what Corsi measures at the team level.',
+          answer: 'No. Ice IQ tracks the underlying actions per player — shots on goal and missed shots out of the box, plus blocked attempts if you add them to a custom template — which is the practical, youth-level version of what Corsi measures at the team level.',
         },
         {
           question: 'Why not just track full team Corsi at the youth level?',

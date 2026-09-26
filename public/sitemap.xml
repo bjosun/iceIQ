@@ -17,7 +17,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.iceiq.app/</loc>
-    <lastmod>2026-09-08</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -41,39 +41,40 @@
        är rätt plats trots att index.html i sig delar taggar mellan routes. -->
   <url>
     <loc>https://www.iceiq.app/hockey-tracking-app</loc>
-    <lastmod>2026-09-14</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
     <loc>https://www.iceiq.app/youth-hockey-stats</loc>
-    <lastmod>2026-09-14</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
     <loc>https://www.iceiq.app/hockey-scouting-template</loc>
-    <lastmod>2026-09-14</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
     <loc>https://www.iceiq.app/measure-corsi-youth-hockey</loc>
-    <lastmod>2026-09-14</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
-  <!-- Bilingual lead-magnet page (src/pages/landing/GameTrackingTemplate.tsx),
-       not part of generate-landing-pages.mjs since its content depends on the
-       client-side language toggle rather than being one fixed English page —
-       served client-rendered like /dashboard etc., not statically prerendered. -->
+  <!-- Bilingual lead-magnet page (src/pages/landing/GameTrackingTemplate.tsx).
+       The language toggle is still client-side, but generate-landing-pages.mjs
+       prerenders an English static version: served client-rendered only, its
+       raw HTML carried the homepage's title and a canonical pointing at the
+       homepage, so Google read it as a duplicate. -->
   <url>
     <loc>https://www.iceiq.app/game-tracking-template</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

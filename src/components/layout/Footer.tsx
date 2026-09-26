@@ -3,15 +3,16 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { Github, Mail, Shield, FileText, Building2 } from 'lucide-react';
 import { SUPPORT_EMAIL, COMPANY_NAME, COMPANY_COUNTRY, COMPANY_URL, COMPANY_ORG_NR } from '../../utils/contact';
+import guides from '../../data/guides.json';
 
 export default function Footer() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="bg-gray-800 border-t border-gray-700 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand */}
           <div>
             <div className="flex items-center space-x-3 mb-4">
@@ -59,6 +60,21 @@ export default function Footer() {
                   Upgrade to Premium
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          {/* Guides — the only internal links pointing at the landing pages,
+              without which Google treats them as orphans (see src/data/guides.json). */}
+          <div>
+            <h4 className="text-white font-semibold mb-4">{t('footerGuides')}</h4>
+            <ul className="space-y-2">
+              {guides.map((guide) => (
+                <li key={guide.path}>
+                  <Link to={guide.path} className="text-gray-400 hover:text-cyan-400 transition-colors">
+                    {language === 'sv' ? guide.sv : guide.en}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 

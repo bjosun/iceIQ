@@ -21,6 +21,14 @@ import path from 'node:path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distIndexPath = path.join(__dirname, '..', 'dist', 'index.html');
 
+// Delas med React (Footer + LandingPage): lista över guidesidorna och den
+// längre copyn per sida. Utan interna länkar hittar Google sidorna bara via
+// sitemap och prioriterar ned dem ("Genomsökt – inte indexerad"), därför
+// måste länkarna finnas i den statiska HTML:en, inte bara i React.
+const dataDir = path.join(__dirname, '..', 'src', 'data');
+const guides = JSON.parse(await readFile(path.join(dataDir, 'guides.json'), 'utf8'));
+const landingSections = JSON.parse(await readFile(path.join(dataDir, 'landingSections.json'), 'utf8'));
+
 const pages = [
   {
     slug: 'hockey-tracking-app',
@@ -76,7 +84,7 @@ const pages = [
       ['Always Backed Up', 'Everything syncs to the cloud automatically — no lost spreadsheet, no version confusion between devices.'],
     ],
     faqs: [
-      ['Is there a downloadable scouting template?', "No — Ice IQ replaces the template itself. Instead of filling in a spreadsheet, you log actions directly in the app and it builds the structured stats for you."],
+      ['Is there a downloadable scouting template?', 'Yes — the free printable game tracking template has a shot chart, a faceoff tally, and a shift chart on one page, no account needed. If you would rather skip paper, Ice IQ logs the same actions in the app and builds the stats for you.'],
       ['What can I log for evaluation purposes?', 'Actions like shots on goal, missed shots, blocked shots, goals, and assists, tracked per player and rolled into season history.'],
       ['Can I evaluate more than one player?', 'Yes. Team management supports tracking multiple players or a full roster from a single account.'],
       ['Is this meant for coaches or for parents?', "Both. It's built for hockey parents, players, and coaches who want structured game data without doing paperwork after every game."],
@@ -90,17 +98,40 @@ const pages = [
     h1: "You Don't Need Full Corsi to Track Shot Attempts",
     intro: "Corsi — a team's shot-attempt differential at 5-on-5 — is an NHL analytics stat, built for a level where every shift and matchup is tracked by a full staff. At the youth level, chasing the exact pro-style number usually isn't worth the overhead. What actually helps a parent or coach is simpler: how many shots is this player getting on net, missing, or having blocked, game after game. Ice IQ tracks exactly that, per player, without a stopwatch or a spreadsheet.",
     features: [
-      ['Shot-by-Shot Logging', 'Log shots on goal, missed shots, and blocked shots for a player as the game happens — the same raw actions Corsi is built from.'],
+      ['Shot-by-Shot Logging', 'Log shots on goal and missed shots as the game happens, and add an action for blocked attempts with a custom template — the same raw actions Corsi is built from.'],
       ['Per-Player, Per-Game', 'See shot activity broken down by game and rolled up across a season, instead of one aggregate team number.'],
       ['AI Coach Turns It Into Advice', "Rather than a raw shot-attempt percentage, the AI coach explains what the numbers actually mean for that player's next game."],
       ['Built for Youth Rosters', 'No dedicated stats staff required — one parent, player, or coach can log a full roster from their phone.'],
     ],
     faqs: [
       ['What is Corsi, in plain terms?', "It's a shot-attempt differential — shots on goal, missed shots, and blocked shots for a team versus against — used in the NHL as a rough proxy for puck possession."],
-      ['Does Ice IQ calculate an official Corsi rating?', 'No. Ice IQ tracks the underlying actions — shots on goal, missed shots, and blocked shots — per player, which is the practical, youth-level version of what Corsi measures at the team level.'],
+      ['Does Ice IQ calculate an official Corsi rating?', 'No. Ice IQ tracks the underlying actions per player — shots on goal and missed shots out of the box, plus blocked attempts if you add them to a custom template — which is the practical, youth-level version of what Corsi measures at the team level.'],
       ['Why not just track full team Corsi at the youth level?', 'It requires tracking every shot attempt for both teams at 5-on-5, which needs a dedicated tracker per game. Per-player shot logging gives a parent or coach useful signal without that overhead.'],
       ['Is this useful without an analytics background?', 'Yes — that’s the point. The AI coach explains what the logged shots mean instead of leaving you to interpret a raw stat.'],
     ],
+  },
+  {
+    // Lead magnet-sidan är tvåspråkig i React (språkväxlaren), men den
+    // statiska HTML:en är engelsk som övriga guider. Utan en egen fil här
+    // serverade /game-tracking-template startsidans titel och en canonical
+    // som pekade på startsidan — Google såg den som en dubblett.
+    // Copy speglar leadMagnet.* i src/utils/translations.ts (en).
+    slug: 'game-tracking-template',
+    title: 'Free Hockey Game Tracking Template (PDF) | Ice IQ',
+    description: 'Download a free, printable hockey game tracking template — shot chart, faceoffs, and shift chart on one page. No account needed.',
+    descriptionSv: 'Ladda ner en gratis, utskrivbar matchspårningsmall för hockey — skottkarta, tekningar och bytesschema på en sida. Inget konto behövs.',
+    ogTitle: 'Free Hockey Game Tracking Template (PDF)',
+    h1: 'A Free Game Tracking Template — Shot Chart, Faceoffs, Shift Chart',
+    intro: "Print one per game and track shots, faceoffs, and shifts by hand — no account needed. When you're ready to skip the paper, Ice IQ logs the same things automatically and adds AI coach feedback.",
+    download: {
+      href: '/downloads/ice-iq-game-tracking-template-en.pdf',
+      text: 'Download the free PDF',
+      note: 'One page · PDF · print at home',
+      hrefSv: '/downloads/ice-iq-game-tracking-template-sv.pdf',
+      textSv: 'Swedish version (PDF)',
+    },
+    features: [],
+    faqs: [],
   },
 ];
 
@@ -117,23 +148,54 @@ function escapeJson(str) {
   return JSON.stringify(str).slice(1, -1);
 }
 
+function buildGuidesNav(guideList, heading) {
+  const items = guideList
+    .map((guide) => `            <li><a href="${guide.path}">${escapeHtml(guide.en)}</a></li>`)
+    .join('\n');
+  return `        <nav aria-label="${escapeHtml(heading)}">
+          <h2>${escapeHtml(heading)}</h2>
+          <ul>
+${items}
+          </ul>
+        </nav>`;
+}
+
 function buildStaticBody(page) {
-  const features = page.features
-    .map(([title, desc]) => `        <section>\n          <h3>${escapeHtml(title)}</h3>\n          <p>${escapeHtml(desc)}</p>\n        </section>`)
-    .join('\n');
-  const faqs = page.faqs
-    .map(([q, a]) => `          <h3>${escapeHtml(q)}</h3>\n          <p>${escapeHtml(a)}</p>`)
-    .join('\n');
+  const parts = [
+    `        <h1>${escapeHtml(page.h1)}</h1>`,
+    `        <p>${escapeHtml(page.intro)}</p>`,
+  ];
+
+  if (page.download) {
+    const d = page.download;
+    parts.push(`        <p><a href="${d.href}" download>${escapeHtml(d.text)}</a> (${escapeHtml(d.note)})</p>`);
+    parts.push(`        <p><a href="${d.hrefSv}" download lang="sv">${escapeHtml(d.textSv)}</a></p>`);
+  }
+
+  for (const [title, desc] of page.features) {
+    parts.push(`        <section>\n          <h3>${escapeHtml(title)}</h3>\n          <p>${escapeHtml(desc)}</p>\n        </section>`);
+  }
+
+  for (const section of landingSections[page.slug] ?? []) {
+    const paragraphs = section.paragraphs.map((p) => `          <p>${escapeHtml(p)}</p>`).join('\n');
+    const link = section.link
+      ? `\n          <p><a href="${section.link.path}">${escapeHtml(section.link.text)}</a></p>`
+      : '';
+    parts.push(`        <section>\n          <h2>${escapeHtml(section.heading)}</h2>\n${paragraphs}${link}\n        </section>`);
+  }
+
+  if (page.faqs.length) {
+    const faqs = page.faqs
+      .map(([q, a]) => `          <h3>${escapeHtml(q)}</h3>\n          <p>${escapeHtml(a)}</p>`)
+      .join('\n');
+    parts.push(`        <section>\n          <h2>Frequently Asked Questions</h2>\n${faqs}\n        </section>`);
+  }
+
+  parts.push(buildGuidesNav(guides.filter((g) => g.path !== `/${page.slug}`), 'More guides'));
 
   return `    <div id="root">
       <main>
-        <h1>${escapeHtml(page.h1)}</h1>
-        <p>${escapeHtml(page.intro)}</p>
-${features}
-        <section>
-          <h2>Frequently Asked Questions</h2>
-${faqs}
-        </section>
+${parts.join('\n')}
       </main>
     </div>`;
 }
@@ -162,6 +224,13 @@ function renderPage(template, page) {
     `<meta name="description" content="${escapeHtml(page.description)}">`
   );
 
+  // Startsidans svenska description följde annars med till varje engelsk
+  // guide — två beskrivningar, varav den ena en dubblett av startsidan.
+  const svDescriptionRegex = /\s*<meta name="description" lang="sv" content="[^"]*">/;
+  html = page.descriptionSv
+    ? html.replace(svDescriptionRegex, `\n    <meta name="description" lang="sv" content="${escapeHtml(page.descriptionSv)}">`)
+    : html.replace(svDescriptionRegex, '');
+
   html = html.replace(
     /<link rel="canonical" href="[^"]*"\s*\/>/,
     `<link rel="canonical" href="${url}" />`
@@ -173,9 +242,18 @@ function renderPage(template, page) {
   html = html.replace(/<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${escapeHtml(page.ogTitle)}">`);
   html = html.replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${escapeHtml(page.description)}">`);
 
-  // Ersätt den engelska FAQPage-blocket (andra ld+json-scriptet) med sidans egna frågor.
-  const faqJsonLdRegex = /<script type="application\/ld\+json">\s*\{\s*"@context": "https:\/\/schema\.org",\s*"@type": "FAQPage",[\s\S]*?<\/script>/;
-  html = html.replace(faqJsonLdRegex, `<script type="application/ld+json">\n    ${buildFaqJsonLd(page)}\n    </script>`);
+  // Startsidan har två FAQPage-block (en + sv). Tidigare byttes bara det
+  // första, så varje guide ärvde startsidans svenska FAQ-schema — frågor som
+  // inte syns på sidan, vilket bryter mot Googles regel att FAQ-markup ska
+  // matcha synligt innehåll. Nu tas alla bort och sidans egen läggs till.
+  const faqJsonLdRegex = /\s*<script type="application\/ld\+json">\s*\{\s*"@context": "https:\/\/schema\.org",\s*"@type": "FAQPage",[\s\S]*?<\/script>/g;
+  html = html.replace(faqJsonLdRegex, '');
+  if (page.faqs.length) {
+    html = html.replace(
+      '</head>',
+      `    <script type="application/ld+json">\n    ${buildFaqJsonLd(page)}\n    </script>\n  </head>`
+    );
+  }
 
   // Ersätt hela #root-blocket (båda main-taggarna) med sidans egen statiska text.
   const rootRegex = /<div id="root">[\s\S]*?<\/div>\s*(?=\n?\s*<\/body>)/;
@@ -194,6 +272,13 @@ async function main() {
     await writeFile(outPath, html, 'utf8');
     console.log(`Generated dist/${page.slug}.html`);
   }
+
+  // Startsidan är den starkaste sidan på domänen — den måste länka ut till
+  // guiderna i den statiska HTML:en, inte bara via React-footern.
+  const homeNav = buildGuidesNav(guides, 'Guides');
+  if (!template.includes('</main>')) throw new Error('dist/index.html saknar </main> — kan inte lägga in guidelänkar');
+  await writeFile(distIndexPath, template.replace('</main>', `${homeNav}\n      </main>`), 'utf8');
+  console.log('Added guide links to dist/index.html');
 }
 
 main().catch((err) => {

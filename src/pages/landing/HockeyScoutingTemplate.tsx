@@ -40,7 +40,7 @@ export default function HockeyScoutingTemplate() {
       faqs={[
         {
           question: 'Is there a downloadable scouting template?',
-          answer: 'No — Ice IQ replaces the template itself. Instead of filling in a spreadsheet, you log actions directly in the app and it builds the structured stats for you.',
+          answer: 'Yes — the free printable game tracking template has a shot chart, a faceoff tally, and a shift chart on one page, no account needed. If you would rather skip paper, Ice IQ logs the same actions in the app and builds the stats for you.',
         },
         {
           question: 'What can I log for evaluation purposes?',

@@ -2,6 +2,14 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, LucideIcon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSEO } from '../../hooks/useSEO';
+import guides from '../../data/guides.json';
+import landingSections from '../../data/landingSections.json';
+
+interface LandingSection {
+  heading: string;
+  paragraphs: string[];
+  link?: { text: string; path: string };
+}
 
 export interface LandingFeature {
   icon: LucideIcon;
@@ -49,6 +57,12 @@ export default function LandingPage({
   useSEO({ title: seoTitle, description: seoDescription, path });
 
   const startState = user ? undefined : { isSignup: true };
+  // Long-form copy and related-guide links come from src/data/, shared with
+  // scripts/generate-landing-pages.mjs so the static HTML crawlers read and
+  // the React page can't drift apart.
+  const sections: LandingSection[] =
+    (landingSections as Record<string, LandingSection[]>)[path.replace(/^\//, '')] ?? [];
+  const relatedGuides = guides.filter((guide) => guide.path !== path);
 
   return (
     <div>
@@ -107,7 +121,33 @@ export default function LandingPage({
         </div>
       </section>
 
-      <section className="py-20">
+      {sections.length > 0 && (
+        <section className="py-20">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            {sections.map((section) => (
+              <div key={section.heading}>
+                <h2 className="text-2xl font-bold text-white mb-4">{section.heading}</h2>
+                <div className="space-y-4">
+                  {section.paragraphs.map((paragraph, index) => (
+                    <p key={index} className="text-gray-300 leading-relaxed">{paragraph}</p>
+                  ))}
+                </div>
+                {section.link && (
+                  <Link
+                    to={section.link.path}
+                    className="inline-flex items-center mt-4 text-primary-400 hover:text-primary-300 font-semibold"
+                  >
+                    {section.link.text}
+                    <ArrowRight className="ml-1" size={16} />
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="py-20 bg-gray-800/20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-white mb-10 text-center">
             Frequently Asked Questions
@@ -121,6 +161,25 @@ export default function LandingPage({
             ))}
           </div>
         </div>
+      </section>
+
+      <section className="py-16">
+        <nav aria-label="More guides" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-bold text-white mb-6">More guides</h2>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {relatedGuides.map((guide) => (
+              <li key={guide.path}>
+                <Link
+                  to={guide.path}
+                  className="flex items-center justify-between h-full px-4 py-3 rounded-xl border border-gray-700/50 bg-gray-800/40 text-gray-200 hover:text-white hover:border-primary-400/50 transition-colors"
+                >
+                  <span>{guide.en}</span>
+                  <ArrowRight className="ml-2 shrink-0 text-primary-400" size={16} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </section>
 
       <section className="py-20 bg-gray-800/20">

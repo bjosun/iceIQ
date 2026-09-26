@@ -49,6 +49,10 @@
           "destination": "/measure-corsi-youth-hockey.html"
         },
         {
+          "source": "/game-tracking-template",
+          "destination": "/game-tracking-template.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -78,6 +82,10 @@
         {
           "source": "/measure-corsi-youth-hockey",
           "destination": "/measure-corsi-youth-hockey.html"
+        },
+        {
+          "source": "/game-tracking-template",
+          "destination": "/game-tracking-template.html"
         },
         {
           "source": "**",

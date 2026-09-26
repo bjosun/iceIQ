@@ -5,6 +5,7 @@ export const translations = {
     // ("termsLink", "privacyLink", "supportContact") rakt av.
     termsLink: "Terms of Service",
     privacyLink: "Privacy Policy",
+    footerGuides: "Guides",
     supportContact: "Contact support",
     footerDeveloper: "Developed and operated by",
 
@@ -497,6 +498,7 @@ export const translations = {
     // Footer & juridik — se kommentaren i en-blocket.
     termsLink: "Användarvillkor",
     privacyLink: "Integritetspolicy",
+    footerGuides: "Guider",
     supportContact: "Kontakta supporten",
     footerDeveloper: "Utvecklas och drivs av",
 

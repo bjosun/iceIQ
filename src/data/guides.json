@@ -1,0 +1,27 @@
+[
+  {
+    "path": "/hockey-tracking-app",
+    "en": "Hockey tracking app with an AI coach",
+    "sv": "Hockeyapp med AI-coach"
+  },
+  {
+    "path": "/youth-hockey-stats",
+    "en": "Tracking youth hockey stats",
+    "sv": "Statistik för ungdomshockey"
+  },
+  {
+    "path": "/hockey-scouting-template",
+    "en": "Hockey scouting & player evaluation",
+    "sv": "Scouting och spelarutvärdering"
+  },
+  {
+    "path": "/measure-corsi-youth-hockey",
+    "en": "Measuring shot attempts (Corsi) in youth hockey",
+    "sv": "Mäta skottförsök (Corsi) i ungdomshockey"
+  },
+  {
+    "path": "/game-tracking-template",
+    "en": "Free printable game tracking template",
+    "sv": "Gratis utskrivbar matchmall"
+  }
+]
