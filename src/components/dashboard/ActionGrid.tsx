@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Minus, Sun } from 'lucide-react';
+import NoSleep from 'nosleep.js';
+import toast from 'react-hot-toast';
 import { useTemplates } from '../../contexts/TemplateContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Card from '../ui/Card';
@@ -17,14 +19,27 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
   const { t, language } = useLanguage();
 
   // "Håll skärmen tänd" — avstängd som standard (samma mönster som
-  // receptsajter). Coachen slår på den själv innan matchen, precis som
-  // BreathingExercise gör automatiskt under en andningsövning.
+  // receptsajter). Webbläsare utan Wake Lock-API (äldre iOS, hemskärms-appar,
+  // in-app-webbläsare) får NoSleep.js-fallbacken: en osynlig video som spelas
+  // upp. Den måste startas direkt i klick-handlern, därför skapas instansen
+  // vid mount och enable() anropas i handleToggle.
+  const nativeWakeLock = typeof navigator !== 'undefined' && 'wakeLock' in navigator;
   const [keepAwake, setKeepAwake] = useState(false);
   const wakeLockRef = useRef<any>(null);
+  const noSleepRef = useRef<NoSleep | null>(null);
 
   useEffect(() => {
+    if (nativeWakeLock) return;
+    noSleepRef.current = new NoSleep();
+    return () => {
+      noSleepRef.current?.disable();
+      noSleepRef.current = null;
+    };
+  }, [nativeWakeLock]);
+
+  useEffect(() => {
+    if (!nativeWakeLock || !keepAwake) return;
     const nav = navigator as any;
-    if (!keepAwake || !nav.wakeLock?.request) return;
     let released = false;
 
     const requestLock = () => {
@@ -54,7 +69,24 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
       wakeLockRef.current?.release?.();
       wakeLockRef.current = null;
     };
-  }, [keepAwake]);
+  }, [keepAwake, nativeWakeLock]);
+
+  const handleToggle = async () => {
+    if (keepAwake) {
+      noSleepRef.current?.disable();
+      setKeepAwake(false);
+      return;
+    }
+    if (!nativeWakeLock) {
+      try {
+        await noSleepRef.current?.enable();
+      } catch {
+        toast.error(t('keepScreenOnFailed'));
+        return;
+      }
+    }
+    setKeepAwake(true);
+  };
 
   if (!currentTemplate) {
     return (
@@ -143,37 +175,33 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
     </div>
   );
 
-  const wakeLockSupported = typeof navigator !== 'undefined' && 'wakeLock' in navigator;
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {wakeLockSupported && (
-        <div className="lg:col-span-2 flex items-center justify-between gap-3 px-4 py-3 bg-gray-800/60 border border-gray-700 rounded-xl">
-          <div className="flex items-center gap-2 min-w-0">
-            <Sun size={18} className={keepAwake ? 'text-yellow-400' : 'text-gray-500'} />
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-white">{t('keepScreenOn')}</p>
-              <p className="text-xs text-gray-400 truncate">{t('keepScreenOnHint')}</p>
-            </div>
+      <div className="lg:col-span-2 flex items-center justify-between gap-3 px-4 py-3 bg-gray-800/60 border border-gray-700 rounded-xl">
+        <div className="flex items-center gap-2 min-w-0">
+          <Sun size={18} className={keepAwake ? 'text-yellow-400' : 'text-gray-500'} />
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white">{t('keepScreenOn')}</p>
+            <p className="text-xs text-gray-400 truncate">{t('keepScreenOnHint')}</p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={keepAwake}
-            aria-label={t('keepScreenOn')}
-            onClick={() => setKeepAwake((prev) => !prev)}
-            className={`relative shrink-0 w-12 h-7 rounded-full transition-colors touch-manipulation ${
-              keepAwake ? 'bg-cyan-500' : 'bg-gray-600'
-            }`}
-          >
-            <span
-              className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
-                keepAwake ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            />
-          </button>
         </div>
-      )}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={keepAwake}
+          aria-label={t('keepScreenOn')}
+          onClick={handleToggle}
+          className={`relative shrink-0 w-12 h-7 rounded-full transition-colors touch-manipulation ${
+            keepAwake ? 'bg-cyan-500' : 'bg-gray-600'
+          }`}
+        >
+          <span
+            className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+              keepAwake ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </div>
 
       {/* Positive Actions */}
       <Card>
