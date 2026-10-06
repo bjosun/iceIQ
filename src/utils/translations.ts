@@ -170,6 +170,17 @@ export const translations = {
       unlimited: "Unlimited"
     },
 
+    // Swish (Sverige) — genväg i Money Mode, se utils/swish.ts
+    swish: {
+      pay: "Pay with Swish",
+      change: "Change number",
+      remove: "Remove number",
+      numberLabel: "{name}'s mobile number",
+      numberHint: "Saved only on this device and never shared.",
+      saveAndOpen: "Save and open Swish",
+      invalid: "Enter a Swedish mobile number, e.g. 070 123 45 67."
+    },
+
     // Money Mode Section
     moneyMode: {
       badge: "Unique to Ice IQ",
@@ -661,6 +672,17 @@ export const translations = {
       support: "Prioriterad support",
       price: "Pris",
       unlimited: "Obegränsat"
+    },
+
+    // Swish (Sverige) — genväg i Money Mode, se utils/swish.ts
+    swish: {
+      pay: "Betala med Swish",
+      change: "Byt nummer",
+      remove: "Ta bort numret",
+      numberLabel: "{name}s mobilnummer",
+      numberHint: "Sparas bara på den här enheten och delas aldrig.",
+      saveAndOpen: "Spara och öppna Swish",
+      invalid: "Ange ett svenskt mobilnummer, t.ex. 070 123 45 67."
     },
 
     // Money Mode Section

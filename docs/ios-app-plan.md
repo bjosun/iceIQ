@@ -80,6 +80,8 @@ Alternativ: lansera v1 gratis (gratismatcher) och lägg till IAP i v2. Kortar v�
 
 ### 1. Swish i Money Mode (Sverige)
 
+**Byggt 2026-10-06** (`src/utils/swish.ts`, `SwishButton.tsx`). Knappen "Betala med Swish" visas bredvid "Betald" när det finns ett överfört saldo, bara på svenska och bara på mobil. Spelarens nummer sparas **enbart i localStorage på förälderns enhet** (aldrig Firestore, spelarvy eller länkar). Ej testat på riktig telefon: djuplänken `swish://payment?data=...` måste provas med Swish installerat. Ingen motsvarighet för andra marknader.
+
 Idé: Money Mode öppnar Swish förifyllt med bandets/lagets nummer, så att föräldern kan betala.
 
 Bedömning: **genomförbart, men håll det enkelt.**

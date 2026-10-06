@@ -664,6 +664,7 @@ export default function Dashboard() {
             onReset={() => window.confirm(t('resetAllWarning')) && setActionCounts({})}
             isMoneyMode={isMoneyMode} 
             onSettleBalance={handleSettleBalance}
+            playerName={selectedPlayerName}
             totalPoints={totals.actionsPoints}
             totalBonus={totals.bonusPoints}
             totalFinal={totals.total}

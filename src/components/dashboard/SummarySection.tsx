@@ -16,6 +16,7 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { moneyModeUnit } from '../../utils/pricing';
+import SwishButton from './SwishButton';
 
 interface SummarySectionProps {
   actionCounts: Record<string, number>;
@@ -31,6 +32,7 @@ interface SummarySectionProps {
   onSettleBalance?: () => void;
   isSaving?: boolean;
   carriedOverBonus?: number;
+  playerName?: string;
 }
 
 export default function SummarySection({
@@ -49,7 +51,8 @@ export default function SummarySection({
   onSettleBalance = () => {},
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   carriedOverBonus = 0,
-  isSaving = false
+  isSaving = false,
+  playerName = ''
 }: SummarySectionProps) {
   const { t, language } = useLanguage();
 
@@ -155,6 +158,7 @@ export default function SummarySection({
                 <Check size={10} /> {isMoneyMode ? (t('markAsSettled') || 'Betald') : (t('resetScore') || 'Reset')}
               </button>
             )}
+            {isMoneyMode && <SwishButton playerName={playerName} amount={carriedOverBalance} />}
           </div>
         </Card>
 
