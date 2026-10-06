@@ -24,6 +24,7 @@ export const translations = {
     // Auth
     loginToContinue: "Log in to Continue",
     continueWithGoogle: "Continue with Google",
+    continueWithApple: "Continue with Apple",
     or: "or",
     email: "Email",
     password: "Password",
@@ -517,6 +518,7 @@ export const translations = {
     // Auth
     loginToContinue: "Logga in för att fortsätta",
     continueWithGoogle: "Fortsätt med Google",
+    continueWithApple: "Fortsätt med Apple",
     or: "eller",
     email: "E-post",
     password: "Lösenord",

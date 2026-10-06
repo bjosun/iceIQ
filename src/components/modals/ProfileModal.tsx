@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { isNativeApp } from '../../utils/platform';
 import { usePlayerData } from '../../hooks/usePlayerData'; // För att rensa data
 import { createStripePortalSession } from '../../services/firestore'; // Från din städade firebase.ts
 import Modal from '../ui/Modal';
@@ -131,7 +132,9 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
           </h3>
           <p className="text-sm text-gray-400 mb-4">
             {isPremium 
-              ? (language === 'en' 
+              ? (isNativeApp
+                  ? (language === 'en' ? "You are a Premium member." : "Du är Premium-medlem.")
+                  : language === 'en' 
                   ? "You are a Premium member. Manage your subscription or cancel anytime below." 
                   : "Du är Premium-medlem. Du kan hantera eller avsluta din prenumeration här.")
               : (language === 'en'
@@ -139,7 +142,7 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
                   : "Du använder gratisversionen.")}
           </p>
           
-          {isPremium && (
+          {isPremium && !isNativeApp && (
             <Button variant="secondary" onClick={handleManageSubscription} loading={loading} fullWidth>
               {language === 'en' ? "Manage / Cancel Subscription" : "Hantera / Avsluta Prenumeration"}
             </Button>

@@ -3,6 +3,7 @@ import { Check, Crown, Sparkles, Shield, Cloud, Users, BarChart3, BrainCircuit }
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { isNativeApp } from '../../utils/platform';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -91,7 +92,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
 
   return (
     <Modal
-      isOpen={isOpen}
+      isOpen={isOpen && !isNativeApp}
       onClose={onClose}
       title={t('selectYourPlan') || "Select Your Plan"}
       size="lg"

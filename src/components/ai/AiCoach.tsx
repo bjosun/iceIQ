@@ -13,6 +13,7 @@ import BreathingExercise from '../breathing/BreathingExercise';
 import { renderInsightCard } from '../../utils/insightCard';
 import { ReportFormat } from '../../utils/shareCanvas';
 import { creditPackPrice, CREDITS_PER_PACK } from '../../utils/pricing';
+import { isNativeApp } from '../../utils/platform';
 
 interface AiCoachProps {
   playerStats: any;
@@ -299,15 +300,18 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
           <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">
             {t('ai.upsellDesc')}
           </p>
+          {!isNativeApp && (
           <button
             onClick={onUpgrade}
             className="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-cyan-500/20 transition-all transform hover:scale-105"
           >
             {t('ai.unlock')}
           </button>
+          )}
           {/* Krediterna finns till just för den som inte vill binda upp sig
               i en prenumeration — utan denna är "lås upp" enda vägen ut
               härifrån, vilket motverkar hela poängen med engångsköp. */}
+          {!isNativeApp && (
           <button
             onClick={handleBuyCredits}
             disabled={buyingCredits}
@@ -316,6 +320,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             <ShoppingCart size={14} />
             {buyingCredits ? t('ai.buyingCredits') : t('ai.buyCreditsInstead', creditPriceParams)}
           </button>
+          )}
         </div>
       </div>
     );
@@ -358,9 +363,9 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             <History size={14} />
           </button>
           <button
-            onClick={handleBuyCredits}
-            disabled={buyingCredits}
-            title={t('ai.buyCredits', creditPriceParams)}
+            onClick={isNativeApp ? undefined : handleBuyCredits}
+            disabled={buyingCredits || isNativeApp}
+            title={isNativeApp ? undefined : t('ai.buyCredits', creditPriceParams)}
             className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-colors disabled:opacity-60 ${
               lowOnCredits
                 ? 'bg-red-500/10 border-red-500/40 animate-pulse hover:bg-red-500/20'
@@ -525,7 +530,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
         {error && (
           <div className="bg-red-500/10 text-red-200 p-4 rounded-lg text-sm text-center border border-red-500/20">
             <p className="mb-0">{error}</p>
-            {showUpgradeCta && (
+            {showUpgradeCta && !isNativeApp && (
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 <button
                   onClick={handleBuyCredits}

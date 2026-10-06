@@ -3,6 +3,7 @@ import { Mail, Lock, UserPlus, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Button from '../ui/Button';
+import AppleSignInButton from './AppleSignInButton';
 import Input from '../ui/Input';
 
 interface SignupFormProps {
@@ -157,6 +158,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             </svg>
             {t('continueWithGoogle')}
           </Button>
+          <AppleSignInButton onError={setError} />
         </div>
       </div>
       {/* --- Slut på Google-sektionen --- */}

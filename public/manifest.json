@@ -1,1 +1,15 @@
-{}
+{
+  "name": "Ice IQ",
+  "short_name": "Ice IQ",
+  "description": "Log a hockey game in two minutes and get concrete advice from the AI hockey coach.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111827",
+  "theme_color": "#00ADEF",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

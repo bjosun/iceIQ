@@ -4,11 +4,15 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithCredential,
   GoogleAuthProvider,
+  OAuthProvider,
   signOut,
   onAuthStateChanged,
   deleteUser
 } from 'firebase/auth'
+import { Capacitor } from '@capacitor/core'
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
 import { auth } from '../services/firebase'
 import { consumeUtmParams } from '../utils/helpers'
 
@@ -18,6 +22,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string) => Promise<void>
   loginWithGoogle: () => Promise<void>
+  loginWithApple: () => Promise<void>
   logout: () => Promise<void>
   deleteAccount: (cleanupCallback?: () => Promise<void>) => Promise<void>
 }
@@ -110,11 +115,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginWithGoogle = async () => {
     try {
-      const provider = new GoogleAuthProvider()
-      // 1. Logga in med Google
-      const result = await signInWithPopup(auth, provider)
-      
-      // 2. Spara användaren i databasen (ifall det är första gången)
+      let result
+      if (Capacitor.isNativePlatform()) {
+        // Popup fungerar inte i iOS-skalet. Det native pluginet loggar in mot
+        // Google och ger tillbaka en token som vi byter mot en Firebase-session
+        // (skapas i JS-SDK:t, se skipNativeAuth i capacitor.config.ts).
+        const native = await FirebaseAuthentication.signInWithGoogle()
+        const credential = GoogleAuthProvider.credential(
+          native.credential?.idToken,
+          native.credential?.accessToken
+        )
+        result = await signInWithCredential(auth, credential)
+      } else {
+        result = await signInWithPopup(auth, new GoogleAuthProvider())
+      }
+
+      // Spara användaren i databasen (ifall det är första gången)
       await saveNewUserToDatabase(result.user);
 
     } catch (error) {
@@ -123,9 +139,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Apple kräver "Sign in with Apple" i appar som erbjuder Google-inloggning.
+  // Bara native: på webben är den inte konfigurerad i Firebase.
+  const loginWithApple = async () => {
+    try {
+      const native = await FirebaseAuthentication.signInWithApple()
+      const credential = new OAuthProvider('apple.com').credential({
+        idToken: native.credential?.idToken,
+        rawNonce: native.credential?.nonce
+      })
+      const result = await signInWithCredential(auth, credential)
+
+      // Apple ger namnet bara första gången, och bara till appen.
+      if (!result.user.displayName && native.user?.displayName) {
+        const { updateProfile } = await import('firebase/auth')
+        await updateProfile(result.user, { displayName: native.user.displayName })
+      }
+      await saveNewUserToDatabase(result.user);
+
+    } catch (error) {
+      console.error('Apple login error:', error)
+      throw error
+    }
+  }
+
   const logout = async () => {
     try {
       await signOut(auth)
+      if (Capacitor.isNativePlatform()) {
+        await FirebaseAuthentication.signOut().catch(() => {})
+      }
     } catch (error) {
       console.error('Logout error:', error)
       throw error
@@ -160,6 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     signup,
     loginWithGoogle,
+    loginWithApple,
     logout,
     deleteAccount
   }

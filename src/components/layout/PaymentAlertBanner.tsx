@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { isNativeApp } from '../../utils/platform';
 
 // Stripe sätter subscriptionStatus till "past_due" via webhooken när en
 // förnyelse misslyckas (nästan alltid ett kort som gått ut). Utan den här
@@ -15,7 +16,7 @@ export default function PaymentAlertBanner() {
   const { t } = useLanguage();
   const [opening, setOpening] = useState(false);
 
-  if (subscription.status !== 'past_due') return null;
+  if (subscription.status !== 'past_due' || isNativeApp) return null;
 
   // manageSubscription() gör ett anrop till createStripePortalSession innan
   // redirecten, så det dröjer en stund — utan loading-läge hinner man klicka

@@ -3,6 +3,7 @@ import { User, LogOut, Crown, Settings } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { isNativeApp } from '../../utils/platform';
 
 interface UserDropdownProps {
   isOpen: boolean;
@@ -53,7 +54,7 @@ export default function UserDropdown({
           {/* Status Badge */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400">{t('currentPlan') || 'Plan'}:</span>
-            {subscription.plan === 'premium' ? (
+            {isNativeApp ? null : subscription.plan === 'premium' ? (
               <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded text-[10px] font-bold tracking-wider">
                 PREMIUM
               </span>

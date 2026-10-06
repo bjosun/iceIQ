@@ -13,6 +13,7 @@ import {
   priceFor,
   type Interval,
 } from '../utils/pricing';
+import { isNativeApp } from '../utils/platform';
 import {
   BarChart3,
   Cloud,
@@ -180,12 +181,14 @@ export default function Home() {
               {user ? t('home.goToDashboard') : t('home.tryAiCoach')}
               <ArrowRight className="ml-2" size={20} />
             </Link>
+            {!isNativeApp && (
             <a
               href="#pricing"
               className="inline-flex items-center justify-center px-8 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-sm text-white rounded-xl font-semibold text-lg transition-all border border-white/10"
             >
               {t('common.viewPlans')}
             </a>
+            )}
           </div>
 
           {/* Dashboard Preview */}
@@ -329,7 +332,7 @@ export default function Home() {
       </section>
 
       {/* --- PRICING SECTION --- */}
-      <section id="pricing" className="py-24 bg-gray-800/30 relative overflow-hidden">
+      <section id="pricing" className={`py-24 bg-gray-800/30 relative overflow-hidden ${isNativeApp ? 'hidden' : ''}`}>
         <RinkLines className="absolute inset-0 w-full h-full opacity-[0.13]" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-10">
