@@ -123,3 +123,22 @@ Hypoteser att mäta, inte fakta:
 - Röstcoachen är den dyra, tydligt nya funktionen och bär Elite.
 
 Apple: samma listpris går bra, 15 % provision under 1 M USD/år. Apple har fasta prispunkter per land (t.ex. $9.99, inte $9.90). Kreditpaketet blir en förbrukningsvara (consumable) och planerna autoförnyande prenumerationer.
+
+## In-App Purchase: serversidan (byggd 2026-10-06, ej deployad)
+
+`functions/revenuecat.js` + `revenueCatWebhook` i `functions/index.js`. RevenueCat skickar köpshändelser, funktionen skriver samma fält som Stripe-webhooken (`subscriptionPlan/Status/Interval/End`, `aiCredits`, `purchasedCredits`). Nytt fält `subscriptionSource` (`stripe` | `apple`, skyddat i `firestore.rules`) hindrar att en kassa nollar en prenumeration som den andra äger. Test: `node --test functions/revenuecat.test.js`.
+
+**Produkt-ID:n** (måste skapas exakt så i App Store Connect och kopplas i RevenueCat):
+
+| ID | Typ |
+|---|---|
+| `iceiq_premium_monthly`, `iceiq_premium_yearly` | Auto-förnyande prenumeration |
+| `iceiq_elite_monthly`, `iceiq_elite_yearly` | Auto-förnyande prenumeration |
+| `iceiq_credits_15` | Förbrukningsvara (consumable) |
+
+**Kvar att göra (kräver Developer-kontot):**
+1. App Store Connect: skapa produkterna, en subscription group, och skatte/bankuppgifter (Business).
+2. RevenueCat: skapa projekt, koppla App Store, importera produkterna, skapa entitlements.
+3. `firebase functions:secrets:set REVENUECAT_WEBHOOK_AUTH`, sätt samma värde som Bearer-token i RevenueCats webhook-inställning, peka webhooken mot funktionens URL, deploya `revenueCatWebhook`.
+4. Klienten: `@revenuecat/purchases-capacitor`, `Purchases.logIn(firebaseUid)` vid inloggning (annars hamnar köp på anonyma ID och ignoreras), köpskärm i appen bakom `isNativeApp`.
+5. Krediter och Apple: Apple-ID byts mot krediter via `NON_RENEWING_PURCHASE` (hanteras redan).
