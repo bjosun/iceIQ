@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>478064861646-20f604fb4vaqon2idleki3g5gs3l9ijf.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.478064861646-20f604fb4vaqon2idleki3g5gs3l9ijf</string>
+	<key>API_KEY</key>
+	<string>AIzaSyA230fCIRMB8PMjF5NhQ7NHL8vEOuMzCyM</string>
+	<key>GCM_SENDER_ID</key>
+	<string>478064861646</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.squareverse.iceiq</string>
+	<key>PROJECT_ID</key>
+	<string>squareverse-36179</string>
+	<key>STORAGE_BUCKET</key>
+	<string>squareverse-36179.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:478064861646:ios:00d0d9be3dd5879b668b9f</string>
+</dict>
+</plist>
