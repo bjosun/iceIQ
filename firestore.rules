@@ -19,7 +19,7 @@ service cloud.firestore {
       function protectedFields() {
         return ['subscriptionPlan', 'subscriptionStatus', 'subscriptionInterval',
                 'subscriptionEnd', 'aiCredits', 'purchasedCredits', 'role',
-                'hasReceivedWelcomeCredits', 'stripeCustomerId'];
+                'hasReceivedWelcomeCredits', 'stripeCustomerId', 'subscriptionSource'];
       }
 
       allow get: if isOwner();

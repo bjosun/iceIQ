@@ -19,6 +19,9 @@ const digestTestToken = defineSecret('DIGEST_TEST_TOKEN');
 // Skyddar acquisitionReport (permanent rapportverktyg) — egen hemlighet så
 // den inte upphör att fungera om digestTestToken tas bort senare.
 const reportsToken = defineSecret('REPORTS_TOKEN');
+// Delad hemlighet som RevenueCat skickar i Authorization-headern till
+// revenueCatWebhook (Bearer <värdet>). Se functions/revenuecat.js.
+const revenueCatWebhookAuth = defineSecret('REVENUECAT_WEBHOOK_AUTH');
 
 // --- KONFIGURATION ---
 // iceiq.app är den faktiska produktionsdomänen (Firebase Hosting-målet
@@ -1398,6 +1401,7 @@ exports.stripeWebhook = functions
             subscriptionId: subscriptionId,
             subscriptionPlan: planType,
             subscriptionInterval: interval,
+            subscriptionSource: "stripe",
             subscriptionEnd: new Date(subscription.current_period_end * 1000).toISOString(),
             aiCredits: creditAmount
           }, { merge: true });
@@ -1463,7 +1467,9 @@ exports.stripeWebhook = functions
       if (event.type === "customer.subscription.deleted") {
         const customerId = data.customer;
         const snapshot = await usersRef.where("stripeCustomerId", "==", customerId).get();
-        if (!snapshot.empty) {
+        // En prenumeration som numera betalas via Apple (subscriptionSource) får
+        // inte nollas av att en gammal Stripe-prenumeration avslutas.
+        if (!snapshot.empty && snapshot.docs[0].data().subscriptionSource !== "apple") {
           // Planen skrivs över till "free" i samma anrop — utan att spara
           // den gamla planen här kan ops-digesten aldrig säga VAD som sades
           // upp, bara ATT något gjorde det.
@@ -1998,3 +2004,15 @@ exports.runOpsDigestNow = functions
     }
   });
 
+// ==========================================
+//  APPLE IN-APP PURCHASE (REVENUECAT)
+// ==========================================
+exports.revenueCatWebhook = require("./revenuecat").createRevenueCatWebhook({
+  functions,
+  admin,
+  db,
+  secret: revenueCatWebhookAuth,
+  getUsersCollection,
+  creditsForPlan,
+  creditsPerPack: CREDITS_PER_PACK,
+});
