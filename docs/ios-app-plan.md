@@ -44,6 +44,8 @@ Firebase är uppgraderat 10 → 12 (kravet från inloggningspluginet). Bygget oc
 
 ### Konfiguration som krävs för inloggningen (ägaren)
 
+Testat i simulatorn 2026-10-06: appen startar och inloggningssidan visar Google- och Apple-knapparna. Utan `GoogleService-Info.plist` ger Google-knappen felet "Google sign-in provider is not enabled" (missvisande: pluginet hoppar över all setup när filen saknas). Det försvinner när steg 2 nedan är gjort.
+
 1. **Firebase Console → Authentication → Sign-in method:** aktivera Apple (och bekräfta Google).
 2. **Firebase Console → Project settings → lägg till iOS-app** med bundle-ID `com.squareverse.iceiq`. Ladda ner `GoogleService-Info.plist` och lägg den i `ios/App/App/` (Xcode: dra in, "Copy items if needed", target App).
 3. **Xcode → App → Signing & Capabilities:** lägg till "Sign in with Apple".

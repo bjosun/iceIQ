@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, initializeAuth, indexedDBLocalPersistence, GoogleAuthProvider } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDqNv_T3YlD3k68-Xzsj7dE_R0daChru_I",
@@ -15,5 +16,10 @@ const firebaseConfig = {
 // inklusive den oautentiserade startsidan) in hela Firestore-SDK:t innan
 // appen ens hunnit mounta.
 export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+// getAuth() hänger sig i iOS-skalet (WKWebView) eftersom den väntar på
+// popup/redirect-stöd som inte finns där. Inloggningen sker native (se
+// AuthContext), så i appen räcker det med persistens i IndexedDB.
+export const auth = Capacitor.isNativePlatform()
+  ? initializeAuth(app, { persistence: indexedDBLocalPersistence })
+  : getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
