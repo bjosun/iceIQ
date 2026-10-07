@@ -699,6 +699,7 @@ exports.askCoach = functions
       - Bara sådant som är belagt i siffrorna du fått. Hitta ALDRIG på ett tal, och avrunda inte uppåt till något snyggare.
       - Finns inget genuint positivt att lyfta den här gången: returnera en tom sträng. Ett påhittat beröm hamnar i en laggrupp och blir genomskådat.
       - Skriv den som ett konstaterande, inte som en hälsning: "Fem vunna sargdueller — flest hittills i säsongen".
+      - STIL: lugn och torr, i andan av Miyamoto Musashis "De fem ringarnas bok" — en iakttagelse som får en kort lärdom, inte pepp. Först det som hänt (med siffran), sedan om det går en halv mening om vad det visar. Inga utropstecken, inga klichéer ("fantastiskt", "bra jobbat"), ingen jämförelse med andra spelare, ingen krigsretorik. Exempel: "Tre blockerade skott — den som står kvar i banan vinner tillbaka pucken". Finns ingen sann lärdom som hänger ihop med siffran: skriv bara iakttagelsen. Lärdomen får aldrig påstå något som inte stöds av datan.
 
       FOKUSOMRÅDEN (fältet "focusTags" i svaret):
       - Max 2 taggar, och bara om ett TYDLIGT mönster i datan pekar dit — en enda match räcker inte om historiken/säsongsöversikten säger något annat. Det vanliga fallet är en tom lista, inte undantaget.

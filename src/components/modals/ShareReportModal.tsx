@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import ShareImageModal from './ShareImageModal';
+import MatchSummaryReveal from './MatchSummaryReveal';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { renderMatchReport, MatchReportData } from '../../utils/matchReport';
 import { MatchHighlight } from '../../utils/matchHighlight';
@@ -16,6 +18,11 @@ interface ShareReportModalProps {
 // Själva delnings-UI:t ligger i ShareImageModal och delas med coach-insikten.
 export default function ShareReportModal({ isOpen, onClose, data }: ShareReportModalProps) {
   const { t } = useLanguage();
+  // Först en kort uppspelning av resultatet, sedan själva delningsrutan.
+  const [stage, setStage] = useState<'reveal' | 'share'>('reveal');
+  useEffect(() => {
+    if (!isOpen) setStage('reveal');
+  }, [isOpen]);
 
   if (!data) return null;
 
@@ -34,8 +41,19 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
     });
 
   return (
+    <>
+    <MatchSummaryReveal
+      isOpen={isOpen && stage === 'reveal'}
+      onContinue={() => setStage('share')}
+      onClose={onClose}
+      playerName={data.playerName}
+      points={data.points}
+      actions={data.actions}
+      highlight={data.highlight ? t(data.highlight.key, data.highlight.params) : undefined}
+      stats={data.stats}
+    />
     <ShareImageModal
-      isOpen={isOpen}
+      isOpen={isOpen && stage === 'share'}
       onClose={onClose}
       title={t('share.title')}
       desc={t('share.desc')}
@@ -43,5 +61,6 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
       renderKey={`${data.playerName}|${data.date}|${data.points}|${data.highlight?.key ?? ''}|${data.stats?.games ?? 0}`}
       render={renderReport}
     />
+    </>
   );
 }

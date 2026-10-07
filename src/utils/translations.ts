@@ -170,6 +170,21 @@ export const translations = {
       unlimited: "Unlimited"
     },
 
+    // Inmatningseffekter och matchsammanfattning
+    effects: {
+      label: "Effects when logging",
+      hint: "Haptics and small animations when you tap."
+    },
+    summary: {
+      title: "The game in brief",
+      points: "Points",
+      highlights: "What stood out",
+      vsAverage: "{delta} vs your own average",
+      milestone: "{count} games logged",
+      continue: "Share the game",
+      skip: "Skip"
+    },
+
     // Swish (Sverige) — genväg i Money Mode, se utils/swish.ts
     swish: {
       pay: "Pay with Swish",
@@ -672,6 +687,21 @@ export const translations = {
       support: "Prioriterad support",
       price: "Pris",
       unlimited: "Obegränsat"
+    },
+
+    // Inmatningseffekter och matchsammanfattning
+    effects: {
+      label: "Effekter vid inmatning",
+      hint: "Haptik och små animationer när du trycker."
+    },
+    summary: {
+      title: "Matchen i korthet",
+      points: "Poäng",
+      highlights: "Det som stack ut",
+      vsAverage: "{delta} mot ditt eget snitt",
+      milestone: "{count} matcher loggade",
+      continue: "Dela matchen",
+      skip: "Hoppa över"
     },
 
     // Swish (Sverige) — genväg i Money Mode, se utils/swish.ts

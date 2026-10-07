@@ -35,6 +35,11 @@ export default {
       animation: {
         'shimmer': 'shimmer 2s infinite linear',
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'float-up': 'float-up 0.8s ease-out forwards',
+        'count-pop': 'count-pop 0.28s ease-out',
+        'confetti': 'confetti 0.9s ease-out forwards',
+        'goal-flash': 'goal-flash 0.6s ease-out',
+        'slide-in': 'slide-in 0.45s ease-out both',
       },
       keyframes: {
         shimmer: {
@@ -44,6 +49,28 @@ export default {
         'pulse-glow': {
           '0%, 100%': { opacity: 1 },
           '50%': { opacity: 0.7 },
+        },
+        'float-up': {
+          '0%': { opacity: 0, transform: 'translateY(0) scale(0.8)' },
+          '20%': { opacity: 1, transform: 'translateY(-10px) scale(1.1)' },
+          '100%': { opacity: 0, transform: 'translateY(-44px) scale(1)' },
+        },
+        'count-pop': {
+          '0%': { transform: 'scale(1)' },
+          '45%': { transform: 'scale(1.35)' },
+          '100%': { transform: 'scale(1)' },
+        },
+        confetti: {
+          '0%': { opacity: 1, transform: 'translate(0, 0) rotate(0deg)' },
+          '100%': { opacity: 0, transform: 'translate(var(--dx), var(--dy)) rotate(var(--rot))' },
+        },
+        'goal-flash': {
+          '0%': { boxShadow: '0 0 0 0 rgba(74, 222, 128, 0.7)' },
+          '100%': { boxShadow: '0 0 0 18px rgba(74, 222, 128, 0)' },
+        },
+        'slide-in': {
+          '0%': { opacity: 0, transform: 'translateY(14px)' },
+          '100%': { opacity: 1, transform: 'translateY(0)' },
         }
       }
     },
