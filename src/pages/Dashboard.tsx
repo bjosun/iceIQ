@@ -126,7 +126,7 @@ export default function Dashboard() {
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [reportData, setReportData] = useState<{
     playerName: string; team: string; date: string; points: number;
-    actions: { label: string; count: number }[];
+    actions: { label: string; count: number; type?: 'positive' | 'negative' }[];
     highlight?: MatchHighlight | null;
     stats?: MatchReportStats;
     badges?: BadgeId[];
@@ -465,7 +465,7 @@ export default function Dashboard() {
         team: teamName,
         date: gameDate,
         points: totals.actionsPoints,
-        actions: reportActions.map(({ label, count }) => ({ label, count })),
+        actions: reportActions.map(({ label, count, type }) => ({ label, count, type })),
         highlight,
         stats: seasonStats,
         badges: newBadges(seasonGames.map(g => g.points || 0), totals.actionsPoints),

@@ -97,7 +97,7 @@ export default function SeasonOverview({ playerName, games, summary }: SeasonOve
             className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
               trendingUp
                 ? 'bg-green-500/10 text-green-400 border border-green-500/30'
-                : 'bg-red-500/10 text-red-400 border border-red-500/30'
+                : 'bg-amber-500/10 text-amber-300 border border-amber-500/30'
             }`}
           >
             {trendingUp ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
@@ -131,7 +131,7 @@ export default function SeasonOverview({ playerName, games, summary }: SeasonOve
               <p className="text-xs text-gray-400 mt-1">{t('bestGame')}</p>
             </div>
             <div className="bg-gray-900/60 rounded-xl p-3 text-center">
-              <p className={`text-2xl font-bold ${trendingUp ? 'text-green-400' : 'text-red-400'}`}>
+              <p className={`text-2xl font-bold ${trendingUp ? 'text-green-400' : 'text-amber-300'}`}>
                 {summary.last5Avg}
               </p>
               <p className="text-xs text-gray-400 mt-1">{t('seasonView.last5')}</p>

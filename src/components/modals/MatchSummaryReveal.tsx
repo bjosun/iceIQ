@@ -12,7 +12,7 @@ interface MatchSummaryRevealProps {
   onClose: () => void;
   playerName: string;
   points: number;
-  actions: { label: string; count: number }[];
+  actions: { label: string; count: number; type?: 'positive' | 'negative' }[];
   /** Färdigöversatt en-radare, eller undefined. */
   highlight?: string;
   stats?: { games: number; avgPoints: number; bestGame: number };
@@ -58,16 +58,26 @@ export default function MatchSummaryReveal({
     return () => window.clearTimeout(id);
   }, [isOpen]);
 
-  const top = [...actions].sort((a, b) => b.count - a.count).slice(0, 3);
+  // Det som gick bra och det som kan övas är två olika listor: misstag ska
+  // synas (utan dem blir man aldrig bättre), men aldrig stå som "det som
+  // stack ut".
+  const top = actions
+    .filter((a) => a.type !== 'negative')
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+  // Ett enstaka misstag är brus; två eller fler av samma sort är något att öva på.
+  const focus = actions
+    .filter((a) => a.type === 'negative' && a.count >= 2)
+    .sort((a, b) => b.count - a.count)[0];
 
   // Snittet FÖRE den här matchen; stats gäller säsongen till och med matchen.
   let delta: number | null = null;
   if (stats && stats.games > 1) {
     const prevAvg = (stats.avgPoints * stats.games - points) / (stats.games - 1);
     const d = Math.round(points - prevAvg);
-    // Bara framsteg visas. En match under snittet är ingen nyhet värd att
-    // peka ut — fokus ligger på det spelaren gjort bra, inte på avvikelser.
-    if (d > 0) delta = d;
+    // Visas åt båda håll, i lugn ton: en match under snittet är information
+    // att lära av, inte något att gömma.
+    if (d !== 0) delta = d;
   }
 
   return (
@@ -79,10 +89,12 @@ export default function MatchSummaryReveal({
 
         {delta !== null && (
           <p
-            className="inline-block px-3 py-1 rounded-full text-sm font-semibold mb-4 animate-slide-in motion-reduce:animate-none bg-green-500/15 text-green-300"
+            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mb-4 animate-slide-in motion-reduce:animate-none ${
+              delta > 0 ? 'bg-green-500/15 text-green-300' : 'bg-slate-600/30 text-slate-200'
+            }`}
             style={{ animationDelay: '0.9s' }}
           >
-            {t('summary.vsAverage', { delta: `+${delta}` })}
+            {t('summary.vsAverage', { delta: `${delta > 0 ? '+' : '−'}${Math.abs(delta)}` })}
           </p>
         )}
 
@@ -112,6 +124,19 @@ export default function MatchSummaryReveal({
           </div>
         )}
 
+        {focus && (
+          <div
+            className="mb-5 px-4 py-3 rounded-xl bg-slate-700/30 border border-slate-600/50 text-left animate-slide-in motion-reduce:animate-none"
+            style={{ animationDelay: '1.6s' }}
+          >
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 mb-1">{t('summary.focus')}</p>
+            <p className="text-sm text-white">
+              <span className="font-semibold">{focus.label}</span> <span className="text-slate-300">×{focus.count}</span>
+            </p>
+            <p className="text-xs text-slate-400 mt-1">{t('summary.focusNote')}</p>
+          </div>
+        )}
+
         {badges.length > 0 && (
           <div className="flex flex-wrap justify-center gap-2 mb-5">
             {badges.map((id, i) => {
@@ -120,7 +145,7 @@ export default function MatchSummaryReveal({
                 <div
                   key={id}
                   className="flex items-center gap-3 px-4 py-2 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-left animate-slide-in motion-reduce:animate-none"
-                  style={{ animationDelay: `${1.7 + i * 0.2}s` }}
+                  style={{ animationDelay: `${1.9 + i * 0.2}s` }}
                 >
                   <span className="w-9 h-9 rounded-full bg-yellow-500/25 text-yellow-300 flex items-center justify-center">
                     <Icon size={18} />

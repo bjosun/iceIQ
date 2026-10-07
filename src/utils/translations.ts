@@ -192,6 +192,8 @@ export const translations = {
       title: "The game in brief",
       points: "Points",
       highlights: "What stood out",
+      focus: "Worth working on",
+      focusNote: "A mistake you can see is one you can practise away. It does not say anything about you.",
       vsAverage: "{delta} vs your own average",
       continue: "Share the game",
       skip: "Skip"
@@ -723,6 +725,8 @@ export const translations = {
       title: "Matchen i korthet",
       points: "Poäng",
       highlights: "Det som stack ut",
+      focus: "Att jobba på",
+      focusNote: "Ett misstag man ser är ett man kan öva bort. Det säger inget om vem du är.",
       vsAverage: "{delta} mot ditt eget snitt",
       continue: "Dela matchen",
       skip: "Hoppa över"

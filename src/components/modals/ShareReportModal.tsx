@@ -10,7 +10,8 @@ import { BadgeId } from '../../utils/badges';
 interface ShareReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  data: (Omit<MatchReportData, 'labels' | 'highlight' | 'format'> & {
+  data: (Omit<MatchReportData, 'labels' | 'highlight' | 'format' | 'actions'> & {
+    actions: { label: string; count: number; type?: 'positive' | 'negative' }[];
     highlight?: MatchHighlight | null;
     badges?: BadgeId[];
   }) | null;
