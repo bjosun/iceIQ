@@ -5,12 +5,14 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { renderMatchReport, MatchReportData } from '../../utils/matchReport';
 import { MatchHighlight } from '../../utils/matchHighlight';
 import { ReportFormat } from '../../utils/shareCanvas';
+import { BadgeId } from '../../utils/badges';
 
 interface ShareReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   data: (Omit<MatchReportData, 'labels' | 'highlight' | 'format'> & {
     highlight?: MatchHighlight | null;
+    badges?: BadgeId[];
   }) | null;
 }
 
@@ -51,6 +53,7 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
       actions={data.actions}
       highlight={data.highlight ? t(data.highlight.key, data.highlight.params) : undefined}
       stats={data.stats}
+      badges={data.badges}
     />
     <ShareImageModal
       isOpen={isOpen && stage === 'share'}

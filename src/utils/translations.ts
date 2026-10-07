@@ -170,6 +170,19 @@ export const translations = {
       unlimited: "Unlimited"
     },
 
+    // Märken — vana och egen utveckling, se utils/badges.ts
+    badges: {
+      title: "Badges",
+      unlocked: "New badge",
+      firstGame: { name: "First game", desc: "Log your first game." },
+      games5: { name: "5 games", desc: "Log 5 games." },
+      games10: { name: "10 games", desc: "Log 10 games." },
+      games25: { name: "25 games", desc: "Log 25 games." },
+      games50: { name: "50 games", desc: "Log 50 games." },
+      personalBest: { name: "Personal best", desc: "A game worth more than any before it." },
+      threeAboveAverage: { name: "On a roll", desc: "Three games in a row above your own average." }
+    },
+
     // Inmatningseffekter och matchsammanfattning
     effects: {
       label: "Effects when logging",
@@ -180,7 +193,6 @@ export const translations = {
       points: "Points",
       highlights: "What stood out",
       vsAverage: "{delta} vs your own average",
-      milestone: "{count} games logged",
       continue: "Share the game",
       skip: "Skip"
     },
@@ -689,6 +701,19 @@ export const translations = {
       unlimited: "Obegränsat"
     },
 
+    // Märken — vana och egen utveckling, se utils/badges.ts
+    badges: {
+      title: "Märken",
+      unlocked: "Nytt märke",
+      firstGame: { name: "Första matchen", desc: "Logga din första match." },
+      games5: { name: "5 matcher", desc: "Logga 5 matcher." },
+      games10: { name: "10 matcher", desc: "Logga 10 matcher." },
+      games25: { name: "25 matcher", desc: "Logga 25 matcher." },
+      games50: { name: "50 matcher", desc: "Logga 50 matcher." },
+      personalBest: { name: "Personbästa", desc: "En match värd mer än alla tidigare." },
+      threeAboveAverage: { name: "På gång", desc: "Tre matcher i rad över ditt eget snitt." }
+    },
+
     // Inmatningseffekter och matchsammanfattning
     effects: {
       label: "Effekter vid inmatning",
@@ -699,7 +724,6 @@ export const translations = {
       points: "Poäng",
       highlights: "Det som stack ut",
       vsAverage: "{delta} mot ditt eget snitt",
-      milestone: "{count} matcher loggade",
       continue: "Dela matchen",
       skip: "Hoppa över"
     },

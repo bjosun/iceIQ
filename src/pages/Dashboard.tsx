@@ -7,6 +7,7 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAiCredits } from '../hooks/useAiCredits';
 import { getDemoPlayerName, getDemoHistory, DEMO_STATS } from '../utils/demoData';
 import { pickMatchHighlight, MatchHighlight } from '../utils/matchHighlight';
+import { newBadges, BadgeId } from '../utils/badges';
 import { MatchReportStats } from '../utils/matchReport';
 import { moneyModeUnit } from '../utils/pricing';
 import toast from 'react-hot-toast';
@@ -128,6 +129,7 @@ export default function Dashboard() {
     actions: { label: string; count: number }[];
     highlight?: MatchHighlight | null;
     stats?: MatchReportStats;
+    badges?: BadgeId[];
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -466,6 +468,7 @@ export default function Dashboard() {
         actions: reportActions.map(({ label, count }) => ({ label, count })),
         highlight,
         stats: seasonStats,
+        badges: newBadges(seasonGames.map(g => g.points || 0), totals.actionsPoints),
       });
 
       // Rensa formuläret (men behåll saldot som nu är uppdaterat)

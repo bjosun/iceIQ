@@ -11,6 +11,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import Card from '../ui/Card';
+import BadgeShelf from './BadgeShelf';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
@@ -138,6 +139,8 @@ export default function SeasonOverview({ playerName, games, summary }: SeasonOve
           </div>
         </>
       )}
+
+      {games.length >= 1 && <BadgeShelf games={games} />}
     </Card>
   );
 }

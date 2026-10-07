@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Trophy, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Modal from '../ui/Modal';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { prefersReducedMotion, tapFeedback } from '../../utils/feedback';
+import { BadgeId } from '../../utils/badges';
+import { BADGE_ICONS } from '../dashboard/BadgeShelf';
 
 interface MatchSummaryRevealProps {
   isOpen: boolean;
@@ -14,13 +16,13 @@ interface MatchSummaryRevealProps {
   /** Färdigöversatt en-radare, eller undefined. */
   highlight?: string;
   stats?: { games: number; avgPoints: number; bestGame: number };
+  /** Märken som just den här matchen låste upp. */
+  badges?: BadgeId[];
 }
 
 // Spelar upp resultatet i stället för att visa en tabell: poängen räknas upp,
 // höjdpunkterna glider in en i taget. Jämför bara med spelarens EGET snitt —
 // aldrig med andra spelare (poängen sätts av föräldrar och är subjektiva).
-const MILESTONES = new Set([1, 5, 10, 25, 50, 100]);
-
 function useCountUp(target: number, run: boolean, durationMs = 900): number {
   const [value, setValue] = useState(0);
   useEffect(() => {
@@ -44,7 +46,7 @@ function useCountUp(target: number, run: boolean, durationMs = 900): number {
 }
 
 export default function MatchSummaryReveal({
-  isOpen, onContinue, onClose, playerName, points, actions, highlight, stats,
+  isOpen, onContinue, onClose, playerName, points, actions, highlight, stats, badges = [],
 }: MatchSummaryRevealProps) {
   const { t } = useLanguage();
   const shown = useCountUp(points, isOpen);
@@ -63,9 +65,10 @@ export default function MatchSummaryReveal({
   if (stats && stats.games > 1) {
     const prevAvg = (stats.avgPoints * stats.games - points) / (stats.games - 1);
     const d = Math.round(points - prevAvg);
-    if (d !== 0) delta = d;
+    // Bara framsteg visas. En match under snittet är ingen nyhet värd att
+    // peka ut — fokus ligger på det spelaren gjort bra, inte på avvikelser.
+    if (d > 0) delta = d;
   }
-  const milestone = stats && MILESTONES.has(stats.games) ? stats.games : null;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('summary.title')} size="md">
@@ -76,12 +79,10 @@ export default function MatchSummaryReveal({
 
         {delta !== null && (
           <p
-            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mb-4 animate-slide-in motion-reduce:animate-none ${
-              delta > 0 ? 'bg-green-500/15 text-green-300' : 'bg-gray-700/60 text-gray-300'
-            }`}
+            className="inline-block px-3 py-1 rounded-full text-sm font-semibold mb-4 animate-slide-in motion-reduce:animate-none bg-green-500/15 text-green-300"
             style={{ animationDelay: '0.9s' }}
           >
-            {t('summary.vsAverage', { delta: `${delta > 0 ? '+' : ''}${delta}` })}
+            {t('summary.vsAverage', { delta: `+${delta}` })}
           </p>
         )}
 
@@ -111,13 +112,27 @@ export default function MatchSummaryReveal({
           </div>
         )}
 
-        {milestone !== null && (
-          <p
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/15 text-yellow-300 text-sm font-semibold mb-5 animate-slide-in motion-reduce:animate-none"
-            style={{ animationDelay: '1.7s' }}
-          >
-            <Trophy size={14} /> {t('summary.milestone', { count: milestone })}
-          </p>
+        {badges.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-2 mb-5">
+            {badges.map((id, i) => {
+              const Icon = BADGE_ICONS[id];
+              return (
+                <div
+                  key={id}
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-left animate-slide-in motion-reduce:animate-none"
+                  style={{ animationDelay: `${1.7 + i * 0.2}s` }}
+                >
+                  <span className="w-9 h-9 rounded-full bg-yellow-500/25 text-yellow-300 flex items-center justify-center">
+                    <Icon size={18} />
+                  </span>
+                  <span>
+                    <span className="block text-[10px] uppercase tracking-widest text-yellow-400">{t('badges.unlocked')}</span>
+                    <span className="block text-sm font-semibold text-white">{t(`badges.${id}.name`)}</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         )}
 
         <button
