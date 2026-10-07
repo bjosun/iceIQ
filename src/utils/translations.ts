@@ -320,7 +320,10 @@ export const translations = {
       tryBreathing: "Want to try a breathing exercise?",
       insightShareTitle: "Share coach insight",
       insightShareDesc: "The coach's one-liner as an image — no balance, no email, nothing but the observation.",
-      insightCardTitle: "Coach insight"
+      insightCardTitle: "Coach insight",
+      strengthTitle: "What went well",
+      thinkTitle: "Something to think about",
+      shareThought: "Share this thought"
     },
 
     // Breathing / mental routines
@@ -851,7 +854,10 @@ export const translations = {
       tryBreathing: "Vill du prova en andningsövning?",
       insightShareTitle: "Dela coach-insikt",
       insightShareDesc: "Coachens en-radare som bild — inget saldo, ingen e-post, bara observationen.",
-      insightCardTitle: "Coach-insikt"
+      insightCardTitle: "Coach-insikt",
+      strengthTitle: "Det som gick bra",
+      thinkTitle: "Att tänka på",
+      shareThought: "Dela tanken"
     },
 
     // Andning / mentala rutiner

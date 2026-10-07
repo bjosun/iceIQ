@@ -701,6 +701,12 @@ exports.askCoach = functions
       - Skriv den som ett konstaterande, inte som en hälsning: "Fem vunna sargdueller — flest hittills i säsongen".
       - STIL: lugn och torr, i andan av Miyamoto Musashis "De fem ringarnas bok" — en iakttagelse som får en kort lärdom, inte pepp. Först det som hänt (med siffran), sedan om det går en halv mening om vad det visar. Inga utropstecken, inga klichéer ("fantastiskt", "bra jobbat"), ingen jämförelse med andra spelare, ingen krigsretorik. Exempel: "Tre blockerade skott — den som står kvar i banan vinner tillbaka pucken". Finns ingen sann lärdom som hänger ihop med siffran: skriv bara iakttagelsen. Lärdomen får aldrig påstå något som inte stöds av datan.
 
+      ATT TÄNKA PÅ (fältet "thinkAbout" i svaret):
+      - EN kort mening om det som är värt att öva på eller fundera över — den mest återkommande svagheten eller ett val som gick fel, belagt i siffrorna. Det är lika viktigt som det positiva: den som aldrig får se sina misstag blir aldrig bättre.
+      - Max 110 tecken, på språkkoden "${userLanguage}". Ingen emoji, ingen rubrik.
+      - Skriv det som ett lugnt konstaterande eller en fråga att bära med sig, aldrig som kritik eller skuld, och aldrig om spelarens värde. Misstaget är något man övar bort, inte något man är. Exempel: "Fyra pucktapp i egen zon — vad såg du precis innan?"
+      - Samma sanningsregel som för shareHighlight: bara sådant som stöds av datan, inget påhittat tal. Finns inget tydligt mönster: tom sträng.
+
       FOKUSOMRÅDEN (fältet "focusTags" i svaret):
       - Max 2 taggar, och bara om ett TYDLIGT mönster i datan pekar dit — en enda match räcker inte om historiken/säsongsöversikten säger något annat. Det vanliga fallet är en tom lista, inte undantaget.
       - Välj ENDAST ur listan nedan. Hitta aldrig på en egen tagg — okända taggar filtreras bort ändå.
@@ -751,6 +757,7 @@ exports.askCoach = functions
       properties: {
         analysis: { type: Type.STRING, description: 'Svaret till spelaren, enligt formateringsinstruktionerna.' },
         shareHighlight: { type: Type.STRING, description: 'En delbar en-radare, max 90 tecken. Tom sträng om inget sant positivt finns att lyfta.' },
+        thinkAbout: { type: Type.STRING, description: 'En kort mening om det som är värt att öva på, max 110 tecken. Tom sträng om inget tydligt mönster finns.' },
         focusTags: {
           type: Type.ARRAY,
           description: 'Max 2 taggar ur den fasta listan, bara vid ett tydligt mönster i datan. Tom lista är det vanliga.',
@@ -848,6 +855,7 @@ exports.askCoach = functions
     const rawText = response.text || '';
     let analysis = rawText;
     let shareHighlight = '';
+    let thinkAbout = '';
     let focusTags = [];
     let coachTimeline = null;
     try {
@@ -857,6 +865,9 @@ exports.askCoach = functions
       // vad kortet rymmer, och instruktionen är bara en instruktion.
       if (typeof parsed.shareHighlight === 'string') {
         shareHighlight = parsed.shareHighlight.trim().slice(0, 90);
+      }
+      if (typeof parsed.thinkAbout === 'string') {
+        thinkAbout = parsed.thinkAbout.trim().slice(0, 110);
       }
       if (Array.isArray(parsed.focusTags)) {
         // enum i schemat styr redan modellen, men filtrera ändå mot
@@ -901,6 +912,7 @@ exports.askCoach = functions
       success: true,
       analysis,
       shareHighlight,
+      thinkAbout,
       focusTags,
       creditsLeft: balance.monthly + balance.purchased,
       monthlyCredits: balance.monthly,

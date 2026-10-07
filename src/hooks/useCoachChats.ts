@@ -25,6 +25,11 @@ export interface CoachChatMessage {
    */
   highlight?: string;
   /**
+   * Coachens korta "att tänka på" (se thinkAbout i askCoach): det som är värt
+   * att öva på, i lugn ton. Utelämnas när inget tydligt mönster fanns.
+   */
+  thinkAbout?: string;
+  /**
    * Fasta nyckelord (se FOCUS_TAGS i functions/index.js) som pekar ut om
    * något i rutinbiblioteket är relevant för det här svaret — t.ex.
    * fokus_press för andningsövningen. Tom lista/utelämnat är det vanliga.

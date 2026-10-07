@@ -31,6 +31,33 @@ const LOADING_STEP_MS = 2500;
 // återuppstår vid nästa besök.
 const ACTIVE_CHAT_KEY = 'iceiq-active-coach-chat';
 
+// Litet citatkort under ett coach-svar. Samma ton för båda sorterna: lugnt,
+// utan utropstecken. "think" får en dämpad slate-ton i stället för grönt.
+function InsightQuote({ title, text, tone, shareLabel, onShare }: {
+  title: string;
+  text: string;
+  tone: 'strength' | 'think';
+  shareLabel: string;
+  onShare: () => void;
+}) {
+  const colors = tone === 'strength'
+    ? 'border-cyan-500/30 bg-cyan-500/5'
+    : 'border-slate-500/40 bg-slate-500/10';
+  return (
+    <div className={`rounded-xl border px-4 py-3 ${colors}`}>
+      <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">{title}</p>
+      <p className="text-sm text-white leading-snug">{text}</p>
+      <button
+        onClick={onShare}
+        className="mt-2 inline-flex items-center gap-1.5 text-cyan-500/80 hover:text-cyan-300 text-xs transition-colors"
+      >
+        <Share2 size={12} />
+        {shareLabel}
+      </button>
+    </div>
+  );
+}
+
 export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoachProps) {
   const { t, language } = useLanguage();
   const { isPremium, isElite, upgradeSubscription } = useSubscription();
@@ -48,7 +75,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
   const [error, setError] = useState('');
   const [showUpgradeCta, setShowUpgradeCta] = useState(false);
   const [buyingCredits, setBuyingCredits] = useState(false);
-  const [insightToShare, setInsightToShare] = useState<string | null>(null);
+  const [insightToShare, setInsightToShare] = useState<{ text: string; kind: 'strength' | 'think' } | null>(null);
   const [showBreathing, setShowBreathing] = useState(false);
 
   // Andningsövningen är medvetet öppen för alla. Den kostar ingenting att
@@ -188,6 +215,9 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
         const highlight = typeof result.data.shareHighlight === 'string'
           ? result.data.shareHighlight.trim()
           : '';
+        const thinkAbout = typeof result.data.thinkAbout === 'string'
+          ? result.data.thinkAbout.trim()
+          : '';
         const focusTags = Array.isArray(result.data.focusTags) ? result.data.focusTags : [];
         const finalMessages: CoachChatMessage[] = [
           ...baseMessages,
@@ -198,6 +228,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             role: 'ai',
             text: result.data.analysis,
             ...(highlight ? { highlight } : {}),
+            ...(thinkAbout ? { thinkAbout } : {}),
             ...(focusTags.length ? { focusTags } : {}),
           },
         ];
@@ -475,6 +506,31 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             >
               {msg.text}
             </div>
+            {/* Två små kort ur samma svar: det som gick bra och det som är värt
+                att tänka på. Båda kommer bara när datan faktiskt stödjer dem
+                — coachen returnerar tom sträng hellre än något påhittat. */}
+            {msg.role === 'ai' && (msg.highlight || msg.thinkAbout) && (
+              <div className="mt-2 max-w-[85%] space-y-2">
+                {msg.highlight && (
+                  <InsightQuote
+                    title={t('ai.strengthTitle')}
+                    text={msg.highlight}
+                    tone="strength"
+                    shareLabel={t('ai.shareInsight')}
+                    onShare={() => setInsightToShare({ text: msg.highlight!, kind: 'strength' })}
+                  />
+                )}
+                {msg.thinkAbout && (
+                  <InsightQuote
+                    title={t('ai.thinkTitle')}
+                    text={msg.thinkAbout}
+                    tone="think"
+                    shareLabel={t('ai.shareThought')}
+                    onShare={() => setInsightToShare({ text: msg.thinkAbout!, kind: 'think' })}
+                  />
+                )}
+              </div>
+            )}
             {/* Bara synlig när spelaren har en sparad e-post — annars finns
                 inget att skicka till, se PlayerForm. */}
             <div className="flex items-center gap-4 mt-1.5">
@@ -486,17 +542,6 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
                 >
                   <Mail size={12} />
                   {sharingIndex === index ? t('ai.sharing') : t('ai.shareWithPlayer')}
-                </button>
-              )}
-              {/* Bara när coachen faktiskt hade något sant att lyfta — den
-                  returnerar tom sträng hellre än ett påhittat beröm. */}
-              {msg.role === 'ai' && msg.highlight && (
-                <button
-                  onClick={() => setInsightToShare(msg.highlight!)}
-                  className="inline-flex items-center gap-1.5 text-cyan-500/80 hover:text-cyan-300 text-xs transition-colors"
-                >
-                  <Share2 size={12} />
-                  {t('ai.shareInsight')}
                 </button>
               )}
               {/* Tyst erbjudande, aldrig ett recept från coachen själv (se
@@ -599,14 +644,14 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
         title={t('ai.insightShareTitle')}
         desc={t('ai.insightShareDesc')}
         fileNameBase={`iceiq-insikt-${(playerName || 'spelare').replace(/\s+/g, '-').toLowerCase()}`}
-        renderKey={insightToShare ?? ''}
+        renderKey={insightToShare ? `${insightToShare.kind}|${insightToShare.text}` : ''}
         render={(format: ReportFormat) =>
           renderInsightCard({
             playerName,
-            insight: insightToShare ?? '',
+            insight: insightToShare?.text ?? '',
             format,
             labels: {
-              cardTitle: t('ai.insightCardTitle'),
+              cardTitle: insightToShare?.kind === 'think' ? t('ai.thinkTitle') : t('ai.insightCardTitle'),
               coachName: 'Ice IQ Coach',
             },
           })
