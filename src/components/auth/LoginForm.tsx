@@ -118,7 +118,7 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginF
           </div>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-6 flex flex-col">
           <Button
             variant="secondary"
             onClick={handleGoogleLogin}

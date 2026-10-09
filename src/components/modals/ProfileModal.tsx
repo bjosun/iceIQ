@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, CreditCard, Trash2, Shield, User, Mail } from 'lucide-react';
+import { LogOut, CreditCard, Trash2, Shield, User, Mail, Lock } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { isNativeApp } from '../../utils/platform';
+import { appLockAvailable, appLockEnabled, setAppLockEnabled, unlockWithBiometry } from '../../utils/appLock';
 import { usePlayerData } from '../../hooks/usePlayerData'; // För att rensa data
 import { createStripePortalSession } from '../../services/firestore'; // Från din städade firebase.ts
 import Modal from '../ui/Modal';
@@ -22,6 +23,25 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
   const { user, logout, deleteAccount } = useAuth();
   const { deleteUserData: clearFirestoreData } = usePlayerData(); // Rename för tydlighet
   const { t, language } = useLanguage();
+
+  // Face ID-spärren: att slå på den kräver att man bekräftar en gång, så att
+  // man inte kan låsa ute sig själv med en biometri som inte fungerar.
+  const [lockAvailable, setLockAvailable] = useState(false);
+  const [lockOn, setLockOn] = useState<boolean>(() => appLockEnabled());
+  useEffect(() => {
+    if (isNativeApp) appLockAvailable().then(setLockAvailable);
+  }, []);
+  const handleLockToggle = async () => {
+    if (lockOn) {
+      setAppLockEnabled(false);
+      setLockOn(false);
+      return;
+    }
+    if (await unlockWithBiometry(t('appLock.reason'))) {
+      setAppLockEnabled(true);
+      setLockOn(true);
+    }
+  };
   
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -123,6 +143,37 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
             </span>
           </div>
         </div>
+
+        {/* Appspärr (bara iPhone-appen, och bara om enheten har Face ID/kod) */}
+        {lockAvailable && (
+          <Card className="bg-gray-800/50">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-lg font-semibold text-white flex items-center">
+                  <Lock className="mr-2 text-cyan-400" size={20} />
+                  {t('appLock.title')}
+                </h3>
+                <p className="text-sm text-gray-400 mt-1">{t('appLock.desc')}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={lockOn}
+                aria-label={t('appLock.title')}
+                onClick={handleLockToggle}
+                className={`relative shrink-0 w-12 h-7 rounded-full transition-colors touch-manipulation ${
+                  lockOn ? 'bg-cyan-500' : 'bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                    lockOn ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </Card>
+        )}
 
         {/* Prenumerationshantering */}
         <Card className="bg-gray-800/50">

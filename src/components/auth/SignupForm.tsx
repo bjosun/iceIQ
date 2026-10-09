@@ -143,7 +143,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
           </div>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-6 flex flex-col">
           <Button
             variant="secondary"
             onClick={handleGoogleSignup}

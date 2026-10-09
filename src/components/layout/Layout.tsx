@@ -3,6 +3,7 @@ import Header from './Header';
 import MobileBottomNav from './MobileBottomNav';
 import Footer from './Footer';
 import PaymentAlertBanner from './PaymentAlertBanner';
+import AppLockGate from './AppLockGate';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -37,6 +38,9 @@ export default function Layout({ children }: LayoutProps) {
         onOpenProfile={() => setShowProfile(true)} 
         onOpenSubscription={() => setShowSub(true)} 
       />
+
+      {/* Valfri Face ID-spärr (bara iPhone-appen, bara om användaren slagit på den) */}
+      {user && <AppLockGate />}
 
       {/* Betalningsvarning ligger utanför <main> så den syns direkt under
          headern på varje inloggad sida, inte bara på dashboarden. */}

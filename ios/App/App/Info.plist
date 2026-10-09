@@ -31,6 +31,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Ice IQ uses Face ID to unlock the app when you have turned on the app lock.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>swish</string>

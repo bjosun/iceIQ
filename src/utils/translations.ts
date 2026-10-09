@@ -170,6 +170,17 @@ export const translations = {
       unlimited: "Unlimited"
     },
 
+    // Appspärr med Face ID — se utils/appLock.ts
+    appLock: {
+      title: "Lock the app",
+      desc: "Ask for Face ID, Touch ID or your passcode when you open Ice IQ.",
+      reason: "Unlock Ice IQ",
+      lockedTitle: "Ice IQ is locked",
+      lockedDesc: "Confirm that it's you to continue.",
+      unlock: "Unlock",
+      logout: "Log out instead"
+    },
+
     // Märken — vana och egen utveckling, se utils/badges.ts
     badges: {
       title: "Badges",
@@ -704,6 +715,17 @@ export const translations = {
       support: "Prioriterad support",
       price: "Pris",
       unlimited: "Obegränsat"
+    },
+
+    // Appspärr med Face ID — se utils/appLock.ts
+    appLock: {
+      title: "Lås appen",
+      desc: "Be om Face ID, Touch ID eller din kod när du öppnar Ice IQ.",
+      reason: "Lås upp Ice IQ",
+      lockedTitle: "Ice IQ är låst",
+      lockedDesc: "Bekräfta att det är du för att fortsätta.",
+      unlock: "Lås upp",
+      logout: "Logga ut i stället"
     },
 
     // Märken — vana och egen utveckling, se utils/badges.ts
