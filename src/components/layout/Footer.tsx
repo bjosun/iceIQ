@@ -4,10 +4,27 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { Github, Mail, Shield, FileText, Building2 } from 'lucide-react';
 import { SUPPORT_EMAIL, COMPANY_NAME, COMPANY_COUNTRY, COMPANY_URL, COMPANY_ORG_NR } from '../../utils/contact';
 import guides from '../../data/guides.json';
+import { isNativeApp } from '../../utils/platform';
 
 export default function Footer() {
   const { t, language } = useLanguage();
   const currentYear = new Date().getFullYear();
+
+  // I iPhone-appen är sidfoten bara det Apple kräver: villkor, integritets-
+  // policy och en supportadress. Snabblänkar och guider är webbplatsens
+  // marknadsföring/SEO och hör inte hemma i appen.
+  if (isNativeApp) {
+    return (
+      <footer className="border-t border-gray-800 mt-8 px-4 py-6 text-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
+          <Link to="/terms" className="text-gray-400 hover:text-cyan-400 transition-colors">{t('termsLink')}</Link>
+          <Link to="/privacy" className="text-gray-400 hover:text-cyan-400 transition-colors">{t('privacyLink')}</Link>
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="text-gray-400 hover:text-cyan-400 transition-colors">{t('supportContact')}</a>
+        </div>
+        <p className="text-gray-500 text-xs mt-3">© {currentYear} Ice IQ — {COMPANY_NAME}</p>
+      </footer>
+    );
+  }
 
   return (
     <footer className="bg-gray-800 border-t border-gray-700 mt-16">
