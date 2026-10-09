@@ -100,3 +100,15 @@
     margin-left: 0.5rem; /* Justera så texten inte krockar med din kalender-ikon */
   }
 }
+
+/* iOS zoomar in på textfält med teckenstorlek under 16 px och lämnar sidan
+   förstorad (sidan "blir för stor" och går att skrolla i sidled/höjd tills
+   appen startas om). Fält på telefonen ska därför alltid vara minst 16 px,
+   oavsett vilken text-storlek de har i övrigt. */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
