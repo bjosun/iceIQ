@@ -41,7 +41,7 @@ export default function Privacy() {
               {t('privacyLink')}
             </h1>
             <p className="text-gray-300">
-              Last updated: {new Date().toLocaleDateString()}
+              Last updated: 9 October 2026
             </p>
           </div>
 
@@ -61,15 +61,20 @@ export default function Privacy() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold text-white mb-4">Information We Collect</h2>
               <p className="text-gray-300 mb-4">
-                We collect the following types of information:
+                Ice IQ is meant for adults: parents, guardians and coaches. We collect the following:
               </p>
               <ul className="text-gray-300 list-disc pl-6 mb-4 space-y-2">
-                <li>Account information (email, name)</li>
-                <li>Player data (names, performance metrics)</li>
-                <li>Game statistics and analysis data</li>
-                <li>Payment information (processed securely by Stripe)</li>
-                <li>Usage data to improve our service</li>
+                <li>Account information: email address and name, and the sign-in method you use (email, Google or Apple).</li>
+                <li>Player data that you enter about a player, who is often a child: name, game statistics, points, notes and, if you use Money Mode, the reward balance.</li>
+                <li>Content you create, such as saved coach conversations.</li>
+                <li>Payment information when you subscribe on the web. It is handled by Stripe and we never see your card number.</li>
+                <li>Basic information about how you found us (for example the campaign in a link you opened), to understand which channels work.</li>
               </ul>
+              <p className="text-gray-300 mb-4">
+                In the iPhone app, some settings and a copy of your data are stored on your phone so the app opens quickly.
+                If you turn on the app lock, Face ID or Touch ID is handled entirely by iOS. We never receive or store biometric data.
+                A player&apos;s mobile number for the Swish shortcut is stored only on your device and is never sent to us.
+              </p>
             </section>
 
             <section className="mb-8">
@@ -115,22 +120,46 @@ export default function Privacy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-white mb-4">Third-Party Services</h2>
+              <h2 className="text-2xl font-semibold text-white mb-4">AI Coach</h2>
               <p className="text-gray-300 mb-4">
-                We use third-party services for:
+                When you ask the AI coach for an analysis, we send the player&apos;s name, the game statistics and points you
+                have logged, a short history, and your question to Google Cloud (Vertex AI), processed in the EU, in order to
+                produce the answer. Nothing is sent until you ask, and only after you have agreed to it in the app. We do not send
+                your email address or payment details. You can stop at any time by not using the coach.
               </p>
-              <ul className="text-gray-300 list-disc pl-6 mb-4 space-y-2">
-                <li>Payment processing (Stripe)</li>
-                <li>Cloud infrastructure (Firebase)</li>
-                <li>Analytics (Google Analytics, anonymized)</li>
-                <li>Customer support</li>
-              </ul>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-white mb-4">Children's Privacy</h2>
+              <h2 className="text-2xl font-semibold text-white mb-4">Third-Party Services</h2>
               <p className="text-gray-300 mb-4">
-                Our service is not intended for children under 13. We do not knowingly collect personal information from children under 13.
+                We use these providers to run the service:
+              </p>
+              <ul className="text-gray-300 list-disc pl-6 mb-4 space-y-2">
+                <li>Firebase and Google Cloud: hosting, sign-in, database and the AI service described above</li>
+                <li>Google and Apple: if you choose to sign in with them</li>
+                <li>Stripe: payments for web subscriptions</li>
+                <li>Email delivery: service messages and the weekly summary</li>
+              </ul>
+              <p className="text-gray-300 mb-4">
+                We do not sell personal data and we do not use it to track you across other companies&apos; apps or websites.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-white mb-4">Deleting Your Data</h2>
+              <p className="text-gray-300 mb-4">
+                You can delete your account and all player data yourself in the app: open your account, choose delete, and
+                confirm. This removes your players, games and account. You can also email us (see below) and we will do it for you.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-white mb-4">Children&apos;s Privacy</h2>
+              <p className="text-gray-300 mb-4">
+                Children do not create accounts and the service is not directed to children under 13. Parents and guardians
+                may record information about their own child as a player, for example name and game statistics. We treat that
+                information with extra care, use it only to provide the service you ask for, and do not use it for advertising.
+                If you believe a child has created an account, contact us and we will remove it.
               </p>
             </section>
 

@@ -8,6 +8,7 @@ import { useAiCredits } from '../hooks/useAiCredits';
 import { getDemoPlayerName, getDemoHistory, DEMO_STATS } from '../utils/demoData';
 import { pickMatchHighlight, MatchHighlight } from '../utils/matchHighlight';
 import { newBadges, BadgeId } from '../utils/badges';
+import { isNativeApp } from '../utils/platform';
 import { onDataRefreshed, firestore as firestoreService } from '../services/firestore';
 import { MatchReportStats } from '../utils/matchReport';
 import { moneyModeUnit } from '../utils/pricing';
@@ -573,6 +574,11 @@ export default function Dashboard() {
   }
 
   const hasUnsavedActions = Object.keys(actionCounts).length > 0;
+  // Förnamnet till hälsningen i appen: första ordet i namnet, eller det som står
+  // före första punkt/understreck i e-postadressen (björn.sundberg -> Björn).
+  const rawName = user.displayName || user.email?.split('@')[0] || '';
+  const firstWord = rawName.split(/[\s._-]+/)[0] || '';
+  const firstName = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
 
   // --- RENDER DASHBOARD ---
   return (
@@ -580,12 +586,23 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Header */}
+        {isNativeApp ? (
+          // Telefon: en kort hälsning på en rad med bara förnamnet. Det långa
+          // "Välkommen tillbaka, Förnamn Efternamn" tog två rader och
+          // undertexten ytterligare en, och trängde ner själva innehållet.
+          <div className="mb-5">
+            <h1 className="text-2xl font-bold text-white truncate">
+              {t('dashboard.hi', { name: firstName })}
+            </h1>
+          </div>
+        ) : (
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">
             {t('dashboard.welcome')} {user.displayName || user.email?.split('@')[0]}
           </h1>
           <p className="text-gray-400 text-sm mt-1">{t('dashboardSubtitle')}</p>
         </div>
+        )}
 
         {/* Top Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

@@ -5,6 +5,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   signInWithCredential,
+  reauthenticateWithCredential,
+  revokeAccessToken,
   GoogleAuthProvider,
   OAuthProvider,
   signOut,
@@ -191,15 +193,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const deleteAccount = async (cleanupCallback?: () => Promise<void>) => {
     try {
-      if (auth.currentUser) {
-        
+      const current = auth.currentUser;
+      if (current) {
+        // 0. Apple-konton: logga in med Apple på nytt FÖRE raderingen. Det
+        //    bekräftar att det är rätt person och ger en engångskod som Apple
+        //    kräver för att dra tillbaka kopplingen till appen när kontot
+        //    raderas. Görs först så att inget hunnit raderas om användaren
+        //    avbryter Apples dialog.
+        let appleAuthCode: string | undefined
+        if (Capacitor.isNativePlatform() && current.providerData.some((p) => p.providerId === 'apple.com')) {
+          const native = await FirebaseAuthentication.signInWithApple()
+          appleAuthCode = native.credential?.authorizationCode
+          const credential = new OAuthProvider('apple.com').credential({
+            idToken: native.credential?.idToken,
+            rawNonce: native.credential?.nonce
+          })
+          await reauthenticateWithCredential(current, credential)
+        }
+
         // 1. Om vi skickade med en städfunktion, kör den FÖRST
         if (cleanupCallback) {
           await cleanupCallback();
         }
 
-        // 2. När städningen är klar, radera användaren i Auth
-        await deleteUser(auth.currentUser);
+        // 2. Dra tillbaka Apple-token (bästa försök: ett fel här ska inte hindra raderingen)
+        if (appleAuthCode) {
+          try {
+            await revokeAccessToken(auth, appleAuthCode)
+          } catch (revokeError) {
+            console.warn('Kunde inte dra tillbaka Apple-token:', revokeError)
+          }
+        }
+
+        // 3. När städningen är klar, radera användaren i Auth
+        await deleteUser(current)
+
+        // 4. Appen: rensa också det som ligger sparat på telefonen
+        if (Capacitor.isNativePlatform()) {
+          const { clearLocalData } = await import('../services/firestore')
+          await clearLocalData()
+          window.location.reload()
+        }
       }
     } catch (error: any) {
       console.error('Delete account error:', error);

@@ -14,6 +14,9 @@ import { renderInsightCard } from '../../utils/insightCard';
 import { ReportFormat } from '../../utils/shareCanvas';
 import { creditPackPrice, CREDITS_PER_PACK } from '../../utils/pricing';
 import { isNativeApp } from '../../utils/platform';
+import { hasAiConsent, recordAiConsent } from '../../utils/aiConsent';
+import AiConsentModal from './AiConsentModal';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface AiCoachProps {
   playerStats: any;
@@ -61,6 +64,10 @@ function InsightQuote({ title, text, tone, shareLabel, onShare }: {
 export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoachProps) {
   const { t, language } = useLanguage();
   const { isPremium, isElite, upgradeSubscription } = useSubscription();
+  const { user } = useAuth();
+  // Frågan som väntar på att samtycket ska ges (se aiConsent.ts).
+  const [consentOpen, setConsentOpen] = useState(false);
+  const pendingQuestion = useRef<string | undefined>(undefined);
   const { credits: displayCredits, monthlyCredits, purchasedCredits } = useAiCredits();
   const { listChats, saveChat, deleteChat } = useCoachChats();
   const [sharingIndex, setSharingIndex] = useState<number | null>(null);
@@ -183,6 +190,13 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
 
   const handleAskCoach = async (specificQuestion?: string) => {
     if (displayCredits <= 0) return;
+
+    // Spelardata skickas till AI först när användaren sagt ja till det.
+    if (user && !hasAiConsent(user.uid)) {
+      pendingQuestion.current = specificQuestion;
+      setConsentOpen(true);
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -329,7 +343,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             Ice IQ Coach <span className="text-[10px] bg-cyan-500 text-black px-1.5 py-0.5 rounded font-black">AI</span>
           </h3>
           <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">
-            {t('ai.upsellDesc')}
+            {isNativeApp ? t('ai.usedUpDesc') : t('ai.upsellDesc')}
           </p>
           {!isNativeApp && (
           <button
@@ -637,6 +651,16 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
            </div>
         </div>
       )}
+
+      <AiConsentModal
+        isOpen={consentOpen}
+        onDecline={() => setConsentOpen(false)}
+        onAccept={async () => {
+          setConsentOpen(false);
+          if (user) await recordAiConsent(user.uid);
+          handleAskCoach(pendingQuestion.current);
+        }}
+      />
 
       <ShareImageModal
         isOpen={insightToShare !== null}

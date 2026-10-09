@@ -108,11 +108,10 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
     
     setLoading(true);
     try {
-      // STEG 1: Radera all data i Firestore (Spelare, matcher, användarrot)
-      await clearFirestoreData(); 
-      
-      // STEG 2: Radera användaren i Auth (Detta triggar även din Stripe-radering via Cloud Function)
-      await deleteAccount(); 
+      // Raderar all data i Firestore (spelare, matcher, användarrot) och därefter
+      // användaren i Auth (vilket även triggar Stripe-raderingen). Apple-konton
+      // loggar in på nytt först — se deleteAccount i AuthContext.
+      await deleteAccount(clearFirestoreData);
       
       toast.success(language === 'en' ? "Account deleted." : "Ditt konto har raderats.");
       onClose();

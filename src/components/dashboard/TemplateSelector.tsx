@@ -4,6 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useTemplates } from '../../contexts/TemplateContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import Button from '../ui/Button';
+import { isNativeApp } from '../../utils/platform';
 
 interface TemplateSelectorProps {
   onEditTemplate: () => void;
@@ -72,7 +73,7 @@ export default function TemplateSelector({ onEditTemplate }: TemplateSelectorPro
       )}
 
       {/* Upgrade Prompt */}
-      {subscription.plan === 'free' && (
+      {subscription.plan === 'free' && !isNativeApp && (
         <div className="bg-gradient-to-r from-yellow-500/10 to-yellow-600/10 border border-yellow-500/20 rounded-xl p-4">
           <p className="text-yellow-400 text-sm">
             🔒 {t('upgradeCTA')} {t('premiumFeature4')}

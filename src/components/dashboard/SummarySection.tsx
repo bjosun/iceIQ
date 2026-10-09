@@ -209,7 +209,7 @@ export default function SummarySection({
       {/* Upgrade CTA */}
       <div className="mt-6 text-center">
         <p className="text-xs text-gray-500">
-           {t('proTip') || 'Pro Tip'}: {t('checkHistory') || 'Check history to see trends.'}
+           {t('checkHistory') || 'Check history to see trends.'}
         </p>
       </div>
     </Card>

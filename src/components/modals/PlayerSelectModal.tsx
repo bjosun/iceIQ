@@ -9,6 +9,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import toast from 'react-hot-toast';
+import { isNativeApp } from '../../utils/platform';
 
 interface Player {
   id: string;
@@ -94,7 +95,7 @@ export default function PlayerSelectModal({
 
     // 2. Kolla premium-spärren
     if (!isPremium && players.length >= FREE_PLAYER_LIMIT) {
-      toast.error(t('playerLimit.reached', { limit: FREE_PLAYER_LIMIT }), { icon: '🔒', duration: 4000 });
+      toast.error(isNativeApp ? t('playerLimit.reachedApp', { limit: FREE_PLAYER_LIMIT }) : t('playerLimit.reached', { limit: FREE_PLAYER_LIMIT }), { icon: '🔒', duration: 4000 });
       return;
     }
 

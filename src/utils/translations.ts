@@ -151,6 +151,7 @@ export const translations = {
     // Free plan limits
     playerLimit: {
       reached: "Free plan is limited to {limit} players. Upgrade to add more.",
+      reachedApp: "You have reached the limit of {limit} players.",
       usage: "Free plan: {count} of {limit} players used."
     },
 
@@ -168,6 +169,19 @@ export const translations = {
       support: "Priority support",
       price: "Price",
       unlimited: "Unlimited"
+    },
+
+    // Samtycke innan AI-coachen får spelardata — se utils/aiConsent.ts
+    aiConsent: {
+      title: "Before you use the AI coach",
+      intro: "The coach writes its answers with the help of an AI service. To do that, Ice IQ sends some information to it. Please read this first.",
+      shared: "What is sent: the player's name, the game statistics and points you have logged, and the question you write.",
+      where: "Where it goes: Google Cloud (Vertex AI) in the EU, only to produce the answer. Ice IQ does not send your email address or payment details.",
+      notShared: "Nothing is sent until you ask the coach something.",
+      guardian: "The player is often a child. By continuing you confirm that you are the parent or guardian, or have their permission, to share this.",
+      more: "You can read more in the",
+      accept: "I agree, continue",
+      decline: "Not now"
     },
 
     // Appspärr med Face ID — se utils/appLock.ts
@@ -295,6 +309,7 @@ export const translations = {
     // AI Coach
     ai: {
       upsellDesc: "Get personalized tactical feedback and training tips from the Ice IQ Coach.",
+      usedUpDesc: "You have used this month's free analyses. They refill every month.",
       unlock: "Unlock AI Coach",
       credits: "credits left",
       creditsSplit: "{monthly} included this month · {purchased} purchased, and these carry over",
@@ -445,6 +460,7 @@ export const translations = {
     // Dashboard specific
     dashboard: {
       welcome: "Welcome back,",
+      hi: "Hi, {name}",
       thisWeek: "This Week",
       noStatsYet: "No stats recorded yet.",
       settleConfirm: "Settle balance for {name}?",
@@ -702,6 +718,7 @@ export const translations = {
     // Free plan limits
     playerLimit: {
       reached: "Gratisplanen är begränsad till {limit} spelare. Uppgradera för att lägga till fler.",
+      reachedApp: "Du har nått gränsen på {limit} spelare.",
       usage: "Gratisplan: {count} av {limit} spelare använda."
     },
 
@@ -719,6 +736,19 @@ export const translations = {
       support: "Prioriterad support",
       price: "Pris",
       unlimited: "Obegränsat"
+    },
+
+    // Samtycke innan AI-coachen får spelardata — se utils/aiConsent.ts
+    aiConsent: {
+      title: "Innan du använder AI-coachen",
+      intro: "Coachen skriver sina svar med hjälp av en AI-tjänst. För det skickar Ice IQ en del uppgifter dit. Läs igenom det här först.",
+      shared: "Det som skickas: spelarens namn, matchstatistiken och poängen du har loggat, samt frågan du skriver.",
+      where: "Vart det går: Google Cloud (Vertex AI) inom EU, bara för att skapa svaret. Ice IQ skickar inte din e-postadress eller dina betaluppgifter.",
+      notShared: "Ingenting skickas förrän du ställer en fråga till coachen.",
+      guardian: "Spelaren är ofta ett barn. När du fortsätter intygar du att du är förälder eller vårdnadshavare, eller har deras tillåtelse, att dela det här.",
+      more: "Du kan läsa mer i",
+      accept: "Jag godkänner, fortsätt",
+      decline: "Inte nu"
     },
 
     // Appspärr med Face ID — se utils/appLock.ts
@@ -844,6 +874,7 @@ export const translations = {
     // AI Coach
     ai: {
       upsellDesc: "Få personlig taktisk feedback och träningstips från Ice IQ Coach.",
+      usedUpDesc: "Du har använt månadens gratis analyser. De fylls på varje månad.",
       unlock: "Lås upp AI-Coachen",
       credits: "krediter kvar",
       creditsSplit: "{monthly} ingår denna månad · {purchased} köpta, och de ligger kvar",
@@ -985,6 +1016,7 @@ export const translations = {
     // Dashboard specific
     dashboard: {
       welcome: "Välkommen tillbaka,",
+      hi: "Hej, {name}",
       thisWeek: "Denna vecka",
       noStatsYet: "Ingen statistik registrerad än.",
       settleConfirm: "Reglera saldo för {name}?",
