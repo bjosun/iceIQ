@@ -53,7 +53,7 @@ export default function Layout({ children }: LayoutProps) {
       <Footer />
 
       {/* Global mobilnavigering (bara inloggade) */}
-      {user && <MobileBottomNav onPremiumClick={() => setShowSub(true)} />}
+      {user && <MobileBottomNav onPremiumClick={() => setShowSub(true)} onProfileClick={() => setShowProfile(true)} />}
 
       {/* GLOBAL MODALS
          Dessa renderas bara om användaren är inloggad och 

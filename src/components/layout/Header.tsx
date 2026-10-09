@@ -5,6 +5,7 @@ import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import UserDropdown from './UserDropdown'; 
 import logo from '../../assets/images/iceiq-logo.png'; 
+import { isNativeApp } from '../../utils/platform';
 import { 
   Menu, 
   User, 
@@ -44,6 +45,47 @@ export default function Header({ onOpenProfile, onOpenSubscription }: HeaderProp
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'sv' : 'en');
   };
+
+  // iPhone-appen: ett slimmat appfält i stället för webbens header. Logga och
+  // språk till vänster/höger, kontot som en rund knapp. Ingen hamburgermeny —
+  // navigeringen ligger i fliken längst ner (MobileBottomNav).
+  if (isNativeApp) {
+    return (
+      <header className="bg-gray-900 border-b border-white/10 sticky top-0 z-50 w-full">
+        <div className="flex items-center justify-between h-12 px-4">
+          <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
+            <img
+              src={logo}
+              alt="Ice IQ"
+              className="w-7 h-7 object-contain rounded-full border border-white/10"
+            />
+            <span className="text-lg font-black tracking-tighter text-white leading-none italic">
+              ICE <span className="text-cyan-400">IQ</span>
+              {isPremium && <span className="text-yellow-500 ml-1 text-xs not-italic font-black uppercase">PRO</span>}
+            </span>
+          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleLanguage}
+              aria-label={language === 'sv' ? 'Switch to English' : 'Byt till Svenska'}
+              className="px-2.5 py-1 rounded-full border border-gray-700 text-gray-400 text-[11px] font-bold uppercase"
+            >
+              {language}
+            </button>
+            {user && (
+              <button
+                onClick={onOpenProfile}
+                aria-label={t('myAccount')}
+                className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-full flex items-center justify-center border border-white/20"
+              >
+                <User size={16} className="text-gray-900" />
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="bg-gray-900/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 w-full">

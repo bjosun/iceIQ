@@ -1,15 +1,17 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Crown } from 'lucide-react';
+import { LayoutDashboard, Users, Crown, User } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { isNativeApp } from '../../utils/platform';
 
 // Global huvudnavigering på mobil (renderas i Layout för inloggade).
 // Konto/inställningar bor kvar i hamburgermenyn i Header.
 interface MobileBottomNavProps {
   onPremiumClick: () => void;
+  onProfileClick?: () => void;
 }
 
-export default function MobileBottomNav({ onPremiumClick }: MobileBottomNavProps) {
+export default function MobileBottomNav({ onPremiumClick, onProfileClick }: MobileBottomNavProps) {
   const { t } = useLanguage();
   const location = useLocation();
 
@@ -37,13 +39,25 @@ export default function MobileBottomNav({ onPremiumClick }: MobileBottomNavProps
           <span className="text-xs mt-1">{t('nav.players')}</span>
         </Link>
 
-        <button
-          onClick={onPremiumClick}
-          className="flex flex-col items-center text-gray-400 hover:text-yellow-400 transition-colors"
-        >
-          <Crown size={24} />
-          <span className="text-xs mt-1">{t('nav.upgrade')}</span>
-        </button>
+        {/* I iPhone-appen finns ingen köpskärm än (Stripe är dolt), så fliken
+            blir i stället kontot: profil, språk och Face ID-spärr. */}
+        {isNativeApp ? (
+          <button
+            onClick={onProfileClick}
+            className="flex flex-col items-center text-gray-400 hover:text-cyan-400 transition-colors"
+          >
+            <User size={24} />
+            <span className="text-xs mt-1">{t('myAccount')}</span>
+          </button>
+        ) : (
+          <button
+            onClick={onPremiumClick}
+            className="flex flex-col items-center text-gray-400 hover:text-yellow-400 transition-colors"
+          >
+            <Crown size={24} />
+            <span className="text-xs mt-1">{t('nav.upgrade')}</span>
+          </button>
+        )}
 
       </div>
     </div>
