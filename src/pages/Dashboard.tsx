@@ -153,6 +153,25 @@ export default function Dashboard() {
     }
     }, [location.state]); 
 
+  // Flikraden i appen (MobileBottomNav) hoppar till en del av sidan.
+  useEffect(() => {
+    const target = location.state?.scrollTo;
+    if (!target) return;
+    const id = window.setTimeout(() => {
+      const el = target === 'match' ? document.getElementById('section-match')
+        : target === 'coach' ? document.getElementById('section-coach') : null;
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (target === 'coach') {
+        // Coachen hör till en spelare: utan vald spelare börjar man med att välja en.
+        setShowPlayerSelect(true);
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [location.key]);
+
   // --- EFFEKT: Hantera Bonus Factor baserat på läge ---
   // Hoppar över första körningen så en återställd draft-faktor inte skrivs över
   const bonusModeInitialized = useRef(false);
@@ -637,7 +656,9 @@ export default function Dashboard() {
           />
           
           {/* The Stats Grid (Buttons) */}
-          <ActionGrid actionCounts={actionCounts} onCountChange={setActionCounts} />
+          <div id="section-match" className="scroll-mt-16">
+            <ActionGrid actionCounts={actionCounts} onCountChange={setActionCounts} />
+          </div>
           
           {/* Bonus Weighting - VISAS BARA I MONEY MODE */}
           {isMoneyMode && (
@@ -679,7 +700,7 @@ export default function Dashboard() {
 
           {/* AI COACH INTEGRATION */}
           {selectedPlayerName && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div id="section-coach" className="scroll-mt-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
                <AiCoach
                  playerStats={{
                     ...currentSessionStats,

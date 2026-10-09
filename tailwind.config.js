@@ -40,6 +40,7 @@ export default {
         'confetti': 'confetti 0.9s ease-out forwards',
         'goal-flash': 'goal-flash 0.6s ease-out',
         'slide-in': 'slide-in 0.45s ease-out both',
+        'sheet-up': 'sheet-up 0.28s ease-out',
       },
       keyframes: {
         shimmer: {
@@ -67,6 +68,10 @@ export default {
         'goal-flash': {
           '0%': { boxShadow: '0 0 0 0 rgba(74, 222, 128, 0.7)' },
           '100%': { boxShadow: '0 0 0 18px rgba(74, 222, 128, 0)' },
+        },
+        'sheet-up': {
+          '0%': { transform: 'translateY(100%)' },
+          '100%': { transform: 'translateY(0)' },
         },
         'slide-in': {
           '0%': { opacity: 0, transform: 'translateY(14px)' },

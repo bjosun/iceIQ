@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../utils/helpers';
+import { isNativeApp } from '../../utils/platform';
 
 interface ModalProps {
   isOpen: boolean;
@@ -65,7 +66,7 @@ export default function Modal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-[60] overflow-y-auto">
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-black/75 transition-opacity"
@@ -73,13 +74,16 @@ export default function Modal({
       />
 
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      {/* iPhone-appen: fönstret glider upp nedifrån som ett "sheet" i stället
+          för att ligga mitt på skärmen. Webben är oförändrad. */}
+      <div className={cn('flex min-h-full justify-center', isNativeApp ? 'items-end p-0' : 'items-center p-4')}>
         <div
           className={cn(
-            'relative w-full bg-gray-800 rounded-2xl shadow-2xl',
-            sizeClasses[size]
+            'relative w-full bg-gray-800 shadow-2xl',
+            isNativeApp ? 'max-w-full rounded-t-3xl rounded-b-none animate-sheet-up' : cn('rounded-2xl', sizeClasses[size])
           )}
         >
+          {isNativeApp && <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-gray-600" aria-hidden="true" />}
           {/* Header */}
           {(title || showCloseButton) && (
             <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
@@ -104,7 +108,7 @@ export default function Modal({
           )}
 
           {/* Content */}
-          <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+          <div className={isNativeApp ? 'max-h-[80vh] overflow-y-auto' : 'max-h-[calc(100vh-200px)] overflow-y-auto'}>
             {children}
           </div>
         </div>

@@ -530,6 +530,10 @@ export const translations = {
     // Navigation
     nav: {
       dashboard: "Dashboard",
+      home: "Home",
+      account: "Account",
+      newMatch: "New game",
+      coach: "Coach",
       players: "Players",
       upgrade: "Upgrade",
       login: "Login",
@@ -1066,6 +1070,10 @@ export const translations = {
     // Navigation
     nav: {
       dashboard: "Dashboard",
+      home: "Hem",
+      account: "Konto",
+      newMatch: "Ny match",
+      coach: "Coach",
       players: "Spelare",
       upgrade: "Uppgradera",
       login: "Logga in",
