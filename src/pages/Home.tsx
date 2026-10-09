@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import heroBg from '../assets/images/hero-bg.jpg';
@@ -32,7 +32,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 
-export default function Home() {
+function HomePage() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
 
@@ -532,4 +532,13 @@ export default function Home() {
       </section>
     </div>
   );
+}
+
+// I iPhone-appen finns ingen marknadsföringssida: den som öppnar appen ska
+// hamna direkt på sin egen sida. Utloggad ser man inloggningen (Dashboard
+// visar den själv), inloggad ser man sina spelare. Sessionen ligger kvar
+// mellan starter, så man loggar inte in varje gång. Webben är oförändrad.
+export default function Home() {
+  if (isNativeApp) return <Navigate to="/dashboard" replace />;
+  return <HomePage />;
 }
