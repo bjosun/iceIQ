@@ -54,7 +54,7 @@ export function useTemplates() {
 
       try {
         setLoading(true);
-        const userData = await firestore.getUserData(user.uid);
+        const userData = await firestore.getUserDataCached(user.uid);
         const userTemplates = userData?.customTemplates || {};
         
         setCustomTemplates(userTemplates);

@@ -105,10 +105,10 @@ export function usePlayerData() {
     if (!user) return [];
     try {
       setLoading(true);
-      const players = await firestore.getPlayers(user.uid);
+      const players = await firestore.getPlayersCached(user.uid);
       const playersWithStats = await Promise.all(
         players.map(async (player: any) => {
-          const games = await firestore.getGames(user.uid, player.name, 1000);
+          const games = await firestore.getGamesCached(user.uid, player.name, 1000);
           return {
             ...player,
             gameCount: games.length,
@@ -130,7 +130,7 @@ export function usePlayerData() {
     if (!user) return [];
     try {
       setLoading(true);
-      return await firestore.getGames(user.uid, playerName, limit);
+      return await firestore.getGamesCached(user.uid, playerName, limit);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch player history');
       return [];

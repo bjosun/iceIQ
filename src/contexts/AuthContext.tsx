@@ -78,8 +78,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Om någon loggar in (eller redan är inloggad), kolla/skapa databasen direkt!
-        await saveNewUserToDatabase(currentUser);
+        // Ett helt nytt konto måste ha sitt dokument innan appen visas. För
+        // alla andra räcker det att kontrollen körs i bakgrunden: att vänta
+        // på den (en Firestore-rundtur plus SDK-nedladdning) var det som
+        // gjorde att appen tog lång tid att öppna efter inloggning.
+        const created = Date.parse(currentUser.metadata.creationTime || '');
+        const isBrandNew = !isNaN(created) && Date.now() - created < 2 * 60 * 1000;
+        if (isBrandNew) {
+          await saveNewUserToDatabase(currentUser);
+        } else {
+          saveNewUserToDatabase(currentUser);
+        }
       }
       setUser(currentUser);
       setLoading(false);
@@ -168,6 +177,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signOut(auth)
       if (Capacitor.isNativePlatform()) {
         await FirebaseAuthentication.signOut().catch(() => {})
+        // Telefonen ska inte behålla den utloggades data: rensa den lokala
+        // cachen och starta om, så Firestore startar rent nästa gång.
+        const { clearLocalData } = await import('../services/firestore')
+        await clearLocalData()
+        window.location.reload()
       }
     } catch (error) {
       console.error('Logout error:', error)

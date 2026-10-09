@@ -8,6 +8,7 @@ import { useAiCredits } from '../hooks/useAiCredits';
 import { getDemoPlayerName, getDemoHistory, DEMO_STATS } from '../utils/demoData';
 import { pickMatchHighlight, MatchHighlight } from '../utils/matchHighlight';
 import { newBadges, BadgeId } from '../utils/badges';
+import { onDataRefreshed, firestore as firestoreService } from '../services/firestore';
 import { MatchReportStats } from '../utils/matchReport';
 import { moneyModeUnit } from '../utils/pricing';
 import toast from 'react-hot-toast';
@@ -153,9 +154,14 @@ export default function Dashboard() {
     }
     }, [location.state]); 
 
+  // När en cachad läsning visat det den hade och serverns data sedan skilde sig
+  // åt laddas sidan om från den färska cachen (se getDocsCacheFirst).
+  useEffect(() => onDataRefreshed(() => setRefreshTrigger((prev) => prev + 1)), []);
+
   // Flikraden i appen (MobileBottomNav) hoppar till en del av sidan.
+  const scrollTarget: string | undefined = location.state?.scrollTo;
   useEffect(() => {
-    const target = location.state?.scrollTo;
+    const target = scrollTarget;
     if (!target) return;
     const id = window.setTimeout(() => {
       const el = target === 'match' ? document.getElementById('section-match')
@@ -170,7 +176,7 @@ export default function Dashboard() {
       }
     }, 60);
     return () => window.clearTimeout(id);
-  }, [location.key]);
+  }, [location.key, scrollTarget]);
 
   // --- EFFEKT: Hantera Bonus Factor baserat på läge ---
   // Hoppar över första körningen så en återställd draft-faktor inte skrivs över
@@ -430,7 +436,14 @@ export default function Dashboard() {
 
       // 2. VIKTIGT: Uppdatera spelarens saldo (Plånbok)
       // Vi tar det gamla saldot + vad denna matchen drog in
-      const newBalance = carriedOverBalance + totals.matchTotal;
+      // Saldot läses färskt från servern här: det visade värdet kan komma ur
+      // cachen, och ett gammalt saldo som grund för en skrivning ger fel summa.
+      let baseBalance = carriedOverBalance;
+      try {
+        const fresh = (await firestoreService.getPlayers(user!.uid)).find((p: any) => p.name === selectedPlayerName);
+        if (fresh && typeof fresh.currentBalance === 'number') baseBalance = fresh.currentBalance;
+      } catch { /* offline: använd det visade värdet */ }
+      const newBalance = baseBalance + totals.matchTotal;
       
       await updatePlayerBalance(selectedPlayerName, newBalance);
       

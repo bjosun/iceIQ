@@ -124,7 +124,7 @@ export function TemplateProvider({ children }: TemplateProviderProps) {
         setLoading(true);
         // Dynamisk import: se motsvarande kommentar i AuthContext.
         const { firestore } = await import('../services/firestore');
-        const userData = await firestore.getUserData(user.uid);
+        const userData = await firestore.getUserDataCached(user.uid);
         const userCustomTemplates = userData?.customTemplates || {};
         
         setCustomTemplates(userCustomTemplates);

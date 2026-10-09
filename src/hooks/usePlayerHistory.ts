@@ -32,7 +32,7 @@ export function usePlayerHistory() {
 
     try {
       setLoading(true);
-      const games = await firestore.getGames(user.uid, playerName, limit);
+      const games = await firestore.getGamesCached(user.uid, playerName, limit);
       return games as GameRecord[];
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch player history');
