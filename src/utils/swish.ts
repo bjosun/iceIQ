@@ -5,6 +5,8 @@
 // i localStorage på förälderns egen enhet — aldrig i Firestore, aldrig i
 // spelarvyn eller delningslänkar, aldrig i statistik.
 
+import { detectRegion, payoutMethodFor } from './payout';
+
 const STORAGE_KEY = 'iceiq-swish-numbers';
 
 // Svenskt mobilnummer -> 07XXXXXXXX (10 siffror). Tar emot 070-123 45 67,
@@ -56,7 +58,9 @@ export function setSwishNumber(playerName: string, number: string | null): void 
   }
 }
 
-// Swish finns bara på mobil. På desktop vore knappen en död länk.
-export function swishAvailable(language: string): boolean {
-  return language === 'sv' && /iPhone|iPad|Android/i.test(navigator.userAgent);
+// Swish finns bara i Sverige och bara på mobil. Landet avgörs av telefonens
+// region (se payout.ts), inte appens språk. På desktop vore knappen en död länk.
+export function swishAvailable(appLanguage?: string): boolean {
+  return payoutMethodFor(detectRegion(appLanguage)) === 'swish'
+    && /iPhone|iPad|Android/i.test(navigator.userAgent);
 }
