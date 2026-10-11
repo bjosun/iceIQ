@@ -54,6 +54,19 @@ Utan tillåtelse finns ingen mikrofon och inga följdfrågor på länken, bara l
 ### 3. Tilltal: vem pratar?
 Coachen pratar redan till den som skriver som om det vore spelaren. Det är rätt för spelaren, och går bra när en förälder, kompis eller tränare skriver. En liten väljare ("Jag är spelaren / Jag är en förälder") gör att svaret kan stå i rätt person när det delas vidare. Det är en liten ändring i prompten, inte i data.
 
+## Röster (Google Chirp 3 HD)
+
+Två coacher, valbara på kortet: **Coach Astrid** (kvinna) och **Coach Gunnar** (man). Namnen står i översättningarna (`listen.voiceFemale` / `listen.voiceMale`). Rösterna sätts i `functions/.env` (gitignorerad, inga hemligheter), och funktionen måste deployas om när de byts:
+
+```
+LISTEN_VOICE_SV_M=sv-SE-Chirp3-HD-Umbriel
+LISTEN_VOICE_SV_F=sv-SE-Chirp3-HD-Kore
+LISTEN_VOICE_EN_M=en-US-Chirp3-HD-Umbriel
+LISTEN_VOICE_EN_F=en-US-Chirp3-HD-Kore
+```
+
+Språk som stöds: svenska (sv-SE) och engelska (en-US), efter appens språk. Kortet visar vilken röst som användes (eller varför molnet föll tillbaka på telefonens röst), som testhjälp.
+
 ## Beslut som behövs innan bygge
 
 | Fråga | Förslag |
