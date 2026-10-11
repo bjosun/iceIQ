@@ -14,6 +14,7 @@ Barn har ett kort koncentrationsspann. Allt på länken är därför byggt för 
 - **Föräldern väljer när länken delas**, i samma ruta som delningen av statistik och coachens kommentar: *"Får spelaren fortsätta prata med coachen, eller bara lyssna?"*
   - **Bara lyssna** (standard): klippen spelas, men det finns inga följdfrågor.
   - **Lyssna och prata:** kräver att föräldern bockar i att spelaren är minst 13 år. Under 13 är alternativet avstängt.
+- **Under 13:** i Sverige/EU får spelaren prata om föräldern godkänner och samtycket loggas (vårdnadshavare kan samtycka för barn under gränsen). I USA/Kanada och övriga länder är det **bara lyssna** tills en jurist sagt hur verifierbart föräldrasamtycke ska lösas (COPPA kräver verifierbart samtycke; en ikryssad ruta räknas normalt inte). Landet avgörs av förälderns region vid delningen (`src/utils/payout.ts`, `detectRegion`).
 - **Barnet kan alltid prata med coachen tillsammans med föräldern**, i förälderns eget gränssnitt, oavsett ålder och oavsett vad länken tillåter.
 - **Rösten är som en kompis, i TikTok-takt:** meningar som klipps ihop snabbt med få pauser. Se "Lyssna" nedan.
 
@@ -33,6 +34,7 @@ När spelaren öppnar länken finns en stor knapp **"Lyssna på matchen"**.
 - **Format:** 15–30 sekunder, en sak åt gången (en match = 2–3 korta klipp: "Det du gjorde bra", "En sak att öva på").
 - **Ton och takt:** en kompis som pratar, i den takt korta videor har: korta meningar som klipps ihop med mycket små pauser, en idé per klipp, direkt och energisk men lugn. Inga utropstecken-lavar, ingen jämförelse med andra, aldrig något som påstår mer än datan visar. Följer [kopieringsreglerna](../README.md): egen utveckling, misstag som något man övar bort.
 - **Så får man den takten:** generera meningarna var för sig och foga ihop dem med minimal tystnad (eller sätt talhastighet och trimma tystnad i början och slutet av varje mening), i stället för att läsa upp ett helt stycke. Det är en bedömning att verifiera med den röst/tjänst som väljs.
+- **Spela om:** varje klipp kan spelas om hur många gånger som helst ("igen"), så det gör inget om man missar något eller volymen var låg. Klippen sparas en kort stund, så omspelning kostar ingenting.
 - **Begriplighet går före fart:** takten får aldrig göra att barnet inte hinner uppfatta siffran eller tanken. Texten visas medan det spelas, och "igen" finns alltid.
 - **Gränssnitt:** en stor spelknapp, undertexten visas medan det spelas (för den som inte kan lyssna), "nästa" och "igen". Inga menyer.
 - **Källa:** texten kommer från samma data som sammanfattningen (poäng, eget snitt, märken, "att tänka på"), inte ett nytt fritt AI-svar. Det gör det billigt, förutsägbart och säkrare för barn.
@@ -62,6 +64,16 @@ Coachen pratar redan till den som skriver som om det vore spelaren. Det är rät
 | Vem bestämmer? | **Föräldern, vid varje delning.** Standard är "bara lyssna". Valet går att ändra senare utan att länken byts. |
 | Vilka får ha en länk? | Föräldern skapar och kan återkalla. Vem som helst med länken kan prata, så länken ska behandlas som ett lösenord (lägg till hastighetsgräns per länk). |
 | Röstdata | Barns röst är känslig. Samtyckestexten (och policyn) ska täcka det. Föräldern ska uttryckligen godkänna att spelaren får prata, inte bara skicka länken. |
+
+## Juridik att klara före lansering
+
+Inte juridisk rådgivning. Ska läsas av någon med rätt kompetens.
+
+- **Samtycke som kan visas:** logga vem som godkände, när, vilken text och vilken version, på länken (som `aiConsent` på kontot).
+- **Konsekvensbedömning (DPIA):** AI som bygger upp en bild av ett barn över tid (coachens minne) och barns tal är sådant som normalt kräver en. Gör den innan prata-funktionen släpps.
+- **Integritetspolicyn** (`src/pages/Privacy.tsx`) ska beskriva barns tal till coachen, att det sparas som text, och att föräldern ser det.
+- **Under 13 utanför EU:** bara lyssna tills verifierbart föräldrasamtycke är löst (se Beslut).
+- **Data om barn och scouting:** bygg inget som delar uppgifter om barnet utåt (till scouter, lag, rankningar). Det ligger utanför planen, och är en medveten gräns.
 
 ## Byggordning
 
