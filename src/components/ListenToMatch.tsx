@@ -127,6 +127,35 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
       logListen(token, 'cloud_ok');
       prefetch(index + 1);
       const el = audioEl.current;
+
+      // Ett enda ljud för hela klippet: meningarna visas i takt med ljudet, och
+      // ljudets längd fördelas efter meningarnas längd (plus lite för pausen).
+      if (urls.length === 1 && clip.sentences.length > 1) {
+        const weights = clip.sentences.map((x) => x.length + 6);
+        const total = weights.reduce((a, b) => a + b, 0);
+        let shown = -1;
+        const showFor = (fraction: number) => {
+          let acc = 0;
+          for (let i = 0; i < weights.length; i++) {
+            acc += weights[i] / total;
+            if (fraction <= acc + 0.0001) {
+              if (i !== shown) { shown = i; setCaption(clip.sentences[i]); }
+              return;
+            }
+          }
+        };
+        setCaption(clip.sentences[0]);
+        el.src = urls[0];
+        el.ontimeupdate = () => {
+          if (runId.current !== myRun || !el.duration) return;
+          showFor(el.currentTime / el.duration);
+        };
+        el.onended = () => { el.ontimeupdate = null; finishClipCloud(); };
+        el.onerror = () => { el.ontimeupdate = null; finishClipCloud(); };
+        el.play().catch(() => finishClipCloud());
+        return true;
+      }
+
       const playSentence = (i: number) => {
         if (runId.current !== myRun) return;
         if (i >= urls!.length) {

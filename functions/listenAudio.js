@@ -48,16 +48,54 @@ async function getAuthClient() {
   return authClient;
 }
 
-async function synthesize(text, voice) {
+const escapeXml = (s) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// Hela klippet i ETT anrop, med en tydlig, jämn paus efter varje mening.
+// Mening för mening gav rusande uttal (rösten saknade sammanhang) och
+// ojämna pauser (tystnad på slutet av varje fil plus uppspelningsglapp).
+//  - Chirp 3 HD: pausmarkering i "markup"-fältet ([pause short]).
+//  - Övriga röster: SSML med <break>.
+function buildInputs(sentences, isChirp) {
+  const plain = sentences.join(" ");
+  if (isChirp) {
+    return [
+      { markup: sentences.join(" [pause short] ") },
+      { text: plain }, // reserv om markup inte godtas
+    ];
+  }
+  return [
+    { ssml: `<speak>${sentences.map(escapeXml).join('<break time="320ms"/>')}</speak>` },
+    { text: plain },
+  ];
+}
+
+async function synthesize(sentences, voice) {
   const client = await getAuthClient();
   const voiceSelection = voice.name
     ? { languageCode: voice.languageCode, name: voice.name }
     : { languageCode: voice.languageCode, ssmlGender: voice.gender === "m" ? "MALE" : "FEMALE" };
+  const isChirp = /chirp/i.test(voice.name || "");
+  const inputs = buildInputs(sentences, isChirp);
+  let lastError;
+  for (const input of inputs) {
+    try {
+      return await request(client, input, voiceSelection, voice);
+    } catch (err) {
+      lastError = err;
+      // Bara ogiltig indata (400) ger en ny chans med enklare text.
+      if (!(err && (err.status === 400 || err.code === 400))) break;
+    }
+  }
+  throw lastError;
+}
+
+async function request(client, input, voiceSelection, voice) {
   const res = await client.request({
     url: TTS_URL,
     method: "POST",
     data: {
-      input: { text },
+      input,
       voice: voiceSelection,
       // Lite snabbare än normalt: kompis-takt, inte uppläsning. Chirp-rösterna
       // stöder inte tonhöjdsinställningen (den avvisas), så den utelämnas där.
@@ -93,24 +131,26 @@ function createListenAudio({ functions, admin, db, appId, resolvePlayerLink }) {
       const gender = data.voice === "m" ? "m" : "f";
       const entry = VOICES[lang];
       const voice = { languageCode: entry.languageCode, name: entry[gender], gender };
-      const keyFor = (text) =>
-        crypto
-          .createHash("sha256")
-          .update(`${lang}|${gender}|${voice.name || voice.languageCode}|${text}`)
-          .digest("hex");
-      const cacheRefs = sentences.map((s) => base.collection("ttsCache").doc(keyFor(s)));
-      const cached = await db.getAll(...cacheRefs);
 
-      const audio = new Array(sentences.length);
-      const missing = [];
-      cached.forEach((doc, i) => {
-        if (doc.exists && doc.data().audio) audio[i] = Buffer.from(doc.data().audio);
-        else missing.push(i);
-      });
+      // Hela klippet är ETT ljud (se buildInputs). Cachenyckeln är hela klippets
+      // text, så ett oförändrat klipp (samma match, samma coachrader) skapas bara
+      // en gång. Klienten räknar ut när varje mening börjar utifrån längd.
+      const clipText = sentences.join("\n");
+      const key = crypto
+        .createHash("sha256")
+        .update(`clip|${lang}|${gender}|${voice.name || voice.languageCode}|${clipText}`)
+        .digest("hex");
+      const cacheRef = base.collection("ttsCache").doc(key);
+      const cachedDoc = await cacheRef.get();
 
-      if (missing.length > 0) {
+      let buf;
+      let wasCached = false;
+      if (cachedDoc.exists && cachedDoc.data().audio) {
+        buf = Buffer.from(cachedDoc.data().audio);
+        wasCached = true;
+      } else {
         // Dagstak per länk, bara på det som måste syntetiseras.
-        const chars = missing.reduce((n, i) => n + sentences[i].length, 0);
+        const chars = clipText.length;
         const day = new Date().toISOString().slice(0, 10);
         const usageRef = base.collection("playerLinks").doc(token).collection("ttsUsage").doc(day);
         await db.runTransaction(async (tx) => {
@@ -123,27 +163,22 @@ function createListenAudio({ functions, admin, db, appId, resolvePlayerLink }) {
         });
 
         try {
-          await Promise.all(
-            missing.map(async (i) => {
-              const buf = await synthesize(sentences[i], voice);
-              audio[i] = buf;
-              await cacheRefs[i].set({
-                audio: buf,
-                lang,
-                chars: sentences[i].length,
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                // För en Firestore-TTL-policy på fältet expireAt (valfritt).
-                expireAt: new Date(Date.now() + CACHE_DAYS * 24 * 60 * 60 * 1000),
-              });
-            })
-          );
+          buf = await synthesize(sentences, voice);
+          await cacheRef.set({
+            audio: buf,
+            lang,
+            chars,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            // För en Firestore-TTL-policy på fältet expireAt (valfritt).
+            expireAt: new Date(Date.now() + CACHE_DAYS * 24 * 60 * 60 * 1000),
+          });
         } catch (err) {
           console.error("getListenAudio synthesis failed:", err);
           throw new functions.https.HttpsError("internal", "Kunde inte skapa ljudet.");
         }
       }
 
-      return { audio: audio.map((b) => b.toString("base64")), cached: sentences.length - missing.length };
+      return { audio: [buf.toString("base64")], whole: true, cached: wasCached ? 1 : 0 };
     });
 }
 

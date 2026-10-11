@@ -31,7 +31,8 @@ export async function fetchClipAudio(
     >(euFunctions, 'getListenAudio');
     const res = await call({ token, lang, sentences, voice });
     const audio = res.data?.audio;
-    if (!Array.isArray(audio) || audio.length !== sentences.length) {
+    // Ett ljud för hela klippet (nu) eller ett per mening (äldre svar).
+    if (!Array.isArray(audio) || (audio.length !== 1 && audio.length !== sentences.length)) {
       return { urls: null, error: 'bad-response' };
     }
     return { urls: audio.map(base64ToUrl) };
