@@ -7,12 +7,17 @@ import { useLanguage } from '../contexts/LanguageContext';
 import BreathingExercise from '../components/breathing/BreathingExercise';
 import RoutineStack, { RoutineStep } from '../components/routines/RoutineStack';
 import SeasonOverview from '../components/dashboard/SeasonOverview';
+import ListenToMatch from '../components/ListenToMatch';
+import { buildListenClips } from '../utils/listenClips';
 
 interface PlayerLinkData {
   playerName: string;
   games: { date: string; points: number }[];
   summary: { games: number; avgPoints: number; bestGame: number; last5Avg: number } | null;
   latestCoachNote: string | null;
+  /** Coachens korta rader från det senaste svaret (se askCoach). Kan saknas. */
+  coachHighlight?: string | null;
+  coachThink?: string | null;
   /** Matcher i rad med rutinen gjord — se computeRoutineStreak i functions/index.js. */
   routineStreak: number;
 }
@@ -148,6 +153,17 @@ export default function PlayerLinkPage() {
             {t('playerLink.pageGreeting', { name: data.playerName })}
           </h1>
         </div>
+
+        {/* Först: det som är enklast att ta in. Kort ljud, inget skrivande. */}
+        <ListenToMatch
+          clips={buildListenClips({
+            playerName: data.playerName,
+            games: data.games,
+            coachHighlight: data.coachHighlight,
+            coachThink: data.coachThink,
+            t,
+          })}
+        />
 
         <div className="bg-gray-800 rounded-2xl p-6">
           <h2 className="text-lg font-semibold text-white mb-4">{t('routines.nightBeforeGame.sectionTitle')}</h2>

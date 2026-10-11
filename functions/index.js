@@ -1144,11 +1144,20 @@ exports.getPlayerLinkData = functions
       .limit(30)
       .get();
     let latestCoachNote = null;
+    // Coachens korta rader ur samma svar (highlight = det som gick bra,
+    // thinkAbout = att tänka på). Redan genererade och sparade — lyssnaklippen
+    // på spelarens länk bygger på dem utan något nytt AI-anrop.
+    let coachHighlight = null;
+    let coachThink = null;
     const chatDoc = chatsSnap.docs.find((d) => d.data().playerName === playerName);
     if (chatDoc) {
       const messages = chatDoc.data().messages || [];
       const lastAi = [...messages].reverse().find((m) => m.role === 'ai');
-      if (lastAi) latestCoachNote = lastAi.text;
+      if (lastAi) {
+        latestCoachNote = lastAi.text;
+        if (typeof lastAi.highlight === 'string') coachHighlight = lastAi.highlight.slice(0, 120);
+        if (typeof lastAi.thinkAbout === 'string') coachThink = lastAi.thinkAbout.slice(0, 140);
+      }
     }
 
     // routineCompletions skrivs bara av logRoutineCompletion ovan. Själva
@@ -1156,7 +1165,7 @@ exports.getPlayerLinkData = functions
     // som är det enda sidan visar.
     const routineStreak = computeRoutineStreak(games, playerDoc.data().routineCompletions);
 
-    return { playerName, games, summary, latestCoachNote, routineStreak };
+    return { playerName, games, summary, latestCoachNote, coachHighlight, coachThink, routineStreak };
   });
 
 

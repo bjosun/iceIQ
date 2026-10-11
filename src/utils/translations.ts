@@ -171,6 +171,26 @@ export const translations = {
       unlimited: "Unlimited"
     },
 
+    // Lyssnaklipp på spelarens länk — se utils/listenClips.ts
+    listen: {
+      title: "Listen to your game",
+      play: "Play",
+      again: "Again",
+      next: "Next",
+      done: "That's it. Want to hear it again?",
+      volumeHint: "Turn the sound up if you can't hear it.",
+      unsupported: "Your browser can't read this out loud. Read the text above instead.",
+      match: "Hey {name}! Your last game: {points} points.",
+      firstGame: "That's your first game logged. A start.",
+      above: "That's {n} above your own average.",
+      below: "That's a bit under your own average. It happens.",
+      same: "Right on your own average.",
+      goodIntro: "What went well:",
+      badge: "New badge: {badge}.",
+      keepGoing: "{count} games logged. That's how you get better.",
+      thinkIntro: "One thing to think about:"
+    },
+
     // Samtycke innan AI-coachen får spelardata — se utils/aiConsent.ts
     aiConsent: {
       title: "Before you use the AI coach",
@@ -736,6 +756,26 @@ export const translations = {
       support: "Prioriterad support",
       price: "Pris",
       unlimited: "Obegränsat"
+    },
+
+    // Lyssnaklipp på spelarens länk — se utils/listenClips.ts
+    listen: {
+      title: "Lyssna på din match",
+      play: "Spela upp",
+      again: "Igen",
+      next: "Nästa",
+      done: "Det var allt. Vill du höra det igen?",
+      volumeHint: "Höj ljudet om du inte hör.",
+      unsupported: "Din webbläsare kan inte läsa upp det här. Läs texten ovan i stället.",
+      match: "Hej {name}! Din senaste match: {points} poäng.",
+      firstGame: "Det är din första loggade match. En start.",
+      above: "Det är {n} över ditt eget snitt.",
+      below: "Det är lite under ditt eget snitt. Det händer.",
+      same: "Precis på ditt eget snitt.",
+      goodIntro: "Det som gick bra:",
+      badge: "Nytt märke: {badge}.",
+      keepGoing: "{count} matcher loggade. Så blir man bättre.",
+      thinkIntro: "En sak att tänka på:"
     },
 
     // Samtycke innan AI-coachen får spelardata — se utils/aiConsent.ts
