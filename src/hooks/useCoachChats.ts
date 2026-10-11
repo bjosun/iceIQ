@@ -29,6 +29,8 @@ export interface CoachChatMessage {
    * att öva på, i lugn ton. Utelämnas när inget tydligt mönster fanns.
    */
   thinkAbout?: string;
+  /** Talat manus (2–4 korta meningar) för uppläsning på spelarens länk. */
+  spokenRecap?: string[];
   /**
    * Fasta nyckelord (se FOCUS_TAGS i functions/index.js) som pekar ut om
    * något i rutinbiblioteket är relevant för det här svaret — t.ex.

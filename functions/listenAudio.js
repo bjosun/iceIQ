@@ -22,9 +22,21 @@ const MAX_LENGTH = 160;
 const DAILY_CHAR_CAP = 3000;
 const CACHE_DAYS = 30;
 
+// Kvinnlig (f) och manlig (m) röst per språk. Namnen sätts i functions/.env
+// (LISTEN_VOICE_SV_F / LISTEN_VOICE_SV_M, samma för EN); LISTEN_VOICE_SV gäller
+// som kvinnlig röst för bakåtkompatibilitet. Utan namn väljer Google en
+// standardröst efter språk och kön.
 const VOICES = {
-  sv: { languageCode: "sv-SE", name: process.env.LISTEN_VOICE_SV || undefined },
-  en: { languageCode: "en-US", name: process.env.LISTEN_VOICE_EN || undefined },
+  sv: {
+    languageCode: "sv-SE",
+    f: process.env.LISTEN_VOICE_SV_F || process.env.LISTEN_VOICE_SV || undefined,
+    m: process.env.LISTEN_VOICE_SV_M || undefined,
+  },
+  en: {
+    languageCode: "en-US",
+    f: process.env.LISTEN_VOICE_EN_F || process.env.LISTEN_VOICE_EN || undefined,
+    m: process.env.LISTEN_VOICE_EN_M || undefined,
+  },
 };
 
 let authClient = null;
@@ -40,7 +52,7 @@ async function synthesize(text, voice) {
   const client = await getAuthClient();
   const voiceSelection = voice.name
     ? { languageCode: voice.languageCode, name: voice.name }
-    : { languageCode: voice.languageCode, ssmlGender: "FEMALE" };
+    : { languageCode: voice.languageCode, ssmlGender: voice.gender === "m" ? "MALE" : "FEMALE" };
   const res = await client.request({
     url: TTS_URL,
     method: "POST",
@@ -78,11 +90,13 @@ function createListenAudio({ functions, admin, db, appId, resolvePlayerLink }) {
         throw new functions.https.HttpsError("invalid-argument", "Ogiltiga meningar.");
       }
 
-      const voice = VOICES[lang];
+      const gender = data.voice === "m" ? "m" : "f";
+      const entry = VOICES[lang];
+      const voice = { languageCode: entry.languageCode, name: entry[gender], gender };
       const keyFor = (text) =>
         crypto
           .createHash("sha256")
-          .update(`${lang}|${voice.name || voice.languageCode}|${text}`)
+          .update(`${lang}|${gender}|${voice.name || voice.languageCode}|${text}`)
           .digest("hex");
       const cacheRefs = sentences.map((s) => base.collection("ttsCache").doc(keyFor(s)));
       const cached = await db.getAll(...cacheRefs);

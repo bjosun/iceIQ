@@ -3,7 +3,9 @@ import { Play, RotateCcw, SkipForward, Volume2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ListenClip } from '../utils/listenClips';
 import { isInAppBrowser } from '../utils/inAppBrowser';
-import { fetchClipAudio } from '../utils/cloudVoice';
+import { fetchClipAudio, VoiceGender } from '../utils/cloudVoice';
+
+const VOICE_KEY = 'iceiq-listen-voice';
 
 // En tyst, giltig WAV. iOS släpper bara igenom uppspelning som startar i ett
 // tryck, och molnljudet hämtas först efter trycket. Därför "låser" vi upp ett
@@ -53,6 +55,13 @@ export default function ListenToMatch({ clips, token }: ListenToMatchProps) {
   // Hämtat molnljud per klipp. null = hämtningen misslyckades (använd telefonens röst).
   const cloudAudio = useRef<Map<string, string[] | null>>(new Map());
   const cloudDown = useRef(false);
+  // Röstens kön (kvinna/man). Sparas på enheten och gäller bara molnrösten.
+  const [gender, setGender] = useState<VoiceGender>(() => {
+    try { return localStorage.getItem(VOICE_KEY) === 'm' ? 'm' : 'f'; } catch { return 'f'; }
+  });
+  // Visar vilken röst som användes (och varför molnet föll bort) — en
+  // testhjälp medan rösten trimmas in.
+  const [voiceInfo, setVoiceInfo] = useState('');
 
   const supported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
@@ -76,30 +85,36 @@ export default function ListenToMatch({ clips, token }: ListenToMatchProps) {
 
     // Molnrösten: hämta (eller använd redan hämtat) ljud för klippet och spela
     // meningarna i följd. Misslyckas något går vi till telefonens röst.
+    const cacheKey = (id: string) => `${gender}:${id}`;
     const prefetch = (i: number) => {
       const c = clips[i];
-      if (!c || !token || cloudDown.current || cloudAudio.current.has(c.id)) return;
-      cloudAudio.current.set(c.id, null);
-      fetchClipAudio(token, language, c.sentences).then((urls) => {
-        if (urls) cloudAudio.current.set(c.id, urls);
-        else cloudDown.current = true;
+      if (!c || !token || cloudDown.current || cloudAudio.current.has(cacheKey(c.id))) return;
+      cloudAudio.current.set(cacheKey(c.id), null);
+      fetchClipAudio(token, language, c.sentences, gender).then((res) => {
+        if (res.urls) cloudAudio.current.set(cacheKey(c.id), res.urls);
+        else {
+          cloudDown.current = true;
+          setVoiceInfo(`telefonens röst (molnet: ${res.error})`);
+        }
       });
     };
 
     const playCloud = async (): Promise<boolean> => {
       if (!token || cloudDown.current || !audioEl.current) return false;
-      let urls = cloudAudio.current.get(clip.id) ?? null;
+      let urls = cloudAudio.current.get(cacheKey(clip.id)) ?? null;
       if (!urls) {
         setCaption(clip.sentences[0]);
-        const fetched = await fetchClipAudio(token, language, clip.sentences);
+        const res = await fetchClipAudio(token, language, clip.sentences, gender);
         if (runId.current !== myRun) return true; // avbrutet under tiden
-        if (!fetched) {
+        if (!res.urls) {
           cloudDown.current = true;
+          setVoiceInfo(`telefonens röst (molnet: ${res.error})`);
           return false;
         }
-        cloudAudio.current.set(clip.id, fetched);
-        urls = fetched;
+        cloudAudio.current.set(cacheKey(clip.id), res.urls);
+        urls = res.urls;
       }
+      setVoiceInfo(gender === 'm' ? 'Google, man' : 'Google, kvinna');
       prefetch(index + 1);
       const el = audioEl.current;
       const playSentence = (i: number) => {
@@ -179,7 +194,7 @@ export default function ListenToMatch({ clips, token }: ListenToMatchProps) {
     playCloud().then((usedCloud) => {
       if (!usedCloud && runId.current === myRun) playDevice();
     });
-  }, [clips, language, stop, supported, token]);
+  }, [clips, language, stop, supported, token, gender]);
 
   // Rösterna laddas asynkront i vissa webbläsare; rensa vid avmontering.
   useEffect(() => {
@@ -254,6 +269,29 @@ export default function ListenToMatch({ clips, token }: ListenToMatchProps) {
               </button>
             )}
           </div>
+
+          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400">
+            <span>{t('listen.voice')}</span>
+            {(['f', 'm'] as VoiceGender[]).map((g) => (
+              <button
+                key={g}
+                onClick={() => {
+                  if (g === gender) return;
+                  stop();
+                  try { localStorage.setItem(VOICE_KEY, g); } catch { /* lagring blockerad */ }
+                  cloudAudio.current.clear();
+                  cloudDown.current = false;
+                  setGender(g);
+                }}
+                className={`px-3 py-1 rounded-full border ${
+                  g === gender ? 'border-cyan-400 text-cyan-200' : 'border-gray-600 text-gray-400'
+                }`}
+              >
+                {t(g === 'f' ? 'listen.voiceFemale' : 'listen.voiceMale')}
+              </button>
+            ))}
+          </div>
+          {voiceInfo && <p className="mt-2 text-[10px] text-gray-500">{voiceInfo}</p>}
 
           {playing && (
             <p className="mt-3 text-xs text-gray-400 flex items-center justify-center gap-1">

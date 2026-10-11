@@ -18,6 +18,7 @@ interface PlayerLinkData {
   /** Coachens korta rader från det senaste svaret (se askCoach). Kan saknas. */
   coachHighlight?: string | null;
   coachThink?: string | null;
+  coachSpoken?: string[];
   /** Matcher i rad med rutinen gjord — se computeRoutineStreak i functions/index.js. */
   routineStreak: number;
 }
@@ -162,6 +163,7 @@ export default function PlayerLinkPage() {
             games: data.games,
             coachHighlight: data.coachHighlight,
             coachThink: data.coachThink,
+            coachSpoken: data.coachSpoken,
             t,
             lang: language,
           })}

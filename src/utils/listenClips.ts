@@ -20,6 +20,8 @@ interface BuildInput {
   games: { date: string; points: number }[];
   coachHighlight?: string | null;
   coachThink?: string | null;
+  /** Coachens TALADE manus (2–4 korta meningar). Den långa analystexten läses aldrig upp. */
+  coachSpoken?: string[] | null;
   t: (key: string, params?: Record<string, string | number>) => string;
   /** Språk för uppläsningen ('sv' eller 'en'). */
   lang?: string;
@@ -33,7 +35,7 @@ const firstWord = (name: string) => name.trim().split(/\s+/)[0] || name;
 const VARIANTS = 3;
 const variant = (seed: number) => (Math.abs(Math.round(seed)) % VARIANTS) + 1;
 
-export function buildListenClips({ playerName, games, coachHighlight, coachThink, t, lang = 'sv' }: BuildInput): ListenClip[] {
+export function buildListenClips({ playerName, games, coachHighlight, coachThink, coachSpoken, t, lang = 'sv' }: BuildInput): ListenClip[] {
   if (games.length === 0) return [];
 
   const name = firstWord(playerName);
@@ -56,8 +58,16 @@ export function buildListenClips({ playerName, games, coachHighlight, coachThink
   }
   clips.push({ id: 'match', sentences: match.map(say) });
 
-  // 2. Det som gick bra: coachens egen rad om den finns, annars ett märke
-  //    eller antalet loggade matcher. Aldrig något påhittat.
+  // 2a. Coachens talade manus: skrivet av coachen för att läsas upp, i samma
+  //     svar som analysen. Finns det används det i stället för raderna nedan.
+  const spoken = (coachSpoken ?? []).filter((x) => typeof x === 'string' && x.trim());
+  if (spoken.length > 0) {
+    clips.push({ id: 'good', sentences: spoken.map(say) });
+    return clips;
+  }
+
+  // 2b. Annars: coachens egen rad om den finns, annars ett märke eller
+  //     antalet loggade matcher. Aldrig något påhittat.
   const good: string[] = [];
   if (coachHighlight) {
     good.push(t('listen.goodIntro'), coachHighlight);

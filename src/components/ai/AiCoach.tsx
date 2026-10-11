@@ -232,6 +232,9 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
         const thinkAbout = typeof result.data.thinkAbout === 'string'
           ? result.data.thinkAbout.trim()
           : '';
+        const spokenRecap: string[] = Array.isArray(result.data.spokenRecap)
+          ? result.data.spokenRecap.filter((x: unknown) => typeof x === 'string' && x.trim())
+          : [];
         const focusTags = Array.isArray(result.data.focusTags) ? result.data.focusTags : [];
         const finalMessages: CoachChatMessage[] = [
           ...baseMessages,
@@ -243,6 +246,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             text: result.data.analysis,
             ...(highlight ? { highlight } : {}),
             ...(thinkAbout ? { thinkAbout } : {}),
+            ...(spokenRecap.length ? { spokenRecap } : {}),
             ...(focusTags.length ? { focusTags } : {}),
           },
         ];

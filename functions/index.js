@@ -707,6 +707,14 @@ exports.askCoach = functions
       - Skriv det som ett lugnt konstaterande eller en fråga att bära med sig, aldrig som kritik eller skuld, och aldrig om spelarens värde. Misstaget är något man övar bort, inte något man är. Exempel: "Fyra pucktapp i egen zon — vad såg du precis innan?"
       - Samma sanningsregel som för shareHighlight: bara sådant som stöds av datan, inget påhittat tal. Finns inget tydligt mönster: tom sträng.
 
+      TALAD SAMMANFATTNING (fältet "spokenRecap" i svaret):
+      - 2 till 4 korta meningar som ska LÄSAS UPP för spelaren av en röst. Skriv som en kompis som pratar, inte som en text: vardagliga ord, du-form, korta meningar (max ca 70 tecken var).
+      - Börja med det viktigaste, gärna det som gick bra, och avsluta med EN konkret sak att göra eller tänka på till nästa gång.
+      - Ingen markdown, inga punktlistor, inga emojis, inga tankstreck, och skriv inte tecken som "×" eller "%". Skriv tal med ord där det går.
+      - Bara det som står i ditt svar och i datan. Inga nya påståenden, ingen jämförelse med andra spelare, och aldrig något som låter som kritik av personen.
+      - Språkkoden är "${userLanguage}". Är spelaren ett barn: enklare ord och ännu kortare meningar.
+      - Finns inget att säga: tom lista.
+
       FOKUSOMRÅDEN (fältet "focusTags" i svaret):
       - Max 2 taggar, och bara om ett TYDLIGT mönster i datan pekar dit — en enda match räcker inte om historiken/säsongsöversikten säger något annat. Det vanliga fallet är en tom lista, inte undantaget.
       - Välj ENDAST ur listan nedan. Hitta aldrig på en egen tagg — okända taggar filtreras bort ändå.
@@ -758,6 +766,11 @@ exports.askCoach = functions
         analysis: { type: Type.STRING, description: 'Svaret till spelaren, enligt formateringsinstruktionerna.' },
         shareHighlight: { type: Type.STRING, description: 'En delbar en-radare, max 90 tecken. Tom sträng om inget sant positivt finns att lyfta.' },
         thinkAbout: { type: Type.STRING, description: 'En kort mening om det som är värt att öva på, max 110 tecken. Tom sträng om inget tydligt mönster finns.' },
+        spokenRecap: {
+          type: Type.ARRAY,
+          description: '2-4 korta meningar på talspråk som kan läsas upp för spelaren. Tom lista om inget att säga.',
+          items: { type: Type.STRING },
+        },
         focusTags: {
           type: Type.ARRAY,
           description: 'Max 2 taggar ur den fasta listan, bara vid ett tydligt mönster i datan. Tom lista är det vanliga.',
@@ -856,6 +869,7 @@ exports.askCoach = functions
     let analysis = rawText;
     let shareHighlight = '';
     let thinkAbout = '';
+    let spokenRecap = [];
     let focusTags = [];
     let coachTimeline = null;
     try {
@@ -868,6 +882,12 @@ exports.askCoach = functions
       }
       if (typeof parsed.thinkAbout === 'string') {
         thinkAbout = parsed.thinkAbout.trim().slice(0, 110);
+      }
+      if (Array.isArray(parsed.spokenRecap)) {
+        spokenRecap = parsed.spokenRecap
+          .filter((x) => typeof x === 'string' && x.trim().length > 0)
+          .map((x) => x.trim().slice(0, 160))
+          .slice(0, 4);
       }
       if (Array.isArray(parsed.focusTags)) {
         // enum i schemat styr redan modellen, men filtrera ändå mot
@@ -913,6 +933,7 @@ exports.askCoach = functions
       analysis,
       shareHighlight,
       thinkAbout,
+      spokenRecap,
       focusTags,
       creditsLeft: balance.monthly + balance.purchased,
       monthlyCredits: balance.monthly,
@@ -1155,6 +1176,8 @@ exports.getPlayerLinkData = functions
     // på spelarens länk bygger på dem utan något nytt AI-anrop.
     let coachHighlight = null;
     let coachThink = null;
+    // Det TALADE manuset (kort, talspråk). Själva analystexten läses aldrig upp.
+    let coachSpoken = [];
     const chatDoc = chatsSnap.docs.find((d) => d.data().playerName === playerName);
     if (chatDoc) {
       const messages = chatDoc.data().messages || [];
@@ -1163,6 +1186,12 @@ exports.getPlayerLinkData = functions
         latestCoachNote = lastAi.text;
         if (typeof lastAi.highlight === 'string') coachHighlight = lastAi.highlight.slice(0, 120);
         if (typeof lastAi.thinkAbout === 'string') coachThink = lastAi.thinkAbout.slice(0, 140);
+        if (Array.isArray(lastAi.spokenRecap)) {
+          coachSpoken = lastAi.spokenRecap
+            .filter((x) => typeof x === 'string' && x.trim())
+            .map((x) => x.slice(0, 160))
+            .slice(0, 4);
+        }
       }
     }
 
@@ -1171,7 +1200,7 @@ exports.getPlayerLinkData = functions
     // som är det enda sidan visar.
     const routineStreak = computeRoutineStreak(games, playerDoc.data().routineCompletions);
 
-    return { playerName, games, summary, latestCoachNote, coachHighlight, coachThink, routineStreak };
+    return { playerName, games, summary, latestCoachNote, coachHighlight, coachThink, coachSpoken, routineStreak };
   });
 
 
