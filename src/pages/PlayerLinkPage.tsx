@@ -140,12 +140,25 @@ export default function PlayerLinkPage() {
       });
   };
 
-  // Språk för lyssnakortet: det coachen svarade på. Äldre svar saknar sparad
-  // språkkod, då gissas det ur texten; sist besökarens språk.
+  // Språk för lyssnakortet. Prioritet:
+  //  1. Ett språk som besökaren själv valt på den här enheten (språkknappen i
+  //     appen sparar det). Det är det som gäller när du testar EN/SV.
+  //  2. Språket coachen svarade på / förälderns kontospråk (barnets telefon har
+  //     inget eget val, och webbläsarens språk ska inte avgöra).
+  //  3. Texten gissas, sist webbläsarens språk.
+  // Coachens rader läses bara upp när de är skrivna på samma språk som kortet,
+  // så att svensk text aldrig läses med engelsk röst eller tvärtom.
+  const coachLines = [...(data.coachSpoken ?? []), data.coachHighlight ?? '', data.coachThink ?? ''].join(' ');
+  const textLang = detectLang(coachLines) || data.listenLang || null;
+  let savedLang: 'sv' | 'en' | null = null;
+  try {
+    const stored = localStorage.getItem('iceiq-language');
+    if (stored === 'sv' || stored === 'en') savedLang = stored;
+  } catch { /* lagring blockerad */ }
   const listenLang: 'sv' | 'en' =
-    data.listenLang ||
-    detectLang([...(data.coachSpoken ?? []), data.coachHighlight ?? '', data.coachThink ?? '', data.latestCoachNote ?? ''].join(' ')) ||
-    (language === 'sv' ? 'sv' : 'en');
+    savedLang || data.listenLang || textLang || (language === 'sv' ? 'sv' : 'en');
+  const coachMatches = !textLang || textLang === listenLang;
+  const hasCoachLines = coachLines.trim().length > 0;
 
   const streakNote = streak > 0
     ? (streak === 1
@@ -171,12 +184,13 @@ export default function PlayerLinkPage() {
         <ListenToMatch
           token={token}
           lang={listenLang}
+          note={hasCoachLines && !coachMatches ? translateFor(listenLang)('listen.coachOtherLang') : undefined}
           clips={buildListenClips({
             playerName: data.playerName,
             games: data.games,
-            coachHighlight: data.coachHighlight,
-            coachThink: data.coachThink,
-            coachSpoken: data.coachSpoken,
+            coachHighlight: coachMatches ? data.coachHighlight : null,
+            coachThink: coachMatches ? data.coachThink : null,
+            coachSpoken: coachMatches ? data.coachSpoken : null,
             t: translateFor(listenLang),
             lang: listenLang,
           })}

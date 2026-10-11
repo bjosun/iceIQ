@@ -21,6 +21,8 @@ interface ListenToMatchProps {
   token?: string;
   /** Språket för kortets texter OCH rösten (coachens språk), inte besökarens. */
   lang: Language;
+  /** Liten notering under kortet (t.ex. att coachens text är på ett annat språk). */
+  note?: string;
 }
 
 // Röst: telefonens/webbläsarens egen text-till-tal. Gratis, inget lämnar
@@ -47,7 +49,7 @@ function pickVoice(lang: string): SpeechSynthesisVoice | null {
 // TikTok-takt: lite snabbare än normalt, korta meningar som spelas direkt efter varandra.
 const RATE = 1.25;
 
-export default function ListenToMatch({ clips, token, lang }: ListenToMatchProps) {
+export default function ListenToMatch({ clips, token, lang, note }: ListenToMatchProps) {
   const language = lang;
   const t = useMemo(() => translateFor(lang), [lang]);
   const [clipIndex, setClipIndex] = useState(0);
@@ -307,6 +309,7 @@ export default function ListenToMatch({ clips, token, lang }: ListenToMatchProps
         </>
       )}
 
+      {note && <p className="text-[11px] text-gray-500 mt-3">{note}</p>}
       {!supported && <p className="text-sm text-gray-400 mt-3">{t('listen.unsupported')}</p>}
     </div>
   );
