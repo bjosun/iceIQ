@@ -47,8 +47,11 @@ async function synthesize(text, voice) {
     data: {
       input: { text },
       voice: voiceSelection,
-      // Lite snabbare än normalt: kompis-takt, inte uppläsning.
-      audioConfig: { audioEncoding: "MP3", speakingRate: 1.12, pitch: 0 },
+      // Lite snabbare än normalt: kompis-takt, inte uppläsning. Chirp-rösterna
+      // stöder inte tonhöjdsinställningen (den avvisas), så den utelämnas där.
+      audioConfig: /chirp/i.test(voice.name || "")
+        ? { audioEncoding: "MP3", speakingRate: 1.1 }
+        : { audioEncoding: "MP3", speakingRate: 1.12, pitch: 0 },
     },
   });
   return Buffer.from(res.data.audioContent, "base64");
