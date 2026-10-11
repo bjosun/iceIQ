@@ -29,7 +29,7 @@ type LoadState = 'loading' | 'ready' | 'not-found' | 'revoked' | 'error';
 // i functions/index.js. Renderas utan <Layout> (se hideLayout i App.tsx).
 export default function PlayerLinkPage() {
   const { token } = useParams<{ token: string }>();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [state, setState] = useState<LoadState>('loading');
   const [data, setData] = useState<PlayerLinkData | null>(null);
   // Streaken uppdateras lokalt när rutinen just gjorts, så belöningskortet
@@ -162,6 +162,7 @@ export default function PlayerLinkPage() {
             coachHighlight: data.coachHighlight,
             coachThink: data.coachThink,
             t,
+            lang: language,
           })}
         />
 

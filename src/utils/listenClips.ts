@@ -4,9 +4,10 @@
 // dem gratis, förutsägbara och säkra för barn — inget fritt AI-svar går
 // direkt till barnet.
 //
-// Texterna är korta meningar (de spelas upp med mycket små pauser) och
-// jämför bara med spelarens eget snitt, aldrig med andra.
+// Texterna är skrivna på talspråk (korta meningar, spelas upp med små pauser)
+// och jämför bara med spelarens eget snitt, aldrig med andra.
 import { newBadges } from './badges';
+import { speakable } from './speakable';
 
 export interface ListenClip {
   id: 'match' | 'good' | 'think';
@@ -20,30 +21,40 @@ interface BuildInput {
   coachHighlight?: string | null;
   coachThink?: string | null;
   t: (key: string, params?: Record<string, string | number>) => string;
+  /** Språk för uppläsningen ('sv' eller 'en'). */
+  lang?: string;
 }
 
 const firstWord = (name: string) => name.trim().split(/\s+/)[0] || name;
 
-export function buildListenClips({ playerName, games, coachHighlight, coachThink, t }: BuildInput): ListenClip[] {
+// Antal varianter per fras (listen.match1..N osv). Varianten väljs av matchens
+// poäng och antal, så samma match låter likadant varje gång men olika matcher
+// inte upprepar sig ord för ord.
+const VARIANTS = 3;
+const variant = (seed: number) => (Math.abs(Math.round(seed)) % VARIANTS) + 1;
+
+export function buildListenClips({ playerName, games, coachHighlight, coachThink, t, lang = 'sv' }: BuildInput): ListenClip[] {
   if (games.length === 0) return [];
 
   const name = firstWord(playerName);
   const last = games[games.length - 1];
   const previous = games.slice(0, -1).map((g) => g.points || 0);
   const clips: ListenClip[] = [];
+  const seed = last.points + games.length;
+  const say = (text: string) => speakable(text, lang);
 
   // 1. Matchen: poängen, och hur den ligger mot spelarens eget snitt.
-  const match: string[] = [t('listen.match', { name, points: last.points })];
+  const match: string[] = [t(`listen.match${variant(seed)}`, { name, points: last.points })];
   if (previous.length === 0) {
     match.push(t('listen.firstGame'));
   } else if (previous.length >= 2) {
     const avg = previous.reduce((a, b) => a + b, 0) / previous.length;
     const diff = Math.round(last.points - avg);
-    if (diff > 0) match.push(t('listen.above', { n: diff }));
-    else if (diff < 0) match.push(t('listen.below'));
+    if (diff > 0) match.push(t(`listen.above${variant(seed + 1)}`, { n: diff }));
+    else if (diff < 0) match.push(t(`listen.below${variant(seed + 1)}`));
     else match.push(t('listen.same'));
   }
-  clips.push({ id: 'match', sentences: match });
+  clips.push({ id: 'match', sentences: match.map(say) });
 
   // 2. Det som gick bra: coachens egen rad om den finns, annars ett märke
   //    eller antalet loggade matcher. Aldrig något påhittat.
@@ -58,11 +69,11 @@ export function buildListenClips({ playerName, games, coachHighlight, coachThink
       good.push(t('listen.keepGoing', { count: games.length }));
     }
   }
-  if (good.length > 0) clips.push({ id: 'good', sentences: good });
+  if (good.length > 0) clips.push({ id: 'good', sentences: good.map(say) });
 
   // 3. Att tänka på: bara om coachen har lämnat en rad om det.
   if (coachThink) {
-    clips.push({ id: 'think', sentences: [t('listen.thinkIntro'), coachThink] });
+    clips.push({ id: 'think', sentences: [t('listen.thinkIntro'), coachThink].map(say) });
   }
 
   return clips;
