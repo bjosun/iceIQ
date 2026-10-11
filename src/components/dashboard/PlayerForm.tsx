@@ -72,7 +72,7 @@ export default function PlayerForm({
     setMintingLink(true);
     try {
       const mintPlayerLink = httpsCallable(euFunctions, 'mintPlayerLink');
-      const result: any = await mintPlayerLink({ playerName: selectedPlayerName });
+      const result: any = await mintPlayerLink({ playerName: selectedPlayerName, origin: window.location.origin });
       setLinkUrl(result.data.url);
       setLinkModalOpen(true);
     } catch (err: any) {

@@ -993,6 +993,12 @@ exports.mintPlayerLink = functions
       throw new functions.https.HttpsError('invalid-argument', 'Spelarnamn saknas.');
     }
 
+    // Länken byggs på den adress föräldern står på (produktion eller testmålet),
+    // så att en länk skapad på testmålet också öppnas där. Bara kända adresser
+    // godtas — annars kunde klienten få oss att skapa länkar mot en annan sajt.
+    const LINK_ORIGINS = ['https://iceiq.app', 'https://www.iceiq.app', 'https://iceiq-v2.web.app'];
+    const linkBase = LINK_ORIGINS.includes(data.origin) ? data.origin : APP_URL;
+
     // Ägarkoll: spelaren måste finnas under den inloggade förälderns egna
     // users/{uid}/players — annars kunde vem som helst skapa en länk för
     // en spelare de inte äger genom att bara gissa ett namn.
@@ -1017,7 +1023,7 @@ exports.mintPlayerLink = functions
       .get();
     if (!existing.empty) {
       const token = existing.docs[0].id;
-      return { token, url: `${APP_URL}/p/${token}` };
+      return { token, url: `${linkBase}/p/${token}` };
     }
 
     const token = crypto.randomBytes(24).toString('base64url');
@@ -1027,7 +1033,7 @@ exports.mintPlayerLink = functions
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       revokedAt: null,
     });
-    return { token, url: `${APP_URL}/p/${token}` };
+    return { token, url: `${linkBase}/p/${token}` };
   });
 
 // Delad tokenupplösning för de inloggningsfria spelarlänk-funktionerna.
