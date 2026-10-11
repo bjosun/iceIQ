@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Play, RotateCcw, SkipForward, Volume2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ListenClip } from '../utils/listenClips';
+import { isInAppBrowser } from '../utils/inAppBrowser';
 
 interface ListenToMatchProps {
   clips: ListenClip[];
@@ -113,6 +114,12 @@ export default function ListenToMatch({ clips }: ListenToMatchProps) {
   return (
     <div className="bg-gradient-to-br from-cyan-900/40 to-gray-800 border border-cyan-500/20 rounded-2xl p-5 text-center">
       <p className="text-xs uppercase tracking-widest text-cyan-300 mb-3">{t('listen.title')}</p>
+
+      {isInAppBrowser() && (
+        <p className="text-xs text-yellow-200 bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-3 py-2 mb-3">
+          {t('listen.inAppHint')}
+        </p>
+      )}
 
       {!started ? (
         <button
