@@ -14,18 +14,23 @@ interface ListenToMatchProps {
 function pickVoice(lang: string): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis?.getVoices() ?? [];
   const wanted = lang === 'sv' ? 'sv' : 'en';
-  const matches = voices.filter((v) => v.lang.toLowerCase().startsWith(wanted));
-  // Föredra de bättre rösterna (de heter ofta "Enhanced"/"Premium"/"Natural").
-  return (
-    matches.find((v) => /enhanced|premium|natural/i.test(v.name)) ||
-    matches.find((v) => v.localService) ||
-    matches[0] ||
-    null
-  );
+  const matches = voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(wanted));
+  if (matches.length === 0) return null;
+  // Poängsätt: de bättre, nedladdade rösterna heter ofta Premium/Enhanced/Natural,
+  // medan "Compact" är de enklaste och låter mest syntetiska.
+  const score = (v: SpeechSynthesisVoice) => {
+    let sc = 0;
+    if (/premium/i.test(v.name)) sc += 4;
+    if (/enhanced|natural|neural|google/i.test(v.name)) sc += 3;
+    if (/compact/i.test(v.name)) sc -= 3;
+    if (v.localService) sc += 1;
+    return sc;
+  };
+  return [...matches].sort((x, y) => score(y) - score(x))[0];
 }
 
 // TikTok-takt: lite snabbare än normalt, korta meningar som spelas direkt efter varandra.
-const RATE = 1.12;
+const RATE = 1.25;
 
 export default function ListenToMatch({ clips }: ListenToMatchProps) {
   const { t, language } = useLanguage();
@@ -56,43 +61,50 @@ export default function ListenToMatch({ clips }: ListenToMatchProps) {
     setPlaying(true);
 
     const voice = pickVoice(language);
-    const speakSentence = (i: number) => {
+
+    // Hela klippets meningar läggs i kö på en gång. Att vänta på "end" för
+    // varje mening och först då starta nästa gav en märkbar paus emellan
+    // (och en seg känsla); kön gör att de följer direkt på varandra.
+    const finishClip = () => {
       if (runId.current !== myRun) return;
-      if (i >= clip.sentences.length) {
-        setPlaying(false);
-        // Nästa klipp startar av sig självt (som i en videoström).
-        if (auto && index + 1 < clips.length) {
-          window.setTimeout(() => { if (runId.current === myRun) playClip(index + 1, true); }, 350);
-        } else if (index + 1 >= clips.length) {
-          setDone(true);
-        }
-        return;
+      setPlaying(false);
+      // Nästa klipp startar av sig självt (som i en videoström).
+      if (auto && index + 1 < clips.length) {
+        window.setTimeout(() => { if (runId.current === myRun) playClip(index + 1, true); }, 250);
+      } else if (index + 1 >= clips.length) {
+        setDone(true);
       }
-      const text = clip.sentences[i];
-      setCaption(text);
+    };
+
+    // Vissa webbläsare (och enheter utan svensk röst) skickar aldrig "end".
+    // Då går vi vidare efter en rimlig tid i stället för att fastna.
+    let finished = false;
+    const finishOnce = () => {
+      if (finished) return;
+      finished = true;
+      window.clearTimeout(fallback);
+      finishClip();
+    };
+    const totalChars = clip.sentences.reduce((n, sentence) => n + sentence.length, 0);
+    const fallback = window.setTimeout(finishOnce, Math.max(2500, (totalChars * 95) / RATE + 1500));
+
+    setCaption(clip.sentences[0]);
+    clip.sentences.forEach((text, i) => {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = language === 'sv' ? 'sv-SE' : 'en-US';
       if (voice) u.voice = voice;
       u.rate = RATE;
-      u.pitch = 1.05;
-      // Vissa webbläsare (och enheter utan svensk röst) skickar aldrig "end".
-      // Då går vi vidare efter en rimlig tid i stället för att fastna.
-      let advanced = false;
-      const advance = () => {
-        if (advanced) return;
-        advanced = true;
-        window.clearTimeout(fallback);
-        speakSentence(i + 1);
-      };
-      const fallback = window.setTimeout(advance, Math.max(1800, text.length * 110));
-      u.onend = advance;
-      u.onerror = () => {
-        window.clearTimeout(fallback);
-        if (runId.current === myRun) setPlaying(false);
-      };
+      u.pitch = 1;
+      u.onstart = () => { if (runId.current === myRun) setCaption(text); };
+      if (i === clip.sentences.length - 1) {
+        u.onend = finishOnce;
+        u.onerror = () => {
+          window.clearTimeout(fallback);
+          if (runId.current === myRun) setPlaying(false);
+        };
+      }
       window.speechSynthesis.speak(u);
-    };
-    speakSentence(0);
+    });
   }, [clips, language, stop, supported]);
 
   // Rösterna laddas asynkront i vissa webbläsare; rensa vid avmontering.
