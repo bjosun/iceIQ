@@ -6,6 +6,7 @@ import type { Language } from '../utils/translations';
 import { ListenClip } from '../utils/listenClips';
 import { isInAppBrowser } from '../utils/inAppBrowser';
 import { fetchClipAudio, VoiceGender } from '../utils/cloudVoice';
+import { logListen } from '../utils/listenStats';
 
 const VOICE_KEY = 'iceiq-listen-voice';
 
@@ -116,12 +117,14 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
         if (!res.urls) {
           cloudDown.current = true;
           setVoiceInfo(`telefonens röst (molnet: ${res.error})`);
+          logListen(token, 'cloud_fallback');
           return false;
         }
         cloudAudio.current.set(cacheKey(clip.id), res.urls);
         urls = res.urls;
       }
       setVoiceInfo(gender === 'm' ? 'Google, man' : 'Google, kvinna');
+      logListen(token, 'cloud_ok');
       prefetch(index + 1);
       const el = audioEl.current;
       const playSentence = (i: number) => {
@@ -139,6 +142,8 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
       const finishClipCloud = () => {
         if (runId.current !== myRun) return;
         setPlaying(false);
+        logListen(token, `clip_${index + 1}_done` as 'clip_1_done');
+        if (index + 1 >= clips.length) logListen(token, 'finished');
         if (auto && index + 1 < clips.length) {
           window.setTimeout(() => { if (runId.current === myRun) playClip(index + 1, true); }, 200);
         } else if (index + 1 >= clips.length) {
@@ -158,6 +163,8 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
     const finishClip = () => {
       if (runId.current !== myRun) return;
       setPlaying(false);
+      logListen(token, `clip_${index + 1}_done` as 'clip_1_done');
+      if (index + 1 >= clips.length) logListen(token, 'finished');
       // Nästa klipp startar av sig självt (som i en videoström).
       if (auto && index + 1 < clips.length) {
         window.setTimeout(() => { if (runId.current === myRun) playClip(index + 1, true); }, 250);
@@ -203,6 +210,15 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
     });
   }, [clips, language, stop, supported, token, gender]);
 
+  // En räkning när kortet visas (för att kunna se hur många som trycker spela).
+  const openLogged = useRef(false);
+  useEffect(() => {
+    if (clips.length > 0 && !openLogged.current) {
+      openLogged.current = true;
+      logListen(token, 'open');
+    }
+  }, [clips.length, token]);
+
   // Rösterna laddas asynkront i vissa webbläsare; rensa vid avmontering.
   useEffect(() => {
     if (!supported) return;
@@ -236,6 +252,9 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
             if (!audioEl.current) audioEl.current = new Audio();
             audioEl.current.src = SILENT_WAV;
             audioEl.current.play().catch(() => {});
+            logListen(token, 'play');
+            logListen(token, language === 'sv' ? 'lang_sv' : 'lang_en');
+            logListen(token, gender === 'm' ? 'voice_m' : 'voice_f');
             playClip(0, true);
           }}
           className="w-full flex items-center justify-center gap-3 bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-black text-xl py-5 rounded-2xl active:scale-[0.98] transition-transform"
@@ -262,14 +281,14 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
 
           <div className="flex items-center justify-center gap-3">
             <button
-              onClick={() => playClip(clipIndex, false)}
+              onClick={() => { logListen(token, 'again'); playClip(clipIndex, false); }}
               className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold px-5 py-3 rounded-xl"
             >
               <RotateCcw size={18} /> {t('listen.again')}
             </button>
             {nextIndex < total && (
               <button
-                onClick={() => playClip(nextIndex, true)}
+                onClick={() => { logListen(token, 'next'); playClip(nextIndex, true); }}
                 className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold px-5 py-3 rounded-xl"
               >
                 {t('listen.next')} <SkipForward size={18} />

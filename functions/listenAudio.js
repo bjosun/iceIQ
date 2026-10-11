@@ -147,4 +147,34 @@ function createListenAudio({ functions, admin, db, appId, resolvePlayerLink }) {
     });
 }
 
-module.exports = { createListenAudio };
+// --- Anonym mätning av lyssnakortet ---
+// Räknare per dag, helt utan identifierare: ingen token, inget spelarnamn,
+// ingen enhet sparas. Svarar på "vad väljer man och var hoppar man av" och
+// ingenting om vem. Läses i Firestore: artifacts/{appId}/listenStats/{YYYY-MM-DD}.
+const STAT_EVENTS = new Set([
+  "open", "play", "again", "next", "finished",
+  "clip_1_done", "clip_2_done", "clip_3_done",
+  "voice_m", "voice_f", "lang_sv", "lang_en",
+  "cloud_ok", "cloud_fallback",
+]);
+
+function createListenStats({ functions, admin, db, appId, resolvePlayerLink }) {
+  return functions
+    .region("europe-west1")
+    .runWith({ memory: "128MB", timeoutSeconds: 10 })
+    .https.onCall(async (data) => {
+      await resolvePlayerLink(data && data.token); // giltig, ej återkallad länk krävs
+      const event = data.event;
+      if (typeof event !== "string" || !STAT_EVENTS.has(event)) {
+        throw new functions.https.HttpsError("invalid-argument", "Okänd händelse.");
+      }
+      const day = new Date().toISOString().slice(0, 10);
+      await db
+        .collection("artifacts").doc(appId)
+        .collection("listenStats").doc(day)
+        .set({ [`e_${event}`]: admin.firestore.FieldValue.increment(1) }, { merge: true });
+      return { ok: true };
+    });
+}
+
+module.exports = { createListenAudio, createListenStats };

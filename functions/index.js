@@ -2099,3 +2099,11 @@ exports.getListenAudio = require("./listenAudio").createListenAudio({
   appId: APP_ID,
   resolvePlayerLink,
 });
+
+exports.logListenEvent = require("./listenAudio").createListenStats({
+  functions,
+  admin,
+  db,
+  appId: APP_ID,
+  resolvePlayerLink,
+});

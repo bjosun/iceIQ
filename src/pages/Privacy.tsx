@@ -143,7 +143,9 @@ export default function Privacy() {
               <p className="text-gray-300 mb-4">
                 When a player opens the listen page, the short texts that are read out (for example the first name and the points
                 of a game) are turned into speech by Google Cloud Text-to-Speech, processed in the EU. We store only a short-lived
-                copy of the generated audio so it does not have to be created again.
+                copy of the generated audio so it does not have to be created again. We also keep anonymous daily counters of how the
+                listen page is used (for example how many play it and which voice is chosen). They contain no names, links or
+                device identifiers.
               </p>
               <p className="text-gray-300 mb-4">
                 We do not sell personal data and we do not use it to track you across other companies&apos; apps or websites.

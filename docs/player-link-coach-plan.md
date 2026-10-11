@@ -78,6 +78,10 @@ Språk som stöds: svenska (sv-SE) och engelska (en-US), efter appens språk. Ko
 | Vilka får ha en länk? | Föräldern skapar och kan återkalla. Vem som helst med länken kan prata, så länken ska behandlas som ett lösenord (lägg till hastighetsgräns per länk). |
 | Röstdata | Barns röst är känslig. Samtyckestexten (och policyn) ska täcka det. Föräldern ska uttryckligen godkänna att spelaren får prata, inte bara skicka länken. |
 
+## Mätning (anonym)
+
+`logListenEvent` räknar händelser per dag i `artifacts/{appId}/listenStats/{YYYY-MM-DD}` (fält `e_<händelse>`). Inga identifierare: ingen token, inget namn, ingen enhet. Händelser: `open`, `play`, `again`, `next`, `finished`, `clip_1_done`..`clip_3_done` (var man hoppar av), `voice_m`/`voice_f`, `lang_sv`/`lang_en`, `cloud_ok`/`cloud_fallback`. Läses i Firestore-konsolen tills det finns en rapport. Frågor den svarar på: trycker man på spela efter att ha öppnat (`play`/`open`), orkar man till sista klippet (`clip_3_done`/`play`), vilken coach väljs, används "igen" mycket.
+
 ## Juridik att klara före lansering
 
 Inte juridisk rådgivning. Ska läsas av någon med rätt kompetens.
