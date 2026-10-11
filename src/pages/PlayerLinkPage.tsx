@@ -9,6 +9,7 @@ import RoutineStack, { RoutineStep } from '../components/routines/RoutineStack';
 import SeasonOverview from '../components/dashboard/SeasonOverview';
 import ListenToMatch from '../components/ListenToMatch';
 import { buildListenClips } from '../utils/listenClips';
+import { detectLang, translateFor } from '../utils/translate';
 
 interface PlayerLinkData {
   playerName: string;
@@ -19,6 +20,8 @@ interface PlayerLinkData {
   coachHighlight?: string | null;
   coachThink?: string | null;
   coachSpoken?: string[];
+  /** Språket coachen svarade på (förälderns konto). Styr text och röst i lyssnakortet. */
+  listenLang?: 'sv' | 'en' | null;
   /** Matcher i rad med rutinen gjord — se computeRoutineStreak i functions/index.js. */
   routineStreak: number;
 }
@@ -137,6 +140,13 @@ export default function PlayerLinkPage() {
       });
   };
 
+  // Språk för lyssnakortet: det coachen svarade på. Äldre svar saknar sparad
+  // språkkod, då gissas det ur texten; sist besökarens språk.
+  const listenLang: 'sv' | 'en' =
+    data.listenLang ||
+    detectLang([...(data.coachSpoken ?? []), data.coachHighlight ?? '', data.coachThink ?? '', data.latestCoachNote ?? ''].join(' ')) ||
+    (language === 'sv' ? 'sv' : 'en');
+
   const streakNote = streak > 0
     ? (streak === 1
         ? t('routines.nightBeforeGame.streakOne')
@@ -155,17 +165,20 @@ export default function PlayerLinkPage() {
           </h1>
         </div>
 
-        {/* Först: det som är enklast att ta in. Kort ljud, inget skrivande. */}
+        {/* Först: det som är enklast att ta in. Kort ljud, inget skrivande.
+            Text och röst följer språket coachen svarade på, så att svensk
+            coachtext aldrig läses med engelsk röst (eller tvärtom). */}
         <ListenToMatch
           token={token}
+          lang={listenLang}
           clips={buildListenClips({
             playerName: data.playerName,
             games: data.games,
             coachHighlight: data.coachHighlight,
             coachThink: data.coachThink,
             coachSpoken: data.coachSpoken,
-            t,
-            lang: language,
+            t: translateFor(listenLang),
+            lang: listenLang,
           })}
         />
 

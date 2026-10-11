@@ -1178,6 +1178,7 @@ exports.getPlayerLinkData = functions
     let coachThink = null;
     // Det TALADE manuset (kort, talspråk). Själva analystexten läses aldrig upp.
     let coachSpoken = [];
+    let listenLang = null;
     const chatDoc = chatsSnap.docs.find((d) => d.data().playerName === playerName);
     if (chatDoc) {
       const messages = chatDoc.data().messages || [];
@@ -1186,6 +1187,7 @@ exports.getPlayerLinkData = functions
         latestCoachNote = lastAi.text;
         if (typeof lastAi.highlight === 'string') coachHighlight = lastAi.highlight.slice(0, 120);
         if (typeof lastAi.thinkAbout === 'string') coachThink = lastAi.thinkAbout.slice(0, 140);
+        if (lastAi.lang === 'sv' || lastAi.lang === 'en') listenLang = lastAi.lang;
         if (Array.isArray(lastAi.spokenRecap)) {
           coachSpoken = lastAi.spokenRecap
             .filter((x) => typeof x === 'string' && x.trim())
@@ -1200,7 +1202,19 @@ exports.getPlayerLinkData = functions
     // som är det enda sidan visar.
     const routineStreak = computeRoutineStreak(games, playerDoc.data().routineCompletions);
 
-    return { playerName, games, summary, latestCoachNote, coachHighlight, coachThink, coachSpoken, routineStreak };
+    // Språk för uppläsningen: det coachen svarade på, annars förälderns
+    // kontospråk. Klienten gissar ur texten om båda saknas.
+    if (!listenLang) {
+      try {
+        const ownerDoc = await getUsersCollection().doc(userId).get();
+        const ownerLang = ownerDoc.exists ? ownerDoc.data().language : null;
+        if (ownerLang === 'sv' || ownerLang === 'en') listenLang = ownerLang;
+      } catch (e) {
+        /* språket är en bonus; klienten har en reserv */
+      }
+    }
+
+    return { playerName, games, summary, latestCoachNote, coachHighlight, coachThink, coachSpoken, listenLang, routineStreak };
   });
 
 

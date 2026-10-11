@@ -245,6 +245,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             role: 'ai',
             text: result.data.analysis,
             ...(highlight ? { highlight } : {}),
+            lang: language,
             ...(thinkAbout ? { thinkAbout } : {}),
             ...(spokenRecap.length ? { spokenRecap } : {}),
             ...(focusTags.length ? { focusTags } : {}),

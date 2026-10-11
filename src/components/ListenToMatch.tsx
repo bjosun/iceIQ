@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Play, RotateCcw, SkipForward, Volume2 } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useMemo } from 'react';
+import { translateFor } from '../utils/translate';
+import type { Language } from '../utils/translations';
 import { ListenClip } from '../utils/listenClips';
 import { isInAppBrowser } from '../utils/inAppBrowser';
 import { fetchClipAudio, VoiceGender } from '../utils/cloudVoice';
@@ -17,6 +19,8 @@ interface ListenToMatchProps {
   clips: ListenClip[];
   /** Spelarlänkens token. Med den används molnrösten; utan den telefonens röst. */
   token?: string;
+  /** Språket för kortets texter OCH rösten (coachens språk), inte besökarens. */
+  lang: Language;
 }
 
 // Röst: telefonens/webbläsarens egen text-till-tal. Gratis, inget lämnar
@@ -43,8 +47,9 @@ function pickVoice(lang: string): SpeechSynthesisVoice | null {
 // TikTok-takt: lite snabbare än normalt, korta meningar som spelas direkt efter varandra.
 const RATE = 1.25;
 
-export default function ListenToMatch({ clips, token }: ListenToMatchProps) {
-  const { t, language } = useLanguage();
+export default function ListenToMatch({ clips, token, lang }: ListenToMatchProps) {
+  const language = lang;
+  const t = useMemo(() => translateFor(lang), [lang]);
   const [clipIndex, setClipIndex] = useState(0);
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);

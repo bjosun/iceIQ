@@ -29,6 +29,8 @@ export interface CoachChatMessage {
    * att öva på, i lugn ton. Utelämnas när inget tydligt mönster fanns.
    */
   thinkAbout?: string;
+  /** Språket svaret skrevs på ('sv' | 'en'). Spelarlänkens uppläsning följer det. */
+  lang?: 'sv' | 'en';
   /** Talat manus (2–4 korta meningar) för uppläsning på spelarens länk. */
   spokenRecap?: string[];
   /**
