@@ -9,6 +9,7 @@ export function speakable(text: string, lang: string): string {
     .replace(/\s*[:;]\s+/g, '. ')
     .replace(/%/g, lang === 'sv' ? ' procent' : ' percent')
     .replace(/\.\s*\./g, '.')
+    .replace(/\. ([a-zåäö])/g, (_m, c: string) => `. ${c.toUpperCase()}`)
     .replace(/\s{2,}/g, ' ')
     .trim();
 }

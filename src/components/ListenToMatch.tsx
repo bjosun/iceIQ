@@ -3,9 +3,18 @@ import { Play, RotateCcw, SkipForward, Volume2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ListenClip } from '../utils/listenClips';
 import { isInAppBrowser } from '../utils/inAppBrowser';
+import { fetchClipAudio } from '../utils/cloudVoice';
+
+// En tyst, giltig WAV. iOS släpper bara igenom uppspelning som startar i ett
+// tryck, och molnljudet hämtas först efter trycket. Därför "låser" vi upp ett
+// ljudelement med den här i trycket och återanvänder det för riktiga klipp.
+const SILENT_WAV =
+  'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 
 interface ListenToMatchProps {
   clips: ListenClip[];
+  /** Spelarlänkens token. Med den används molnrösten; utan den telefonens röst. */
+  token?: string;
 }
 
 // Röst: telefonens/webbläsarens egen text-till-tal. Gratis, inget lämnar
@@ -32,7 +41,7 @@ function pickVoice(lang: string): SpeechSynthesisVoice | null {
 // TikTok-takt: lite snabbare än normalt, korta meningar som spelas direkt efter varandra.
 const RATE = 1.25;
 
-export default function ListenToMatch({ clips }: ListenToMatchProps) {
+export default function ListenToMatch({ clips, token }: ListenToMatchProps) {
   const { t, language } = useLanguage();
   const [clipIndex, setClipIndex] = useState(0);
   const [started, setStarted] = useState(false);
@@ -40,12 +49,17 @@ export default function ListenToMatch({ clips }: ListenToMatchProps) {
   const [caption, setCaption] = useState('');
   const [done, setDone] = useState(false);
   const runId = useRef(0);
+  const audioEl = useRef<HTMLAudioElement | null>(null);
+  // Hämtat molnljud per klipp. null = hämtningen misslyckades (använd telefonens röst).
+  const cloudAudio = useRef<Map<string, string[] | null>>(new Map());
+  const cloudDown = useRef(false);
 
   const supported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
   const stop = useCallback(() => {
     runId.current += 1;
     window.speechSynthesis?.cancel();
+    audioEl.current?.pause();
     setPlaying(false);
   }, []);
 
@@ -60,6 +74,60 @@ export default function ListenToMatch({ clips }: ListenToMatchProps) {
     setDone(false);
     setPlaying(true);
 
+    // Molnrösten: hämta (eller använd redan hämtat) ljud för klippet och spela
+    // meningarna i följd. Misslyckas något går vi till telefonens röst.
+    const prefetch = (i: number) => {
+      const c = clips[i];
+      if (!c || !token || cloudDown.current || cloudAudio.current.has(c.id)) return;
+      cloudAudio.current.set(c.id, null);
+      fetchClipAudio(token, language, c.sentences).then((urls) => {
+        if (urls) cloudAudio.current.set(c.id, urls);
+        else cloudDown.current = true;
+      });
+    };
+
+    const playCloud = async (): Promise<boolean> => {
+      if (!token || cloudDown.current || !audioEl.current) return false;
+      let urls = cloudAudio.current.get(clip.id) ?? null;
+      if (!urls) {
+        setCaption(clip.sentences[0]);
+        const fetched = await fetchClipAudio(token, language, clip.sentences);
+        if (runId.current !== myRun) return true; // avbrutet under tiden
+        if (!fetched) {
+          cloudDown.current = true;
+          return false;
+        }
+        cloudAudio.current.set(clip.id, fetched);
+        urls = fetched;
+      }
+      prefetch(index + 1);
+      const el = audioEl.current;
+      const playSentence = (i: number) => {
+        if (runId.current !== myRun) return;
+        if (i >= urls!.length) {
+          finishClipCloud();
+          return;
+        }
+        setCaption(clip.sentences[i]);
+        el.src = urls![i];
+        el.onended = () => playSentence(i + 1);
+        el.onerror = () => finishClipCloud();
+        el.play().catch(() => finishClipCloud());
+      };
+      const finishClipCloud = () => {
+        if (runId.current !== myRun) return;
+        setPlaying(false);
+        if (auto && index + 1 < clips.length) {
+          window.setTimeout(() => { if (runId.current === myRun) playClip(index + 1, true); }, 200);
+        } else if (index + 1 >= clips.length) {
+          setDone(true);
+        }
+      };
+      playSentence(0);
+      return true;
+    };
+
+    const playDevice = () => {
     const voice = pickVoice(language);
 
     // Hela klippets meningar läggs i kö på en gång. Att vänta på "end" för
@@ -105,7 +173,13 @@ export default function ListenToMatch({ clips }: ListenToMatchProps) {
       }
       window.speechSynthesis.speak(u);
     });
-  }, [clips, language, stop, supported]);
+    };
+
+    // Molnet först, annars telefonens röst.
+    playCloud().then((usedCloud) => {
+      if (!usedCloud && runId.current === myRun) playDevice();
+    });
+  }, [clips, language, stop, supported, token]);
 
   // Rösterna laddas asynkront i vissa webbläsare; rensa vid avmontering.
   useEffect(() => {
@@ -135,7 +209,13 @@ export default function ListenToMatch({ clips }: ListenToMatchProps) {
 
       {!started ? (
         <button
-          onClick={() => playClip(0, true)}
+          onClick={() => {
+            // Skapa och "lås upp" ljudelementet i själva trycket (se SILENT_WAV).
+            if (!audioEl.current) audioEl.current = new Audio();
+            audioEl.current.src = SILENT_WAV;
+            audioEl.current.play().catch(() => {});
+            playClip(0, true);
+          }}
           className="w-full flex items-center justify-center gap-3 bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-black text-xl py-5 rounded-2xl active:scale-[0.98] transition-transform"
         >
           <Play size={28} fill="currentColor" /> {t('listen.play')}

@@ -156,6 +156,7 @@ export default function PlayerLinkPage() {
 
         {/* Först: det som är enklast att ta in. Kort ljud, inget skrivande. */}
         <ListenToMatch
+          token={token}
           clips={buildListenClips({
             playerName: data.playerName,
             games: data.games,

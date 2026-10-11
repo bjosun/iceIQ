@@ -2038,3 +2038,15 @@ exports.revenueCatWebhook = require("./revenuecat").createRevenueCatWebhook({
   creditsForPlan,
   creditsPerPack: CREDITS_PER_PACK,
 });
+
+
+// ==========================================
+//  UPPLÄSNING PÅ SPELARENS LÄNK (GOOGLE TEXT-TILL-TAL)
+// ==========================================
+exports.getListenAudio = require("./listenAudio").createListenAudio({
+  functions,
+  admin,
+  db,
+  appId: APP_ID,
+  resolvePlayerLink,
+});
