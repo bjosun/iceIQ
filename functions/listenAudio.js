@@ -19,7 +19,7 @@ const { GoogleAuth } = require("google-auth-library");
 const TTS_URL = "https://eu-texttospeech.googleapis.com/v1/text:synthesize";
 // Takt: 1,0 är rösten som den är byggd. Lägre = lugnare. Ingår i cachenyckeln,
 // så en ändring här skapar nya klipp i stället för att återanvända gamla.
-const SPEAKING_RATE = 0.95;
+const SPEAKING_RATE = 1.08;
 const MAX_SENTENCES = 6;
 const MAX_LENGTH = 160;
 const DAILY_CHAR_CAP = 3000;

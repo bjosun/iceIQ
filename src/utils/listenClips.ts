@@ -20,10 +20,12 @@ export interface ListenClip {
   rates?: number[];
 }
 
-// Taktnivåer. Små steg: bara ±10 % låter naturligt utan att ljudet blir bearbetat.
-const FAST = 1.08; // inledningar och "fyllnad"
+// Taktnivåer per mening. Provat 2026-10-12: att variera takten (±10 %) lät
+// sämre än jämn takt, så alla nivåer är 1. Mekanismen finns kvar (rates) om
+// man vill prova igen, men då ska värdena ändras här.
+const FAST = 1.0;
 const NORMAL = 1.0;
-const SLOW = 0.9;  // det som ska fastna
+const SLOW = 1.0;
 
 interface BuildInput {
   playerName: string;

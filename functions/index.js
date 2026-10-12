@@ -712,6 +712,7 @@ exports.askCoach = functions
       - Börja med det viktigaste, gärna det som gick bra, och avsluta med EN konkret sak att göra eller tänka på till nästa gång.
       - Ingen markdown, inga punktlistor, inga emojis, inga tankstreck, och skriv inte tecken som "×" eller "%". Skriv tal med ord där det går.
       - Använd punkt i stället för komma. Skriv hellre två korta meningar än en lång med kommatecken: rösten läser komma med en konstig paus.
+      - Tempo som i en kort video: rakt på sak, inga inledande ord som "Det är viktigt att" eller "Först och främst". Börja med själva poängen. Max ca 40 ord totalt. Ett utropstecken är okej, men inte fler än ett.
       - Bara det som står i ditt svar och i datan. Inga nya påståenden, ingen jämförelse med andra spelare, och aldrig något som låter som kritik av personen.
       - Språkkoden är "${userLanguage}". Är spelaren ett barn: enklare ord och ännu kortare meningar.
       - Finns inget att säga: tom lista.

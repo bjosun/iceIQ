@@ -60,9 +60,9 @@ Två coacher, valbara på kortet: **Coach Astrid** (kvinna) och **Coach Gunnar**
 
 ```
 LISTEN_VOICE_SV_M=sv-SE-Chirp3-HD-Umbriel
-LISTEN_VOICE_SV_F=sv-SE-Chirp3-HD-Kore
+LISTEN_VOICE_SV_F=sv-SE-Chirp3-HD-Zephyr
 LISTEN_VOICE_EN_M=en-US-Chirp3-HD-Umbriel
-LISTEN_VOICE_EN_F=en-US-Chirp3-HD-Kore
+LISTEN_VOICE_EN_F=en-US-Chirp3-HD-Zephyr
 ```
 
 Språk som stöds: svenska (sv-SE) och engelska (en-US), efter appens språk. Kortet visar vilken röst som användes (eller varför molnet föll tillbaka på telefonens röst), som testhjälp.

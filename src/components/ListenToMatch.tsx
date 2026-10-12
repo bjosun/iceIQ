@@ -48,7 +48,7 @@ function pickVoice(lang: string): SpeechSynthesisVoice | null {
 }
 
 // Reservrösten (telefonens): nära normal takt; molnrösten styrs av SPEAKING_RATE i functions/listenAudio.js.
-const RATE = 1.05;
+const RATE = 1.15;
 
 export default function ListenToMatch({ clips, token, lang, note }: ListenToMatchProps) {
   const language = lang;
