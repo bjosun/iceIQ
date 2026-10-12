@@ -17,6 +17,9 @@ const crypto = require("crypto");
 const { GoogleAuth } = require("google-auth-library");
 
 const TTS_URL = "https://eu-texttospeech.googleapis.com/v1/text:synthesize";
+// Takt: 1,0 är rösten som den är byggd. Lägre = lugnare. Ingår i cachenyckeln,
+// så en ändring här skapar nya klipp i stället för att återanvända gamla.
+const SPEAKING_RATE = 0.95;
 const MAX_SENTENCES = 6;
 const MAX_LENGTH = 160;
 const DAILY_CHAR_CAP = 3000;
@@ -97,11 +100,11 @@ async function request(client, input, voiceSelection, voice) {
     data: {
       input,
       voice: voiceSelection,
-      // Lite snabbare än normalt: kompis-takt, inte uppläsning. Chirp-rösterna
+      // Takten styrs av SPEAKING_RATE ovan. Chirp-rösterna
       // stöder inte tonhöjdsinställningen (den avvisas), så den utelämnas där.
       audioConfig: /chirp/i.test(voice.name || "")
-        ? { audioEncoding: "MP3", speakingRate: 1.1 }
-        : { audioEncoding: "MP3", speakingRate: 1.12, pitch: 0 },
+        ? { audioEncoding: "MP3", speakingRate: SPEAKING_RATE }
+        : { audioEncoding: "MP3", speakingRate: SPEAKING_RATE, pitch: 0 },
     },
   });
   return Buffer.from(res.data.audioContent, "base64");
@@ -138,7 +141,7 @@ function createListenAudio({ functions, admin, db, appId, resolvePlayerLink }) {
       const clipText = sentences.join("\n");
       const key = crypto
         .createHash("sha256")
-        .update(`clip|${lang}|${gender}|${voice.name || voice.languageCode}|${clipText}`)
+        .update(`clip|r${SPEAKING_RATE}|${lang}|${gender}|${voice.name || voice.languageCode}|${clipText}`)
         .digest("hex");
       const cacheRef = base.collection("ttsCache").doc(key);
       const cachedDoc = await cacheRef.get();

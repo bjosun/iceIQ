@@ -47,8 +47,8 @@ function pickVoice(lang: string): SpeechSynthesisVoice | null {
   return [...matches].sort((x, y) => score(y) - score(x))[0];
 }
 
-// TikTok-takt: lite snabbare än normalt, korta meningar som spelas direkt efter varandra.
-const RATE = 1.25;
+// Reservrösten (telefonens): nära normal takt; molnrösten styrs av SPEAKING_RATE i functions/listenAudio.js.
+const RATE = 1.05;
 
 export default function ListenToMatch({ clips, token, lang, note }: ListenToMatchProps) {
   const language = lang;
