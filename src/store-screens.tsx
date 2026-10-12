@@ -19,6 +19,10 @@ import { renderMatchReport } from './utils/matchReport'
 const params = new URLSearchParams(location.search)
 const slide = Number(params.get('s') || '1')
 const lang = params.get('lang') === 'en' ? 'en' : 'sv'
+// Sidstorlek i CSS-pixlar (standard: iPhone 6,9" vid skala 3). Andra storlekar för
+// äldre iPhone-fack: ?w=414&h=736 (5,5", skala 3) eller ?w=375&h=667 (4,7", skala 2).
+const W = Number(params.get('w') || 440)
+const H = Number(params.get('h') || 956)
 try { localStorage.setItem('iceiq-language', lang) } catch { /* */ }
 
 const CAPTIONS: Record<string, string[]> = {
@@ -50,7 +54,7 @@ function Caption({ text }: { text: string }) {
   return (
     <div
       className="fixed top-0 left-0 right-0 z-[100] px-6 pt-10 pb-4"
-      style={{ background: 'linear-gradient(180deg, #0b1220 0%, #0b1220 70%, rgba(11,18,32,0) 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #0b1220 0%, #0b1220 92%, rgba(11,18,32,0) 100%)' }}
     >
       <p className="text-[30px] leading-tight font-extrabold text-white tracking-tight">{text}</p>
     </div>
@@ -102,7 +106,7 @@ function Screen() {
   const caption = CAPTIONS[lang][slide - 1] || ''
   const tr = translateFor(lang)
   return (
-    <div className="bg-[#0b1220] min-h-screen" style={{ width: 440, height: 956, overflow: 'hidden' }}>
+    <div className="bg-[#0b1220] min-h-screen" style={{ width: W, height: H, overflow: 'hidden' }}>
       <Caption text={caption} />
       <div style={{ paddingTop: 150 }} className="px-4">
         {slide === 1 && <div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', marginTop: -140 }}><CountedGrid /></div>}
@@ -176,7 +180,7 @@ if (params.get('frame') === '1') {
   document.body.style.margin = '0'
   document.body.style.background = '#0b1220'
   ReactDOM.createRoot(document.getElementById('root')!).render(
-    <iframe src={inner} width={440} height={956} style={{ border: 0, display: 'block' }} />
+    <iframe src={inner + '&w=' + W + '&h=' + H} width={W} height={H} style={{ border: 0, display: 'block' }} />
   )
 } else {
 ReactDOM.createRoot(document.getElementById('root')!).render(
