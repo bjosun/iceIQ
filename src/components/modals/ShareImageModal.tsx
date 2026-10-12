@@ -3,6 +3,17 @@ import { Share2, Download, Square, Smartphone } from 'lucide-react';
 import Modal from '../ui/Modal';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ReportFormat } from '../../utils/shareCanvas';
+import { isNativeApp } from '../../utils/platform';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+
+const blobToBase64 = (b: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(b);
+  });
 
 interface ShareImageModalProps {
   isOpen: boolean;
@@ -71,6 +82,10 @@ export default function ShareImageModal({
   const fileName = `${fileNameBase}${format === 'story' ? '-story' : ''}.jpg`;
 
   const canShareFiles = () => {
+    // I appen finns alltid det inbyggda delningsbladet (Snapchat, Instagram,
+    // Meddelanden m.fl.). Webbens navigator.share med filer saknas i appens
+    // webbvy, och blob-nedladdning fungerar inte där.
+    if (isNativeApp) return !!blob;
     if (!blob || typeof navigator.share !== 'function' || typeof navigator.canShare !== 'function') return false;
     const file = new File([blob], fileName, { type: 'image/jpeg' });
     return navigator.canShare({ files: [file] });
@@ -78,6 +93,17 @@ export default function ShareImageModal({
 
   const handleShare = async () => {
     if (!blob) return;
+    if (isNativeApp) {
+      try {
+        const data = await blobToBase64(blob);
+        const written = await Filesystem.writeFile({ path: fileName, data, directory: Directory.Cache });
+        await Share.share({ title, files: [written.uri] });
+      } catch (err: any) {
+        // Avbruten delning är inte ett fel
+        if (!/cancel/i.test(String(err?.message || err))) console.error('Native share failed:', err);
+      }
+      return;
+    }
     const file = new File([blob], fileName, { type: 'image/jpeg' });
     try {
       await navigator.share({ files: [file], title });
@@ -138,6 +164,7 @@ export default function ShareImageModal({
               <Share2 size={18} /> {t('share.shareBtn')}
             </button>
           )}
+          {!isNativeApp && (
           <button
             onClick={handleDownload}
             disabled={!previewUrl}
@@ -149,6 +176,7 @@ export default function ShareImageModal({
           >
             <Download size={18} /> {t('share.downloadBtn')}
           </button>
+          )}
         </div>
       </div>
     </Modal>

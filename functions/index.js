@@ -708,11 +708,13 @@ exports.askCoach = functions
       - Samma sanningsregel som för shareHighlight: bara sådant som stöds av datan, inget påhittat tal. Finns inget tydligt mönster: tom sträng.
 
       TALAD SAMMANFATTNING (fältet "spokenRecap" i svaret):
-      - 2 till 4 korta meningar som ska LÄSAS UPP för spelaren av en röst. Skriv som en kompis som pratar, inte som en text: vardagliga ord, du-form, korta meningar (max ca 70 tecken var).
-      - Börja med det viktigaste, gärna det som gick bra, och avsluta med EN konkret sak att göra eller tänka på till nästa gång.
+      - 4 till 6 korta meningar som ska LÄSAS UPP för spelaren av en röst. Skriv som en kompis som pratar, inte som en text: vardagliga ord, du-form, korta meningar (max ca 70 tecken var).
+      - Uppbyggnad: (1) hälsa med spelarens FÖRNAMN och säg matchens poäng med egna ord (ur "Poäng denna match"), (2) jämför med spelarens EGET snitt ur säsongsöversikten om det finns (över, under eller på), aldrig med andra spelare, (3) det viktigaste du sagt i ditt svar, (4) avsluta med EN konkret sak att göra eller tänka på till nästa gång.
+      - Variera: formulera dig på ett nytt sätt varje gång. Återanvänd inte samma fraser eller samma uppbyggnad som i tidigare svar i samtalet. Det ska låta som en person som pratar, inte som en mall.
+      - Hitta aldrig på siffror: använd bara de tal du faktiskt fått (poäng och snitt).
       - Ingen markdown, inga punktlistor, inga emojis, inga tankstreck, och skriv inte tecken som "×" eller "%". Skriv tal med ord där det går.
       - Använd punkt i stället för komma. Skriv hellre två korta meningar än en lång med kommatecken: rösten läser komma med en konstig paus.
-      - Tempo som i en kort video: rakt på sak, inga inledande ord som "Det är viktigt att" eller "Först och främst". Börja med själva poängen. Max ca 40 ord totalt. Ett utropstecken är okej, men inte fler än ett.
+      - Tempo som i en kort video: rakt på sak, inga inledande ord som "Det är viktigt att" eller "Först och främst". Börja med själva poängen. Max ca 65 ord totalt. Ett utropstecken är okej, men inte fler än ett.
       - Bara det som står i ditt svar och i datan. Inga nya påståenden, ingen jämförelse med andra spelare, och aldrig något som låter som kritik av personen.
       - Språkkoden är "${userLanguage}". Är spelaren ett barn: enklare ord och ännu kortare meningar.
       - Finns inget att säga: tom lista.
@@ -770,7 +772,7 @@ exports.askCoach = functions
         thinkAbout: { type: Type.STRING, description: 'En kort mening om det som är värt att öva på, max 110 tecken. Tom sträng om inget tydligt mönster finns.' },
         spokenRecap: {
           type: Type.ARRAY,
-          description: '2-4 korta meningar på talspråk som kan läsas upp för spelaren. Tom lista om inget att säga.',
+          description: '4-6 korta meningar på talspråk som kan läsas upp för spelaren (hälsning med förnamn och poäng, jämförelse med eget snitt, råd). Tom lista om inget att säga.',
           items: { type: Type.STRING },
         },
         focusTags: {
@@ -889,7 +891,7 @@ exports.askCoach = functions
         spokenRecap = parsed.spokenRecap
           .filter((x) => typeof x === 'string' && x.trim().length > 0)
           .map((x) => x.trim().slice(0, 160))
-          .slice(0, 4);
+          .slice(0, 6);
       }
       if (Array.isArray(parsed.focusTags)) {
         // enum i schemat styr redan modellen, men filtrera ändå mot
@@ -1194,7 +1196,7 @@ exports.getPlayerLinkData = functions
           coachSpoken = lastAi.spokenRecap
             .filter((x) => typeof x === 'string' && x.trim())
             .map((x) => x.slice(0, 160))
-            .slice(0, 4);
+            .slice(0, 6);
         }
       }
     }

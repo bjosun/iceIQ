@@ -10,7 +10,7 @@ import { newBadges } from './badges';
 import { speakable } from './speakable';
 
 export interface ListenClip {
-  id: 'match' | 'good' | 'think';
+  id: string;
   /** Meningarna spelas upp en i taget. */
   sentences: string[];
   /**
@@ -70,18 +70,20 @@ export function buildListenClips({ playerName, games, coachHighlight, coachThink
   }
   clips.push({ id: 'match', sentences: match.map(say), rates: match.map(() => NORMAL) });
 
-  // 2a. Coachens talade manus: skrivet av coachen för att läsas upp, i samma
-  //     svar som analysen. Finns det används det i stället för raderna nedan.
+  // 2a. Coachens talade manus. Det skrivs av coachen i samma svar som
+  //     analysen och är DYNAMISKT: hälsning, matchens poäng, jämförelse med
+  //     eget snitt och råd, formulerade om varje gång. När det finns ersätter
+  //     det mallarna helt (mallarna ovan är bara reserv). Delas upp i klipp om
+  //     två meningar så att man ser framsteg och kan hoppa.
   const spoken = (coachSpoken ?? []).filter((x) => typeof x === 'string' && x.trim());
   if (spoken.length > 0) {
-    // Coachens manus: allt normalt, och sista meningen (det man ska ta med
-    // sig) lite långsammare så att den tydligt fastnar.
-    clips.push({
-      id: 'good',
-      sentences: spoken.map(say),
-      rates: spoken.map((_, i) => (i === spoken.length - 1 && spoken.length > 1 ? SLOW : NORMAL)),
-    });
-    return clips;
+    const chunks: string[][] = [];
+    for (let i = 0; i < spoken.length; i += 2) chunks.push(spoken.slice(i, i + 2));
+    return chunks.map((c, i) => ({
+      id: `spoken${i + 1}`,
+      sentences: c.map(say),
+      rates: c.map(() => NORMAL),
+    }));
   }
 
   // 2b. Annars: coachens egen rad om den finns, annars ett märke eller

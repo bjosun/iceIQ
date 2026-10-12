@@ -181,7 +181,7 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
       const finishClipCloud = () => {
         if (runId.current !== myRun) return;
         setPlaying(false);
-        logListen(token, `clip_${index + 1}_done` as 'clip_1_done');
+        logListen(token, `clip_${Math.min(index + 1, 3)}_done` as 'clip_1_done');
         if (index + 1 >= clips.length) logListen(token, 'finished');
         if (auto && index + 1 < clips.length) {
           window.setTimeout(() => { if (runId.current === myRun) playClip(index + 1, true); }, 200);
@@ -202,7 +202,7 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
     const finishClip = () => {
       if (runId.current !== myRun) return;
       setPlaying(false);
-      logListen(token, `clip_${index + 1}_done` as 'clip_1_done');
+      logListen(token, `clip_${Math.min(index + 1, 3)}_done` as 'clip_1_done');
       if (index + 1 >= clips.length) logListen(token, 'finished');
       // Nästa klipp startar av sig självt (som i en videoström).
       if (auto && index + 1 < clips.length) {
