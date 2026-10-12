@@ -15,7 +15,7 @@ export default function Privacy() {
     {
       icon: <Lock className="text-green-400" size={24} />,
       title: "Access Control",
-      description: "Only you and authorized team members you invite can access your player data."
+      description: "Only you can open your account. If you create a player link, anyone who has that link can open that player's page, so treat it like a password."
     },
     {
       icon: <Eye className="text-green-400" size={24} />,
@@ -25,7 +25,7 @@ export default function Privacy() {
     {
       icon: <Database className="text-green-400" size={24} />,
       title: "Data Ownership",
-      description: "You own your data. You can export or delete it at any time."
+      description: "You can delete your account and all player data yourself in the app, or ask us for a copy of it."
     }
   ];
 
@@ -41,7 +41,7 @@ export default function Privacy() {
               {t('privacyLink')}
             </h1>
             <p className="text-gray-300">
-              Last updated: 9 October 2026
+              Last updated: 12 October 2026
             </p>
           </div>
 
@@ -65,8 +65,11 @@ export default function Privacy() {
               </p>
               <ul className="text-gray-300 list-disc pl-6 mb-4 space-y-2">
                 <li>Account information: email address and name, and the sign-in method you use (email, Google or Apple).</li>
-                <li>Player data that you enter about a player, who is often a child: name, game statistics, points, notes and, if you use Money Mode, the reward balance.</li>
-                <li>Content you create, such as saved coach conversations.</li>
+                <li>Player data that you enter about a player, who is often a child: name, team, game statistics, points and, if you use Money Mode, the reward balance.</li>
+                <li>The player&apos;s email address, if you choose to enter one so the player can be sent an analysis.</li>
+                <li>Content you create, such as saved coach conversations, and short notes the AI coach keeps about the player over time so it can give more personal advice (see AI Coach below).</li>
+                <li>The dates when a player has done a mental routine on the player&apos;s own page.</li>
+                <li>The link (a long random address) that lets a player open their own page without logging in.</li>
                 <li>Payment information when you subscribe on the web. It is handled by Stripe and we never see your card number.</li>
                 <li>Basic information about how you found us (for example the campaign in a link you opened), to understand which channels work.</li>
               </ul>
@@ -84,8 +87,9 @@ export default function Privacy() {
               </p>
               <ul className="text-gray-300 list-disc pl-6 mb-4 space-y-2">
                 <li>Provide and maintain the Service</li>
+                <li>Create the AI coach&apos;s advice and the listen clips</li>
                 <li>Process your subscription payments</li>
-                <li>Send important service notifications</li>
+                <li>Send service messages and a weekly summary by email</li>
                 <li>Improve and develop new features</li>
                 <li>Ensure security and prevent fraud</li>
               </ul>
@@ -101,7 +105,9 @@ export default function Privacy() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold text-white mb-4">Data Retention</h2>
               <p className="text-gray-300 mb-4">
-                We retain your personal data only for as long as necessary to provide you with our services and for legitimate and essential business purposes.
+                We keep your account and player data until you delete your account. Deleting your account in the app removes your
+                players, games, saved coach conversations and the account itself. Payment records may be kept as long as
+                accounting law requires. We do not currently delete inactive accounts automatically.
               </p>
             </section>
 
@@ -114,7 +120,8 @@ export default function Privacy() {
                 <li>Access your personal data</li>
                 <li>Correct inaccurate data</li>
                 <li>Request deletion of your data</li>
-                <li>Export your data in a standard format</li>
+                <li>Receive a copy of your data in a common format (email us)</li>
+                <li>Have a player link switched off (email us)</li>
                 <li>Object to certain data processing</li>
               </ul>
             </section>
@@ -127,6 +134,12 @@ export default function Privacy() {
                 produce the answer. Nothing is sent until you ask, and only after you have agreed to it in the app. We do not send
                 your email address or payment details. You can stop at any time by not using the coach.
               </p>
+              <p className="text-gray-300 mb-4">
+                To make the advice more personal over time, the coach saves a short list of dated notes about the player (what
+                the player is working on, strengths, recurring patterns), at most eight at a time. These notes are part of the
+                player&apos;s data and are removed when you delete the player or your account. The coach&apos;s advice is
+                generated automatically; it is guidance, not a decision about the player.
+              </p>
             </section>
 
             <section className="mb-8">
@@ -135,11 +148,15 @@ export default function Privacy() {
                 We use these providers to run the service:
               </p>
               <ul className="text-gray-300 list-disc pl-6 mb-4 space-y-2">
-                <li>Firebase and Google Cloud: hosting, sign-in, database and the AI service described above</li>
+                <li>Google (Firebase and Google Cloud, including Vertex AI and Text-to-Speech): hosting, sign-in, database, the AI coach and the listen clips</li>
                 <li>Google and Apple: if you choose to sign in with them</li>
                 <li>Stripe: payments for web subscriptions</li>
-                <li>Email delivery: service messages and the weekly summary</li>
+                <li>Resend: delivery of service messages and the weekly summary by email</li>
               </ul>
+              <p className="text-gray-300 mb-4">
+                Most of this runs in the EU. Some of our servers (for example the part that handles payments and some emails) run in
+                the United States, and Stripe and Resend are US-based companies.
+              </p>
               <p className="text-gray-300 mb-4">
                 When a player opens the listen page, the short texts that are read out (for example the first name and the points
                 of a game) are turned into speech by Google Cloud Text-to-Speech, processed in the EU. We store only a short-lived

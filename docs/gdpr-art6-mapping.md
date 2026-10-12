@@ -62,13 +62,13 @@ Utkast 2026-10-12. Kopplar varje uppgift i appen till ändamål, **förslag** p�
 
 Från granskningen och den här mappningen. Det här är sakfel jag kan rätta direkt; formuleringen av rättslig grund och tredjelandsmekanism ska en jurist skriva.
 
-- [ ] Lägg till **spelarens e-post** under insamlade uppgifter.
-- [ ] Beskriv **coachens minne** (anteckningar över tid) som profilering av spelaren.
-- [ ] Rätta "authorized team members you invite": systemet har **spelarlänkar**, inte kontoinbjudningar, och en länk kan öppnas av vem som helst som har den.
-- [ ] Lägg till **rutiner** (datum) och **lyssnaklipp/text-till-tal**.
-- [ ] Namnge biträden: **Google (Firebase/Cloud/Vertex AI/Text-to-Speech)**, **Stripe**, **Resend**.
-- [ ] Ange **tredjelandsöverföring** (USA) och mekanism.
-- [ ] Ange **lagringstider** och rättslig grund per behandling (enligt tabellen när jurist bekräftat).
+- [x] Lägg till **spelarens e-post** under insamlade uppgifter.
+- [x] Beskriv **coachens minne** (anteckningar över tid) som profilering av spelaren.
+- [x] Rätta "authorized team members you invite": systemet har **spelarlänkar**, inte kontoinbjudningar, och en länk kan öppnas av vem som helst som har den.
+- [x] Lägg till **rutiner** (datum) och **lyssnaklipp/text-till-tal**.
+- [x] Namnge biträden: **Google (Firebase/Cloud/Vertex AI/Text-to-Speech)**, **Stripe**, **Resend**.
+- [~] **Tredjelandsöverföring (USA)** är angiven som faktum; **mekanismen** (DPF/SCC) ska jurist skriva.
+- [~] **Lagringstider** angivna som faktum (tills kontot raderas, ingen automatisk rensning, betalningsunderlag enligt bokföring). **Rättslig grund** per behandling återstår (enligt tabellen när jurist bekräftat).
 
 ## Det som behöver ändras i Terms (förslag från granskningen, formuleras av jurist)
 
@@ -76,3 +76,11 @@ Från granskningen och den här mappningen. Det här är sakfel jag kan rätta d
 - **AI-friskrivning:** råd kan vara felaktiga eller ofullständiga och används på egen risk; ersätter inte tränare, läkare eller annan fackperson.
 - **Åldersgräns** som speglar policyn (kontot är för vuxna; barn pratar inte direkt med coachen utan förälderns val).
 - **Money Mode:** Ice IQ tillhandahåller bara räknaren, aldrig betalningstjänsten mellan förälder och barn.
+
+## Rättat 2026-10-12 (fakta, ej juridiskt)
+
+Integritetspolicyn och villkoren är rättade för sakfel enligt listan ovan. Observera:
+
+- **Länkåterkallning och export saknar gränssnitt.** Servern kan stänga en spelarlänk (`revokedAt`) men det finns ingen knapp i appen, och det finns ingen exportfunktion för användardata. Policyn säger därför "mejla oss" för båda. Bygg gärna knappar, så blir texten och funktionen samma sak.
+- **Villkoren** har fått tre tillägg (vårdnadshavarintyg, AI-friskrivning, Money Mode som räknare) skrivna i enkelt språk. De är utkast till jurist, inte färdig juridisk text.
+- Ingen deploy är gjord: ändringarna syns på iceiq.app först när webben deployas.

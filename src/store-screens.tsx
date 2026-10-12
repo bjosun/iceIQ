@@ -12,9 +12,7 @@ import { TemplateProvider, useTemplates } from './contexts/TemplateContext'
 import ActionGrid from './components/dashboard/ActionGrid'
 import SeasonOverview from './components/dashboard/SeasonOverview'
 import MatchSummaryReveal from './components/modals/MatchSummaryReveal'
-import ListenToMatch from './components/ListenToMatch'
 import { InsightQuote } from './components/ai/AiCoach'
-import { buildListenClips } from './utils/listenClips'
 import { translateFor } from './utils/translate'
 import { renderMatchReport } from './utils/matchReport'
 
@@ -103,13 +101,6 @@ function Screen() {
   const { t } = useLanguage()
   const caption = CAPTIONS[lang][slide - 1] || ''
   const tr = translateFor(lang)
-  const clips = buildListenClips({
-    playerName: 'Elias', games: GAMES.map((g) => ({ date: g.date, points: g.points })),
-    coachSpoken: lang === 'sv'
-      ? ['Hej Elias! Du gjorde arton poäng.', 'Det är fem över ditt eget snitt.', 'Tre vunna närkamper. Bra jobbat.', 'Nästa gång: håll huvudet uppe i egen zon.']
-      : ['Hey Elias! You got eighteen points.', "That's five over your own average.", 'Three won battles. Nice work.', 'Next time: keep your head up in your own zone.'],
-    t: tr, lang,
-  })
   return (
     <div className="bg-[#0b1220] min-h-screen" style={{ width: 440, height: 956, overflow: 'hidden' }}>
       <Caption text={caption} />
