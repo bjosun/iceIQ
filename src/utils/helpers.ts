@@ -19,18 +19,18 @@ export function formatCurrency(amount: number, currency: 'SEK' | 'USD' = 'SEK'):
   }).format(amount);
 }
 
-const UTM_STORAGE_KEY = 'iceiq-utm';
 const UTM_PARAMS = ['source', 'medium', 'campaign', 'term', 'content'] as const;
 
-// Läs in UTM-parametrar från URL:en och spara dem lokalt, så källan
-// finns kvar när kontot väl skapas (kan vara flera klick/sidor senare).
-// Första-touch: skriver bara om inget redan sparats, så en retargeting-
-// annons inte tar äran från kampanjen som faktiskt drog in besökaren.
-// localStorage, inte sessionStorage — attributionen ska överleva att
-// fliken stängs, inte bara det pågående besöket (samma val som språket,
-// se AuthContext.tsx).
+// UTM-parametrar från URL:en hålls i minnet (inte i enhetens lagring) tills ett
+// konto skapas. Då behövs inget samtycke för att läsa eller skriva något på
+// enheten (ePrivacy/LEK 9 kap. 28 §): att läsa adressen man själv öppnat är
+// inte lagring. Priset är att källan bara överlever så länge sidan inte laddas
+// om; sidnavigering i appen (en SPA) räknas däremot. Första-touch: skriver bara
+// om inget redan finns.
+let memoryUtm: Record<string, string> | null = null;
+
 export function captureUtmParams(search: string = window.location.search): void {
-  if (localStorage.getItem(UTM_STORAGE_KEY)) return;
+  if (memoryUtm) return;
 
   const params = new URLSearchParams(search);
   const source = params.get('utm_source');
@@ -42,20 +42,15 @@ export function captureUtmParams(search: string = window.location.search): void 
     if (value) utm[key] = value;
   });
 
-  localStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(utm));
+  memoryUtm = utm;
 }
 
-// Läses vid kontoskapande (AuthContext) och tas sedan bort — attributionen
-// ska bara gälla det EN gången ett konto faktiskt skapas av den besökaren.
+// Läses vid kontoskapande (AuthContext) och töms sedan — attributionen ska bara
+// gälla det EN gången ett konto faktiskt skapas av den besökaren.
 export function consumeUtmParams(): Record<string, string> | null {
-  const raw = localStorage.getItem(UTM_STORAGE_KEY);
-  if (!raw) return null;
-  localStorage.removeItem(UTM_STORAGE_KEY);
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  const value = memoryUtm;
+  memoryUtm = null;
+  return value;
 }
 
 export function debounce<T extends (...args: any[]) => any>(

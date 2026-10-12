@@ -3,6 +3,7 @@ import { LogOut, CreditCard, Trash2, Shield, User, Mail, Lock, Download } from '
 import { httpsCallable } from 'firebase/functions';
 import { euFunctions } from '../../services/firestore';
 import { saveTextFile } from '../../utils/saveFile';
+import { withdrawAiConsent } from '../../utils/aiConsent';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firestore';
 import { useAuth } from '../../contexts/AuthContext';
@@ -39,6 +40,18 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
       if (!/cancel/i.test(String(err?.message || err))) toast.error(t('dataRights.error'));
     } finally {
       setExporting(false);
+    }
+  };
+
+  // Återkalla samtycket till AI-coachen (art. 7.3): lika enkelt som att ge det.
+  const handleWithdrawAi = async () => {
+    if (!user || !window.confirm(t('dataRights.withdrawConfirm'))) return;
+    const erase = window.confirm(t('dataRights.withdrawErase'));
+    try {
+      await withdrawAiConsent(user.uid, erase);
+      toast.success(t('dataRights.withdrawn'));
+    } catch {
+      toast.error(t('dataRights.error'));
     }
   };
 
@@ -248,6 +261,12 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
           <Button variant="secondary" onClick={handleExportData} loading={exporting} fullWidth>
             {t('dataRights.download')}
           </Button>
+          <button
+            onClick={handleWithdrawAi}
+            className="mt-3 w-full text-sm text-gray-400 hover:text-white underline underline-offset-2"
+          >
+            {t('dataRights.withdraw')}
+          </button>
         </Card>
 
         {/* Logga ut */}

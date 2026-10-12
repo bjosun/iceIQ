@@ -261,7 +261,11 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
     } catch (err: any) {
       console.error("AI Error:", err);
 
-      if (err.message.includes('permission-denied')) {
+      if (String(err?.code || '').includes('failed-precondition')) {
+        // Samtycket är återkallat (kanske från en annan enhet): fråga igen.
+        pendingQuestion.current = specificQuestion;
+        setConsentOpen(true);
+      } else if (err.message.includes('permission-denied')) {
         onUpgrade();
       } else if (err.message.includes('resource-exhausted')) {
         // Saldot behöver inte tvingas till 0 här — servern spärrar först när

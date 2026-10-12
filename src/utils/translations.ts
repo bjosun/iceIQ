@@ -179,7 +179,11 @@ export const translations = {
       title: "Your information",
       desc: "Download a copy of your account, players, games and coach conversations as a file.",
       download: "Download my information",
-      error: "Could not create the file. Try again, or email us."
+      error: "Could not create the file. Try again, or email us.",
+      withdraw: "Withdraw my consent to the AI coach",
+      withdrawConfirm: "Withdraw your consent to the AI coach? It will stop using the player's information. You can still log games, and you can say yes again later.",
+      withdrawErase: "Also delete the saved coach conversations and the coach's notes about your players? (OK = delete, Cancel = keep)",
+      withdrawn: "Your consent is withdrawn."
     },
 
     playerForm: {
@@ -808,7 +812,11 @@ export const translations = {
       title: "Dina uppgifter",
       desc: "Ladda ner en kopia av ditt konto, dina spelare, matcher och coachsamtal som en fil.",
       download: "Ladda ner mina uppgifter",
-      error: "Kunde inte skapa filen. Försök igen, eller mejla oss."
+      error: "Kunde inte skapa filen. Försök igen, eller mejla oss.",
+      withdraw: "Återkalla mitt samtycke till AI-coachen",
+      withdrawConfirm: "Återkalla ditt samtycke till AI-coachen? Den slutar använda spelarens uppgifter. Du kan fortfarande logga matcher, och du kan säga ja igen senare.",
+      withdrawErase: "Radera också sparade coachsamtal och coachens anteckningar om dina spelare? (OK = radera, Avbryt = behåll)",
+      withdrawn: "Ditt samtycke är återkallat."
     },
 
     playerForm: {

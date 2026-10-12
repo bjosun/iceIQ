@@ -80,7 +80,7 @@ En skriftlig bedömning av risker för de registrerade, och åtgärder. Skälet:
 
 ## 6. Behöver verifieras (jag har inte kunnat bekräfta)
 
-- **Var Firestore-databasen ligger** (region). Funktionerna ligger i EU och USA, men databasens plats har inte kontrollerats.
+- ~~Var Firestore-databasen ligger~~ **Verifierat 2026-10-14: `eur3` (europeisk multiregion, Belgien/Nederländerna).** Funktionerna ligger i EU (europe-west1) och USA (us-central1).
 - **E-posttjänstens (Resend) behandlingsplats** och om ett personuppgiftsbiträdesavtal finns.
 - **Biträdesavtal (DPA)** med Google (Firebase/Cloud/Vertex), Stripe och Resend, och vilka överföringsmekanismer som gäller för USA.
 - **Lagringstider:** inga automatiska raderingsregler finns idag, utom att användaren kan radera sitt konto och all data i appen. Coachens minne och matchhistorik sparas tills kontot raderas. Cache för ljud har ett `expireAt`-fält men ingen aktiv radering konfigurerad.

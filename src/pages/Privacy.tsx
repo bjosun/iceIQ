@@ -10,12 +10,12 @@ export default function Privacy() {
     {
       icon: <Shield className="text-green-400" size={24} />,
       title: "Data Protection",
-      description: "Your data is encrypted both in transit and at rest using industry-standard encryption."
+      description: "Our cloud providers encrypt data in transit and at rest."
     },
     {
       icon: <Lock className="text-green-400" size={24} />,
       title: "Access Control",
-      description: "Only you can open your account. If you create a player link, anyone who has that link can open that player's page, so treat it like a password."
+      description: "Your account is protected by your sign-in. If you create a player link, anyone who has that link can open that player's page, so treat it like a password."
     },
     {
       icon: <Eye className="text-green-400" size={24} />,
@@ -41,7 +41,7 @@ export default function Privacy() {
               {t('privacyLink')}
             </h1>
             <p className="text-gray-300">
-              Last updated: 13 October 2026
+              Last updated: 14 October 2026
             </p>
           </div>
 
@@ -132,7 +132,7 @@ export default function Privacy() {
                 When you ask the AI coach for an analysis, we send the player&apos;s name, the game statistics and points you
                 have logged, a short history, and your question to Google Cloud (Vertex AI), processed in the EU, in order to
                 produce the answer. Nothing is sent until you ask, and only after you have agreed to it in the app. We do not send
-                your email address or payment details. You can stop at any time by not using the coach.
+                your email address or payment details. You can withdraw your consent at any time in the app (My account, Your information). The coach then stops using the player&apos;s information, and you can have the saved coach conversations and notes deleted. You can still log games without the coach.
               </p>
               <p className="text-gray-300 mb-4">
                 To make the advice more personal over time, the coach saves a short list of dated notes about the player (what
@@ -155,8 +155,9 @@ export default function Privacy() {
                 <li>Resend: delivery of service messages and the weekly summary by email</li>
               </ul>
               <p className="text-gray-300 mb-4">
-                Most of this runs in the EU. Some of our servers (for example the part that handles payments and some emails) run in
-                the United States, and Stripe and Resend are US-based companies.
+                Our database is stored in the EU (a European multi-region), and the AI coach and the listen clips are processed in
+                the EU. Some of our servers (for example the part that handles payments and some emails) run in the United States,
+                and Stripe and Resend are US-based companies.
               </p>
               <p className="text-gray-300 mb-4">
                 When a player opens the listen page, the short texts that are read out (for example the first name and the points

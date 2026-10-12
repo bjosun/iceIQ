@@ -604,6 +604,12 @@ exports.askCoach = functions
   const userDoc = await userRef.get();
   const userData = userDoc.exists ? userDoc.data() : {};
 
+  // Återkallat AI-samtycke: inga fler AI-anrop förrän användaren godkänner igen
+  // (recordAiConsent i klienten nollställer withdrawnAt).
+  if (userData.aiConsent && userData.aiConsent.withdrawnAt) {
+    throw new functions.https.HttpsError('failed-precondition', 'AI-samtycket är återkallat.');
+  }
+
   // Kontrollera plan
   const isSubscribed = userData.subscriptionStatus === 'active';
   const plan = userData.subscriptionPlan || (isSubscribed ? 'premium' : 'free');
@@ -2132,4 +2138,17 @@ exports.exportMyData = require("./dataRights").createExportMyData({
   admin,
   db,
   appId: APP_ID,
+});
+
+// ==========================================
+//  RENSNING AV INAKTIVA KONTON (AV SOM STANDARD, SE inactiveCleanup.js)
+// ==========================================
+exports.inactiveAccountCleanup = require("./inactiveCleanup").createInactiveCleanup({
+  functions,
+  admin,
+  db,
+  appId: APP_ID,
+  sendEmail,
+  getStripe,
+  secrets: [stripeSecretKey, resendApiKey],
 });
