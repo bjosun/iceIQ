@@ -41,7 +41,7 @@ export default function Privacy() {
               {t('privacyLink')}
             </h1>
             <p className="text-gray-300">
-              Last updated: 14 October 2026
+              Last updated: 15 October 2026
             </p>
           </div>
 
@@ -68,7 +68,7 @@ export default function Privacy() {
                 <li>Player data that you enter about a player, who is often a child: name, team, game statistics, points and, if you use Money Mode, the reward balance.</li>
                 <li>The player&apos;s email address, only if you choose to add one so the player can be sent an analysis. It is not needed to use the Service.</li>
                 <li>Content you create, such as saved coach conversations, and short notes the AI coach keeps about the player over time so it can give more personal advice (see AI Coach below).</li>
-                <li>The dates when a player has done a mental routine on the player&apos;s own page.</li>
+                <li>Earlier versions saved the dates when a player had done a mental routine. In the current version the player&apos;s page does not save anything; older dates remain until you delete the player.</li>
                 <li>The link (a long random address) that lets a player open their own page without logging in.</li>
                 <li>Payment information when you subscribe on the web. It is handled by Stripe and we never see your card number.</li>
                 <li>Basic information about how you found us (for example the campaign in a link you opened), to understand which channels work.</li>
@@ -160,8 +160,8 @@ export default function Privacy() {
                 and Stripe and Resend are US-based companies.
               </p>
               <p className="text-gray-300 mb-4">
-                When a player opens the listen page, the short texts that are read out (for example the first name and the points
-                of a game) are turned into speech by Google Cloud Text-to-Speech, processed in the EU. We do not keep a copy of the
+                When a player opens the listen page, the short texts that are read out (for example the points of a game and
+                the coach&apos;s advice, without the player&apos;s name) are turned into speech by Google Cloud Text-to-Speech, processed in the EU. We do not keep a copy of the
                 audio. We also keep anonymous daily counters of how the
                 listen page is used (for example how many play it and which voice is chosen). They contain no names, links or
                 device identifiers.

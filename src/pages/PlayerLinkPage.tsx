@@ -38,7 +38,6 @@ export default function PlayerLinkPage() {
   const [data, setData] = useState<PlayerLinkData | null>(null);
   // Streaken uppdateras lokalt när rutinen just gjorts, så belöningskortet
   // visar rätt siffra utan att sidan behöver laddas om.
-  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     if (!token) {
@@ -52,7 +51,6 @@ export default function PlayerLinkPage() {
         if (cancelled) return;
         const payload = res.data as PlayerLinkData;
         setData(payload);
-        setStreak(payload.routineStreak || 0);
         setState('ready');
       })
       .catch((err: any) => {
@@ -124,21 +122,12 @@ export default function PlayerLinkPage() {
     },
   ];
 
-  // Bäst-ansträngning: rutinen är gjord i spelarens huvud oavsett vad
-  // servern svarar, så ett misslyckat anrop får aldrig visa ett felmeddelande
-  // ovanpå belöningskortet. Streaken blir bara inte uppdaterad den gången.
-  const handleRoutineComplete = () => {
-    if (!token) return;
-    const logRoutineCompletion = httpsCallable(euFunctions, 'logRoutineCompletion');
-    logRoutineCompletion({ token })
-      .then((res) => {
-        const next = (res.data as { streak?: number }).streak;
-        if (typeof next === 'number') setStreak(next);
-      })
-      .catch(() => {
-        /* Tyst: se kommentaren ovan. */
-      });
-  };
+  // Version 1: spelarens sida sparar ingenting. Rutinen görs i huvudet och på
+  // skärmen, men inget skickas till servern och ingen streak räknas, så att
+  // länken är skrivskyddad och inget samlas in från barnet. Slås på igen när ett
+  // hållbart samtyckes- och verifieringsflöde finns (ROUTINE_LOGGING_ENABLED i
+  // functions/.env plus den här koden).
+  const handleRoutineComplete = () => {};
 
   // Språk för lyssnakortet. Prioritet:
   //  1. Ett språk som besökaren själv valt på den här enheten (språkknappen i
@@ -160,11 +149,7 @@ export default function PlayerLinkPage() {
   const coachMatches = !textLang || textLang === listenLang;
   const hasCoachLines = coachLines.trim().length > 0;
 
-  const streakNote = streak > 0
-    ? (streak === 1
-        ? t('routines.nightBeforeGame.streakOne')
-        : t('routines.nightBeforeGame.streakMany', { count: streak }))
-    : undefined;
+  const streakNote = undefined;
 
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-8">

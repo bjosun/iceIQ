@@ -55,10 +55,16 @@ export function buildListenClips({ playerName, games, coachHighlight, coachThink
   const previous = games.slice(0, -1).map((g) => g.points || 0);
   const clips: ListenClip[] = [];
   const seed = last.points + games.length;
-  const say = (text: string) => speakable(text, lang);
+  // Spelarens namn ska aldrig bli en del av det som läses upp (och går till
+  // röst-tjänsten). Coachen ombeds att inte nämna det; här tas det bort om det
+  // ändå skulle förekomma.
+  const nameRe = name.length >= 2
+    ? new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b[,!:]?\\s*`, 'gi')
+    : null;
+  const say = (text: string) => speakable(nameRe ? text.replace(nameRe, '') : text, lang);
 
   // 1. Matchen: poängen, och hur den ligger mot spelarens eget snitt.
-  const match: string[] = [t(`listen.match${variant(seed)}`, { name, points: last.points })];
+  const match: string[] = [t(`listen.match${variant(seed)}`, { points: last.points })];
   if (previous.length === 0) {
     match.push(t('listen.firstGame'));
   } else if (previous.length >= 2) {

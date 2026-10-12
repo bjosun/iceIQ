@@ -720,7 +720,7 @@ exports.askCoach = functions
 
       TALAD SAMMANFATTNING (fältet "spokenRecap" i svaret):
       - 4 till 6 korta meningar som ska LÄSAS UPP för spelaren av en röst. Skriv som en kompis som pratar, inte som en text: vardagliga ord, du-form, korta meningar (max ca 70 tecken var).
-      - Uppbyggnad: (1) hälsa med spelarens FÖRNAMN och säg matchens poäng med egna ord (ur "Poäng denna match"), (2) jämför med spelarens EGET snitt ur säsongsöversikten om det finns (över, under eller på), aldrig med andra spelare, (3) det viktigaste du sagt i ditt svar, (4) avsluta med EN konkret sak att göra eller tänka på till nästa gång.
+      - Uppbyggnad: (1) hälsa kort ("Hej!" eller liknande) och säg matchens poäng med egna ord (ur "Poäng denna match"). Nämn ALDRIG spelarens namn i det talade manuset, tala till spelaren med "du" (namnet skickas annars vidare till en röstdel), (2) jämför med spelarens EGET snitt ur säsongsöversikten om det finns (över, under eller på), aldrig med andra spelare, (3) det viktigaste du sagt i ditt svar, (4) avsluta med EN konkret sak att göra eller tänka på till nästa gång.
       - Variera: formulera dig på ett nytt sätt varje gång. Återanvänd inte samma fraser eller samma uppbyggnad som i tidigare svar i samtalet. Det ska låta som en person som pratar, inte som en mall.
       - Hitta aldrig på siffror: använd bara de tal du faktiskt fått (poäng och snitt).
       - Ingen markdown, inga punktlistor, inga emojis, inga tankstreck, och skriv inte tecken som "×" eller "%". Skriv tal med ord där det går.
@@ -1114,6 +1114,14 @@ exports.logRoutineCompletion = functions
   .https.onCall(async (data) => {
     const link = await resolvePlayerLink(data && data.token);
     const { userId, playerName } = link;
+
+    // Version 1 sparar inget från spelarens sida: länken är skrivskyddad så att
+    // ingenting samlas in från barnet. Slås på igen med
+    // ROUTINE_LOGGING_ENABLED=true när ett hållbart samtyckes-/verifieringsflöde
+    // finns (se docs/legal-review-chatgpt-triage.md, beslut 1).
+    if (process.env.ROUTINE_LOGGING_ENABLED !== 'true') {
+      return { streak: 0, saved: false };
+    }
 
     const playerRef = getUsersCollection().doc(userId).collection('players').doc(playerName);
     const playerDoc = await playerRef.get();

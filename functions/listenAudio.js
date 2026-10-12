@@ -149,6 +149,12 @@ function createListenAudio({ functions, admin, db, appId, resolvePlayerLink }) {
           throw new functions.https.HttpsError("resource-exhausted", "Dagens gräns för uppläsning är nådd.");
         }
         tx.set(usageRef, { chars: used + chars }, { merge: true });
+        // Dagsräknaren är bara till för kvoten: äldre dagar rensas direkt, så att
+        // ingen användningshistorik per länk byggs upp.
+        for (let back = 2; back <= 6; back++) {
+          const old = new Date(Date.now() - back * 86400000).toISOString().slice(0, 10);
+          tx.delete(base.collection("playerLinks").doc(token).collection("ttsUsage").doc(old));
+        }
       });
 
       let buf;
