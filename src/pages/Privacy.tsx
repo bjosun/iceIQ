@@ -41,7 +41,7 @@ export default function Privacy() {
               {t('privacyLink')}
             </h1>
             <p className="text-gray-300">
-              Last updated: 15 October 2026
+              Last updated: 12 October 2026
             </p>
           </div>
 
