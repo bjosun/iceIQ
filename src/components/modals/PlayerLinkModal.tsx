@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Copy, Check, Share2 } from 'lucide-react';
+import { Copy, Check, Share2, Ban } from 'lucide-react';
+import { httpsCallable } from 'firebase/functions';
+import { euFunctions } from '../../services/firestore';
 import toast from 'react-hot-toast';
 import Modal from '../ui/Modal';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -17,6 +19,7 @@ interface PlayerLinkModalProps {
 export default function PlayerLinkModal({ isOpen, onClose, url, playerName }: PlayerLinkModalProps) {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
+  const [revoking, setRevoking] = useState(false);
 
   const copy = async () => {
     try {
@@ -26,6 +29,22 @@ export default function PlayerLinkModal({ isOpen, onClose, url, playerName }: Pl
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error(t('playerLink.mintError'));
+    }
+  };
+
+  // Stänger länken: den som har den kommer då inte längre in. En ny länk
+  // skapas nästa gång du trycker på "Skapa länk".
+  const revoke = async () => {
+    if (!window.confirm(t('playerLink.revokeConfirm', { name: playerName }))) return;
+    setRevoking(true);
+    try {
+      await httpsCallable(euFunctions, 'revokePlayerLink')({ playerName });
+      toast.success(t('playerLink.revoked'));
+      onClose();
+    } catch {
+      toast.error(t('playerLink.revokeError'));
+    } finally {
+      setRevoking(false);
     }
   };
 
@@ -66,6 +85,13 @@ export default function PlayerLinkModal({ isOpen, onClose, url, playerName }: Pl
             </button>
           )}
         </div>
+        <button
+          onClick={revoke}
+          disabled={revoking}
+          className="w-full flex items-center justify-center gap-2 text-sm text-red-400 hover:text-red-300 py-2 disabled:opacity-50"
+        >
+          <Ban size={15} /> {t('playerLink.revoke')}
+        </button>
       </div>
     </Modal>
   );

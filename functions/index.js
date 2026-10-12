@@ -2112,3 +2112,19 @@ exports.logListenEvent = require("./listenAudio").createListenStats({
   appId: APP_ID,
   resolvePlayerLink,
 });
+
+// ==========================================
+//  REGISTRERADES RÄTTIGHETER (STÄNG SPELARLÄNK, EXPORTERA DATA)
+// ==========================================
+exports.revokePlayerLink = require("./dataRights").createRevokePlayerLink({
+  functions,
+  admin,
+  db,
+  appId: APP_ID,
+});
+exports.exportMyData = require("./dataRights").createExportMyData({
+  functions,
+  admin,
+  db,
+  appId: APP_ID,
+});

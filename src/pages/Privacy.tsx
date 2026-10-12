@@ -25,7 +25,7 @@ export default function Privacy() {
     {
       icon: <Database className="text-green-400" size={24} />,
       title: "Data Ownership",
-      description: "You can delete your account and all player data yourself in the app, or ask us for a copy of it."
+      description: "You can download a copy of your data and delete your account and all player data yourself in the app."
     }
   ];
 
@@ -120,8 +120,8 @@ export default function Privacy() {
                 <li>Access your personal data</li>
                 <li>Correct inaccurate data</li>
                 <li>Request deletion of your data</li>
-                <li>Receive a copy of your data in a common format (email us)</li>
-                <li>Have a player link switched off (email us)</li>
+                <li>Download a copy of your data (in the app: My account, Your information)</li>
+                <li>Switch off a player link (in the app, in the dialog that shows the link)</li>
                 <li>Object to certain data processing</li>
               </ul>
             </section>

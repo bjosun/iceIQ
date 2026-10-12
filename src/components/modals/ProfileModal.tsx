@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, CreditCard, Trash2, Shield, User, Mail, Lock } from 'lucide-react';
+import { LogOut, CreditCard, Trash2, Shield, User, Mail, Lock, Download } from 'lucide-react';
+import { httpsCallable } from 'firebase/functions';
+import { euFunctions } from '../../services/firestore';
+import { saveTextFile } from '../../utils/saveFile';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firestore';
 import { useAuth } from '../../contexts/AuthContext';
@@ -23,6 +26,21 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
   const { user, logout, deleteAccount } = useAuth();
   const { deleteUserData: clearFirestoreData } = usePlayerData(); // Rename för tydlighet
   const { t, language } = useLanguage();
+
+  // Hämta en kopia av sina uppgifter (rätten till tillgång/dataportabilitet).
+  const [exporting, setExporting] = useState(false);
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const res = await httpsCallable(euFunctions, 'exportMyData')({});
+      const day = new Date().toISOString().slice(0, 10);
+      await saveTextFile(`iceiq-mina-uppgifter-${day}.json`, JSON.stringify(res.data, null, 2));
+    } catch (err: any) {
+      if (!/cancel/i.test(String(err?.message || err))) toast.error(t('dataRights.error'));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Face ID-spärren: att slå på den kräver att man bekräftar en gång, så att
   // man inte kan låsa ute sig själv med en biometri som inte fungerar.
@@ -218,6 +236,18 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
               <div className={`w-5 h-5 bg-white rounded-full transition-transform ${digestEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
           </div>
+        </Card>
+
+        {/* Dina uppgifter */}
+        <Card className="bg-gray-800/50">
+          <h3 className="text-lg font-semibold text-white mb-1 flex items-center">
+            <Download className="mr-2 text-cyan-400" size={20} />
+            {t('dataRights.title')}
+          </h3>
+          <p className="text-sm text-gray-400 mb-3">{t('dataRights.desc')}</p>
+          <Button variant="secondary" onClick={handleExportData} loading={exporting} fullWidth>
+            {t('dataRights.download')}
+          </Button>
         </Card>
 
         {/* Logga ut */}

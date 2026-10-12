@@ -175,6 +175,13 @@ export const translations = {
       appStore: "Get the app on the App Store"
     },
 
+    dataRights: {
+      title: "Your information",
+      desc: "Download a copy of your account, players, games and coach conversations as a file.",
+      download: "Download my information",
+      error: "Could not create the file. Try again, or email us."
+    },
+
     // Lyssnaklipp på spelarens länk — se utils/listenClips.ts
     listen: {
       title: "Listen to your game",
@@ -451,6 +458,10 @@ export const translations = {
       generateHint: "A page {name} can open on their own phone — breathing exercise, progress, and your notes. No login needed.",
       generating: "Generating…",
       mintError: "Could not generate the link right now",
+      revoke: "Switch this link off",
+      revokeConfirm: "Switch off the link to {name}'s page? Anyone who has it will no longer get in. You can create a new link later.",
+      revoked: "The link is switched off.",
+      revokeError: "Could not switch off the link. Try again.",
       modalTitle: "Link for {name}",
       modalDesc: "A standalone page {name} can open on their own device — no login needed. The same link works every time.",
       copy: "Copy link",
@@ -777,6 +788,13 @@ export const translations = {
       appStore: "Ladda ner appen i App Store"
     },
 
+    dataRights: {
+      title: "Dina uppgifter",
+      desc: "Ladda ner en kopia av ditt konto, dina spelare, matcher och coachsamtal som en fil.",
+      download: "Ladda ner mina uppgifter",
+      error: "Kunde inte skapa filen. Försök igen, eller mejla oss."
+    },
+
     // Lyssnaklipp på spelarens länk — se utils/listenClips.ts
     listen: {
       title: "Lyssna på din match",
@@ -1042,6 +1060,10 @@ export const translations = {
       generateHint: "En sida {name} kan öppna på sin egen mobil — andningsövning, utveckling och dina anteckningar. Ingen inloggning behövs.",
       generating: "Genererar…",
       mintError: "Kunde inte generera länken just nu",
+      revoke: "Stäng länken",
+      revokeConfirm: "Stänga länken till {name}s sida? Den som har den kommer inte längre in. Du kan skapa en ny länk senare.",
+      revoked: "Länken är stängd.",
+      revokeError: "Kunde inte stänga länken. Försök igen.",
       modalTitle: "Länk till {name}",
       modalDesc: "En egen sida {name} kan öppna på sin egen enhet — ingen inloggning behövs. Samma länk fungerar varje gång.",
       copy: "Kopiera länk",
