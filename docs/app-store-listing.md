@@ -97,14 +97,30 @@ Ice IQ is operated by SquareVerse Group AB.
 
 ## Skärmdumpar
 
-Apple kräver 6,9" (1320 × 2868) för iPhone, och räknar om till mindre skärmar. Fånga i simulatorn med en inloggad testanvändare med lite testdata (Cmd+S sparar en bild i rätt storlek):
-1. Inmatningen under en match (stora knappar)
-2. Sammanfattningen efter matchen (poäng som räknas upp, märken)
-3. Coachens två kort ("Det som gick bra" och "Att tänka på")
-4. Säsongsöversikten med kurvan
-5. Delningsbilden (matchrapporten)
+Färdiga i `marketing/app-store-screenshots/sv/` och `.../en/` (1320 × 2868, iPhone 6,9", som Apple kräver). Sex bilder per språk, med påhittad data (spelaren "Elias"; inga riktiga barn):
 
-Inga skärmdumpar som visar riktiga barns namn.
+| # | Rubrik (sv) | Visar |
+|---|---|---|
+| 01 | Logga matchen på ett par minuter | Inmatningen med stora knappar |
+| 02 | Se hur det gick, mot ditt eget snitt | Sammanfattningen, märken, "att jobba på" |
+| 03 | Coachen: det som gick bra och något att tänka på | Coachens svar och de två korten |
+| 04 | Följ utvecklingen över säsongen | Kurvan, nyckeltal och märkeshyllan |
+| 05 | Lyssna på matchen i korta klipp | Lyssnakortet |
+| 06 | Dela en matchbild med laget | Matchrapporten som bild |
+
+Ladda upp svenska bilderna under svenskt språk och de engelska under engelskt. Apple skalar ned till mindre skärmstorlekar, så en uppsättning räcker.
+
+**Gör om dem** efter ändringar i gränssnittet (kräver Google Chrome och att dev-servern körs):
+
+```bash
+npm run dev -- --port 3111
+CH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+"$CH" --headless=new --hide-scrollbars --force-prefers-reduced-motion \
+  --force-device-scale-factor=3 --window-size=440,956 --virtual-time-budget=12000 \
+  --screenshot=out.png "http://localhost:3111/store-screens.html?frame=1&s=1&lang=sv"
+```
+
+`s` är bildnummer (1–6), `lang` är `sv` eller `en`. Verktyget är `store-screens.html` och `src/store-screens.tsx` och ingår inte i produktionsbygget. Texterna och datan ändras i `src/store-screens.tsx`.
 
 ## Åldersgräns och App Privacy
 
@@ -147,7 +163,7 @@ Notes: The Swish shortcut in Money Mode only appears when the app language is Sw
 - [ ] Avtal i App Store Connect (Paid Apps krävs först när In-App Purchase läggs till)
 - [ ] Appen skapad i App Store Connect med bundle-ID ovan
 - [ ] Testkonto skapat och inlagt i granskningsanteckningarna
-- [ ] Skärmdumpar uppladdade
+- [x] Skärmdumpar framtagna (se ovan), [ ] uppladdade i App Store Connect
 - [ ] App Privacy ifyllt, åldersgräns ifylld
 - [ ] Integritetspolicyn läst av någon med juridisk kompetens
 - [ ] Skicka först till TestFlight, prova med ett par föräldrar, publicera därefter

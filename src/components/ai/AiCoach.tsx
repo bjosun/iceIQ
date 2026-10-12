@@ -36,7 +36,7 @@ const ACTIVE_CHAT_KEY = 'iceiq-active-coach-chat';
 
 // Litet citatkort under ett coach-svar. Samma ton för båda sorterna: lugnt,
 // utan utropstecken. "think" får en dämpad slate-ton i stället för grönt.
-function InsightQuote({ title, text, tone, shareLabel, onShare }: {
+export function InsightQuote({ title, text, tone, shareLabel, onShare }: {
   title: string;
   text: string;
   tone: 'strength' | 'think';
