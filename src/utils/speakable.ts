@@ -1,10 +1,14 @@
 // Skrivet språk blir konstigt uppläst: tankstreck, kolon och "×" läses som
 // tecken eller ger fel betoning. Gör om dem till vanliga pauser och ord.
-// Gäller även coachens rader, som är skrivna för att läsas.
+// Gäller även coachens rader, som är skrivna för att läsas. Kommatecken görs
+// till punkt: rösten lägger en märklig paus vid komma men en ren vid punkt.
 export function speakable(text: string, lang: string): string {
   const times = lang === 'sv' ? 'gånger' : 'times';
   return text
     .replace(/(\d+)\s*[×x]\s*/g, `$1 ${times} `)
+    // Komma ger en konstig paus i rösten; punkt ger en ren. Decimalkomma (7,5)
+    // lämnas orörd.
+    .replace(/\s*(?:(?<!\d),|,(?!\d))\s*/g, '. ')
     .replace(/\s*[—–]\s*/g, '. ')
     .replace(/\s*[:;]\s+/g, '. ')
     .replace(/%/g, lang === 'sv' ? ' procent' : ' percent')

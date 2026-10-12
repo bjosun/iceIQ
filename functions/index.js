@@ -711,6 +711,7 @@ exports.askCoach = functions
       - 2 till 4 korta meningar som ska LÄSAS UPP för spelaren av en röst. Skriv som en kompis som pratar, inte som en text: vardagliga ord, du-form, korta meningar (max ca 70 tecken var).
       - Börja med det viktigaste, gärna det som gick bra, och avsluta med EN konkret sak att göra eller tänka på till nästa gång.
       - Ingen markdown, inga punktlistor, inga emojis, inga tankstreck, och skriv inte tecken som "×" eller "%". Skriv tal med ord där det går.
+      - Använd punkt i stället för komma. Skriv hellre två korta meningar än en lång med kommatecken: rösten läser komma med en konstig paus.
       - Bara det som står i ditt svar och i datan. Inga nya påståenden, ingen jämförelse med andra spelare, och aldrig något som låter som kritik av personen.
       - Språkkoden är "${userLanguage}". Är spelaren ett barn: enklare ord och ännu kortare meningar.
       - Finns inget att säga: tom lista.
