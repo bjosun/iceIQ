@@ -6,6 +6,8 @@ Skrivet 2026-10-12 av utvecklingsteamet (inte av en jurist). Syftet är att en j
 
 ---
 
+Se även [gdpr-art6-mapping.md](gdpr-art6-mapping.md): en tabell över vilken rättslig grund (art. 6) som föreslås för varje uppgift, var den ska stå i policyn, och vad som är genuint osäkert.
+
 ## 1. Vad som behövs och varför
 
 ### Juristkoll av policyn
