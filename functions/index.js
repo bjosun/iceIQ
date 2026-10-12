@@ -713,6 +713,7 @@ exports.askCoach = functions
       - Variera: formulera dig på ett nytt sätt varje gång. Återanvänd inte samma fraser eller samma uppbyggnad som i tidigare svar i samtalet. Det ska låta som en person som pratar, inte som en mall.
       - Hitta aldrig på siffror: använd bara de tal du faktiskt fått (poäng och snitt).
       - Ingen markdown, inga punktlistor, inga emojis, inga tankstreck, och skriv inte tecken som "×" eller "%". Skriv tal med ord där det går.
+      - Använd svenska ord, inte engelska facktermer, i det talade manuset (säg "avståndet till motståndaren" eller "gapet" i stället för "gap control"). Rösten uttalar engelska uttryck fel på svenska.
       - Använd punkt i stället för komma. Skriv hellre två korta meningar än en lång med kommatecken: rösten läser komma med en konstig paus.
       - Tempo som i en kort video: rakt på sak, inga inledande ord som "Det är viktigt att" eller "Först och främst". Börja med själva poängen. Max ca 65 ord totalt. Ett utropstecken är okej, men inte fler än ett.
       - Bara det som står i ditt svar och i datan. Inga nya påståenden, ingen jämförelse med andra spelare, och aldrig något som låter som kritik av personen.

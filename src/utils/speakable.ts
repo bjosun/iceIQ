@@ -2,8 +2,18 @@
 // tecken eller ger fel betoning. Gör om dem till vanliga pauser och ord.
 // Gäller även coachens rader, som är skrivna för att läsas. Kommatecken görs
 // till punkt: rösten lägger en märklig paus vid komma men en ren vid punkt.
+// Engelska hockeytermer som en svensk röst annars läser fel ("gap control"
+// blev "gap cont"). Skrivs om till något den svenska rösten uttalar rätt.
+// Fler termer läggs till här när någon hörs fel.
+const SV_TERMS: [RegExp, string][] = [
+  [/gap[\s-]*control/gi, 'gap-kontroll'],
+];
+
 export function speakable(text: string, lang: string): string {
   const times = lang === 'sv' ? 'gånger' : 'times';
+  if (lang === 'sv') {
+    for (const [pattern, spoken] of SV_TERMS) text = text.replace(pattern, spoken);
+  }
   return text
     .replace(/(\d+)\s*[×x]\s*/g, `$1 ${times} `)
     // Komma ger en konstig paus i rösten; punkt ger en ren. Decimalkomma (7,5)
