@@ -13,7 +13,17 @@ export interface ListenClip {
   id: 'match' | 'good' | 'think';
   /** Meningarna spelas upp en i taget. */
   sentences: string[];
+  /**
+   * Uppspelningstakt per mening (1 = normal): lite långsammare för det som ska
+   * stå ut, lite snabbare för inledningar. Samma längd som `sentences`.
+   */
+  rates?: number[];
 }
+
+// Taktnivåer. Små steg: bara ±10 % låter naturligt utan att ljudet blir bearbetat.
+const FAST = 1.08; // inledningar och "fyllnad"
+const NORMAL = 1.0;
+const SLOW = 0.9;  // det som ska fastna
 
 interface BuildInput {
   playerName: string;
@@ -56,13 +66,19 @@ export function buildListenClips({ playerName, games, coachHighlight, coachThink
     else if (diff < 0) match.push(t(`listen.below${variant(seed + 1)}`));
     else match.push(t('listen.same'));
   }
-  clips.push({ id: 'match', sentences: match.map(say) });
+  clips.push({ id: 'match', sentences: match.map(say), rates: match.map(() => NORMAL) });
 
   // 2a. Coachens talade manus: skrivet av coachen för att läsas upp, i samma
   //     svar som analysen. Finns det används det i stället för raderna nedan.
   const spoken = (coachSpoken ?? []).filter((x) => typeof x === 'string' && x.trim());
   if (spoken.length > 0) {
-    clips.push({ id: 'good', sentences: spoken.map(say) });
+    // Coachens manus: allt normalt, och sista meningen (det man ska ta med
+    // sig) lite långsammare så att den tydligt fastnar.
+    clips.push({
+      id: 'good',
+      sentences: spoken.map(say),
+      rates: spoken.map((_, i) => (i === spoken.length - 1 && spoken.length > 1 ? SLOW : NORMAL)),
+    });
     return clips;
   }
 
@@ -79,11 +95,24 @@ export function buildListenClips({ playerName, games, coachHighlight, coachThink
       good.push(t('listen.keepGoing', { count: games.length }));
     }
   }
-  if (good.length > 0) clips.push({ id: 'good', sentences: good.map(say) });
+  if (good.length > 0) {
+    // Inledningen ("Det här funkade bra.") snabbt, innehållet i normal takt.
+    const withIntro = !!coachHighlight && good.length > 1;
+    clips.push({
+      id: 'good',
+      sentences: good.map(say),
+      rates: good.map((_, i) => (withIntro && i === 0 ? FAST : NORMAL)),
+    });
+  }
 
   // 3. Att tänka på: bara om coachen har lämnat en rad om det.
   if (coachThink) {
-    clips.push({ id: 'think', sentences: [t('listen.thinkIntro'), coachThink].map(say) });
+    // Inledningen snabbt, själva tanken långsamt så att den fastnar.
+    clips.push({
+      id: 'think',
+      sentences: [t('listen.thinkIntro'), coachThink].map(say),
+      rates: [FAST, SLOW],
+    });
   }
 
   return clips;

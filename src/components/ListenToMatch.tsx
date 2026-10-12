@@ -134,18 +134,27 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
         const weights = clip.sentences.map((x) => x.length + 6);
         const total = weights.reduce((a, b) => a + b, 0);
         let shown = -1;
+        const applyRate = (i: number) => {
+          // Lite långsammare på det som ska stå ut, lite snabbare på inledningar.
+          try {
+            (el as any).preservesPitch = true;
+            (el as any).webkitPreservesPitch = true;
+            el.playbackRate = clip.rates?.[i] ?? 1;
+          } catch { /* enheten tillåter inte taktändring: spelas i normal takt */ }
+        };
         const showFor = (fraction: number) => {
           let acc = 0;
           for (let i = 0; i < weights.length; i++) {
             acc += weights[i] / total;
             if (fraction <= acc + 0.0001) {
-              if (i !== shown) { shown = i; setCaption(clip.sentences[i]); }
+              if (i !== shown) { shown = i; setCaption(clip.sentences[i]); applyRate(i); }
               return;
             }
           }
         };
         setCaption(clip.sentences[0]);
         el.src = urls[0];
+        applyRate(0);
         el.ontimeupdate = () => {
           if (runId.current !== myRun || !el.duration) return;
           showFor(el.currentTime / el.duration);
@@ -164,6 +173,7 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
         }
         setCaption(clip.sentences[i]);
         el.src = urls![i];
+        try { el.playbackRate = clip.rates?.[i] ?? 1; } catch { /* normal takt */ }
         el.onended = () => playSentence(i + 1);
         el.onerror = () => finishClipCloud();
         el.play().catch(() => finishClipCloud());
@@ -219,7 +229,7 @@ export default function ListenToMatch({ clips, token, lang, note }: ListenToMatc
       const u = new SpeechSynthesisUtterance(text);
       u.lang = language === 'sv' ? 'sv-SE' : 'en-US';
       if (voice) u.voice = voice;
-      u.rate = RATE;
+      u.rate = RATE * (clip.rates?.[i] ?? 1);
       u.pitch = 1;
       u.onstart = () => { if (runId.current === myRun) setCaption(text); };
       if (i === clip.sentences.length - 1) {
