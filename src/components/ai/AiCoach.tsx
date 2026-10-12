@@ -6,7 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAiCredits } from '../../hooks/useAiCredits';
 import { useCoachChats, CoachChat, CoachChatMessage } from '../../hooks/useCoachChats';
-import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2, ShoppingCart, Mail, Share2, Wind } from 'lucide-react';
+import { Sparkles, Send, Lock, BrainCircuit, Loader2, Crown, History, Plus, Trash2, ShoppingCart, Mail, Share2, Wind, Brain } from 'lucide-react';
 import ShareImageModal from '../modals/ShareImageModal';
 import Modal from '../ui/Modal';
 import BreathingExercise from '../breathing/BreathingExercise';
@@ -16,6 +16,7 @@ import { creditPackPrice, CREDITS_PER_PACK } from '../../utils/pricing';
 import { isNativeApp } from '../../utils/platform';
 import { hasAiConsent, recordAiConsent } from '../../utils/aiConsent';
 import AiConsentModal from './AiConsentModal';
+import CoachMemoryModal from './CoachMemoryModal';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface AiCoachProps {
@@ -84,6 +85,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
   const [buyingCredits, setBuyingCredits] = useState(false);
   const [insightToShare, setInsightToShare] = useState<{ text: string; kind: 'strength' | 'think' } | null>(null);
   const [showBreathing, setShowBreathing] = useState(false);
+  const [showMemory, setShowMemory] = useState(false);
 
   // Andningsövningen är medvetet öppen för alla. Den kostar ingenting att
   // köra — helt klientsidig, inga API-anrop, inga krediter — och att låsa
@@ -402,6 +404,13 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             <Wind size={14} />
           </button>
           <button
+            onClick={() => setShowMemory(true)}
+            title={t('coachMemory.button')}
+            className="p-2 rounded-full border border-white/5 text-gray-400 hover:text-white bg-black/40 transition-colors"
+          >
+            <Brain size={14} />
+          </button>
+          <button
             onClick={handleOpenHistory}
             title={t('ai.history')}
             className={`p-2 rounded-full border transition-colors ${
@@ -656,6 +665,8 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
            </div>
         </div>
       )}
+
+      <CoachMemoryModal isOpen={showMemory} onClose={() => setShowMemory(false)} playerName={playerName} />
 
       <AiConsentModal
         isOpen={consentOpen}

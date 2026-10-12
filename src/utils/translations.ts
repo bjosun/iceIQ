@@ -182,6 +182,22 @@ export const translations = {
       error: "Could not create the file. Try again, or email us."
     },
 
+    playerForm: {
+      addEmail: "Add the player's email (optional)",
+      nameHint: "A first name or nickname is enough. No surname needed."
+    },
+    coachMemory: {
+      button: "The coach's notes",
+      title: "The coach's notes about {name}",
+      desc: "To give more personal advice the coach keeps a few short, dated notes about the player. You can read them, clear them, or switch them off.",
+      keep: "Keep notes about this player",
+      empty: "There are no notes yet.",
+      clear: "Clear all notes",
+      clearConfirm: "Clear all the coach's notes about {name}?",
+      cleared: "The notes are cleared.",
+      error: "That did not work. Try again."
+    },
+
     // Lyssnaklipp på spelarens länk — se utils/listenClips.ts
     listen: {
       title: "Listen to your game",
@@ -793,6 +809,22 @@ export const translations = {
       desc: "Ladda ner en kopia av ditt konto, dina spelare, matcher och coachsamtal som en fil.",
       download: "Ladda ner mina uppgifter",
       error: "Kunde inte skapa filen. Försök igen, eller mejla oss."
+    },
+
+    playerForm: {
+      addEmail: "Lägg till spelarens e-post (valfritt)",
+      nameHint: "Ett förnamn eller smeknamn räcker. Inget efternamn behövs."
+    },
+    coachMemory: {
+      button: "Coachens anteckningar",
+      title: "Coachens anteckningar om {name}",
+      desc: "För att ge mer personliga råd sparar coachen några korta, daterade anteckningar om spelaren. Du kan läsa dem, rensa dem eller stänga av dem.",
+      keep: "Spara anteckningar om den här spelaren",
+      empty: "Det finns inga anteckningar än.",
+      clear: "Rensa alla anteckningar",
+      clearConfirm: "Rensa alla coachens anteckningar om {name}?",
+      cleared: "Anteckningarna är rensade.",
+      error: "Det gick inte. Försök igen."
     },
 
     // Lyssnaklipp på spelarens länk — se utils/listenClips.ts

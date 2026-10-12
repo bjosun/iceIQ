@@ -84,3 +84,15 @@ Integritetspolicyn och villkoren är rättade för sakfel enligt listan ovan. Ob
 - **Länkåterkallning och export saknar gränssnitt.** Servern kan stänga en spelarlänk (`revokedAt`) men det finns ingen knapp i appen, och det finns ingen exportfunktion för användardata. Policyn säger därför "mejla oss" för båda. Bygg gärna knappar, så blir texten och funktionen samma sak.
 - **Villkoren** har fått tre tillägg (vårdnadshavarintyg, AI-friskrivning, Money Mode som räknare) skrivna i enkelt språk. De är utkast till jurist, inte färdig juridisk text.
 - Ingen deploy är gjord: ändringarna syns på iceiq.app först när webben deployas.
+
+## Minimering gjord 2026-10-13 (gör DPIA:n enklare)
+
+| Åtgärd | Effekt |
+|---|---|
+| Spelarens **e-post** döljs bakom ett val ("Lägg till spelarens e-post, valfritt") i stället för ett ständigt synligt fält | Mindre insamling av barns kontaktuppgifter; behövs sällan eftersom spelarlänken finns |
+| **Namntips** vid ny spelare: "ett förnamn eller smeknamn räcker, inget efternamn" | Mindre identifierande uppgifter om barn |
+| **Coachens anteckningar** kan läsas, rensas och stängas av per spelare (knappen med hjärnan i coachen). När de är avstängda används och sparas inget minne | Profileringen blir ett medvetet val med insyn och kontroll (rad 5) |
+| **Text-till-tal-ljud sparas inte längre** (tidigare cache i ca 30 dagar) | En kategori mindre att motivera, och ingen lagringstid att förklara (rad 9) |
+| Dagsgräns per länk och anonym mätning är kvar | Oförändrat |
+
+Kvar att besluta: automatisk rensning av inaktiva konton, och om marknadsföringskällan (UTM) ska sparas alls.

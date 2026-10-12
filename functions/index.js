@@ -651,11 +651,16 @@ exports.askCoach = functions
   // kan referera till en utveckling ("i mars jobbade du på X, nu i augusti
   // har du...") snarare än bara ett senaste-tillstånd. Konton med den gamla
   // formen migreras in som en första post första gången de körs om.
-  const existingTimeline = Array.isArray(playerDocData.coachTimeline)
-    ? playerDocData.coachTimeline
-    : (playerDocData.coachNotes
-        ? [{ date: '(tidigare anteckning)', note: String(playerDocData.coachNotes).slice(0, 200) }]
-        : []);
+  // Föräldern kan stänga av coachens anteckningar om spelaren (coachMemoryOff
+  // på spelaren): då används inget minne och inget nytt sparas.
+  const memoryOff = playerDocData.coachMemoryOff === true;
+  const existingTimeline = memoryOff
+    ? []
+    : (Array.isArray(playerDocData.coachTimeline)
+        ? playerDocData.coachTimeline
+        : (playerDocData.coachNotes
+            ? [{ date: '(tidigare anteckning)', note: String(playerDocData.coachNotes).slice(0, 200) }]
+            : []));
   const today = new Date().toISOString().slice(0, 10);
 
   const systemPrompt = `
@@ -919,7 +924,7 @@ exports.askCoach = functions
       console.warn(`askCoach: kunde inte tolka JSON-svaret för ${userId}: ${e.message}`);
     }
 
-    if (playerRef && coachTimeline) {
+    if (playerRef && coachTimeline && !memoryOff) {
       // Bäst-ansträngning: minnet får inte blockera själva svaret till
       // spelaren om det här skulle strula. coachNotes (gamla strängfältet)
       // raderas medvetet inte — coachTimeline-läsningen ovan migrerar in

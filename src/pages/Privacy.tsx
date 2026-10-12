@@ -41,7 +41,7 @@ export default function Privacy() {
               {t('privacyLink')}
             </h1>
             <p className="text-gray-300">
-              Last updated: 12 October 2026
+              Last updated: 13 October 2026
             </p>
           </div>
 
@@ -66,7 +66,7 @@ export default function Privacy() {
               <ul className="text-gray-300 list-disc pl-6 mb-4 space-y-2">
                 <li>Account information: email address and name, and the sign-in method you use (email, Google or Apple).</li>
                 <li>Player data that you enter about a player, who is often a child: name, team, game statistics, points and, if you use Money Mode, the reward balance.</li>
-                <li>The player&apos;s email address, if you choose to enter one so the player can be sent an analysis.</li>
+                <li>The player&apos;s email address, only if you choose to add one so the player can be sent an analysis. It is not needed to use the Service.</li>
                 <li>Content you create, such as saved coach conversations, and short notes the AI coach keeps about the player over time so it can give more personal advice (see AI Coach below).</li>
                 <li>The dates when a player has done a mental routine on the player&apos;s own page.</li>
                 <li>The link (a long random address) that lets a player open their own page without logging in.</li>
@@ -136,8 +136,9 @@ export default function Privacy() {
               </p>
               <p className="text-gray-300 mb-4">
                 To make the advice more personal over time, the coach saves a short list of dated notes about the player (what
-                the player is working on, strengths, recurring patterns), at most eight at a time. These notes are part of the
-                player&apos;s data and are removed when you delete the player or your account. The coach&apos;s advice is
+                the player is working on, strengths, recurring patterns), at most eight at a time. You can read, clear or switch off
+                these notes at any time in the app (the notes button in the coach). They are part of the player&apos;s data and are
+                removed when you delete the player or your account. The coach&apos;s advice is
                 generated automatically; it is guidance, not a decision about the player.
               </p>
             </section>
@@ -159,8 +160,8 @@ export default function Privacy() {
               </p>
               <p className="text-gray-300 mb-4">
                 When a player opens the listen page, the short texts that are read out (for example the first name and the points
-                of a game) are turned into speech by Google Cloud Text-to-Speech, processed in the EU. We store only a short-lived
-                copy of the generated audio so it does not have to be created again. We also keep anonymous daily counters of how the
+                of a game) are turned into speech by Google Cloud Text-to-Speech, processed in the EU. We do not keep a copy of the
+                audio. We also keep anonymous daily counters of how the
                 listen page is used (for example how many play it and which voice is chosen). They contain no names, links or
                 device identifiers.
               </p>

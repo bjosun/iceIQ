@@ -58,6 +58,9 @@ export default function PlayerForm({
   const [mintingLink, setMintingLink] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  // Spelarens e-post är valfri och behövs sällan (spelarlänken räcker). Fältet
+  // visas först när man ber om det, eller om en adress redan finns.
+  const [showEmail, setShowEmail] = useState(false);
 
   const templateOptions = Object.entries(templates).map(([id, template]) => ({
     value: id,
@@ -121,15 +124,30 @@ export default function PlayerForm({
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">{t('playerEmail') || "Email"}</label>
-            <Input
-              type="email"
-              value={playerEmail}
-              onChange={(e) => onPlayerEmailChange(e.target.value)}
-              onBlur={(e) => onPlayerEmailBlur?.(e.target.value)}
-              placeholder="Optional"
-              icon={Mail}
-            />
+            {(showEmail || playerEmail) ? (
+              <>
+                <label className="block text-sm font-medium text-gray-400 mb-1">{t('playerEmail') || "Email"}</label>
+                <Input
+                  type="email"
+                  value={playerEmail}
+                  onChange={(e) => onPlayerEmailChange(e.target.value)}
+                  onBlur={(e) => onPlayerEmailBlur?.(e.target.value)}
+                  placeholder="Optional"
+                  icon={Mail}
+                />
+              </>
+            ) : (
+              <>
+                <span className="block text-sm font-medium text-gray-400 mb-1">{t('playerEmail') || "Email"}</span>
+                <button
+                  type="button"
+                  onClick={() => setShowEmail(true)}
+                  className="w-full text-left text-sm text-cyan-400 hover:text-cyan-300 border border-dashed border-gray-700 rounded-xl px-4 py-3"
+                >
+                  {t('playerForm.addEmail')}
+                </button>
+              </>
+            )}
           </div>
 
           <div>

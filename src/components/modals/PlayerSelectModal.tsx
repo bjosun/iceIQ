@@ -125,6 +125,7 @@ export default function PlayerSelectModal({
             icon={Search}
             autoFocus
           />
+          <p className="mt-2 text-xs text-gray-500">{t('playerForm.nameHint')}</p>
         </div>
 
         <div className="max-h-96 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
