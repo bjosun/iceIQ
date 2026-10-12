@@ -1,6 +1,6 @@
 # iPhone-app (App Store) — plan och status
 
-Status: Capacitor-skal uppsatt, ej byggt eller testat. Skriven 2026-10-05.
+Status 2026-10-15: appen är byggd, testad på telefon via TestFlight, och bygge 6 är arkiverat inför nästa uppladdning. Se [release-runbook.md](release-runbook.md) för rutin, reglage och checklista. Ursprunglig plan skriven 2026-10-05.
 
 ## Mål
 
