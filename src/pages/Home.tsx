@@ -14,6 +14,7 @@ import {
   type Interval,
 } from '../utils/pricing';
 import { isNativeApp } from '../utils/platform';
+import { APP_STORE_URL } from '../utils/appStore';
 import {
   BarChart3,
   Cloud,
@@ -188,6 +189,16 @@ function HomePage() {
             >
               {t('common.viewPlans')}
             </a>
+            )}
+            {!isNativeApp && APP_STORE_URL && (
+              <a
+                href={APP_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 rounded-xl font-semibold text-lg transition-all hover:bg-gray-200"
+              >
+                {t('footer.appStore')}
+              </a>
             )}
           </div>
 

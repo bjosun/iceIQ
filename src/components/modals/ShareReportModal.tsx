@@ -6,6 +6,7 @@ import { renderMatchReport, MatchReportData } from '../../utils/matchReport';
 import { MatchHighlight } from '../../utils/matchHighlight';
 import { ReportFormat } from '../../utils/shareCanvas';
 import { BadgeId } from '../../utils/badges';
+import { maybeAskForReview } from '../../utils/reviewPrompt';
 
 interface ShareReportModalProps {
   isOpen: boolean;
@@ -29,6 +30,21 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
 
   if (!data) return null;
 
+  // Betygsrutan visas först när flödet är klart (delningsrutan stängs) och det
+  // var ett bra tillfälle: över det egna snittet eller ett nytt märke.
+  const handleClose = () => {
+    if (stage === 'share') {
+      const s = data.stats;
+      let positive = (data.badges?.length ?? 0) > 0;
+      if (s && s.games > 1) {
+        const prevAvg = (s.avgPoints * s.games - data.points) / (s.games - 1);
+        if (data.points > prevAvg) positive = true;
+      }
+      window.setTimeout(() => { maybeAskForReview(s?.games ?? 0, positive); }, 900);
+    }
+    onClose();
+  };
+
   const renderReport = (format: ReportFormat) =>
     renderMatchReport({
       ...data,
@@ -48,7 +64,7 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
     <MatchSummaryReveal
       isOpen={isOpen && stage === 'reveal'}
       onContinue={() => setStage('share')}
-      onClose={onClose}
+      onClose={handleClose}
       playerName={data.playerName}
       points={data.points}
       actions={data.actions}
@@ -58,7 +74,7 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
     />
     <ShareImageModal
       isOpen={isOpen && stage === 'share'}
-      onClose={onClose}
+      onClose={handleClose}
       title={t('share.title')}
       desc={t('share.desc')}
       fileNameBase={`iceiq-${data.playerName.replace(/\s+/g, '-').toLowerCase()}-${data.date}`}

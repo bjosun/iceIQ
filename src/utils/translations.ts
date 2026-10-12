@@ -171,6 +171,10 @@ export const translations = {
       unlimited: "Unlimited"
     },
 
+    footer: {
+      appStore: "Get the app on the App Store"
+    },
+
     // Lyssnaklipp på spelarens länk — se utils/listenClips.ts
     listen: {
       title: "Listen to your game",
@@ -767,6 +771,10 @@ export const translations = {
       support: "Prioriterad support",
       price: "Pris",
       unlimited: "Obegränsat"
+    },
+
+    footer: {
+      appStore: "Ladda ner appen i App Store"
     },
 
     // Lyssnaklipp på spelarens länk — se utils/listenClips.ts

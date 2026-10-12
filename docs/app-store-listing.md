@@ -157,3 +157,19 @@ Notes: The Swish shortcut in Money Mode only appears when the app language is Sw
 - **Radera Apple-konto:** appen loggar in med Apple på nytt före raderingen och försöker dra tillbaka Apple-token (`revokeAccessToken`). Det är inte provat på riktig enhet. Om Apple-token inte kan dras tillbaka på det sättet behöver det göras serversidan med Apples REST-API.
 - **Reglerna om AI och personuppgifter** skärptes av Apple under hösten 2025. Samtyckesrutan följer det, men verifiera mot den aktuella lydelsen av riktlinje 5.1.1/5.1.2 innan inskickning.
 - **Appen utan köp:** gratisanvändare ser ingen väg att köpa fler AI-krediter. Tillåtet, men en återvändsgränd som In-App Purchase löser i version 1.1.
+
+## Efter publicering: slå på App Store-länkarna
+
+Sidorna påstår inget om appen förrän ni sätter två värden i `.env` (och bygger om och deployar webben):
+
+```
+VITE_APP_STORE_ID=<appens numeriska ID från App Store Connect>
+VITE_APP_STORE_URL=https://apps.apple.com/se/app/ice-iq/id<ID>
+```
+
+Då läggs följande in automatiskt:
+- Smart App Banner (`apple-itunes-app`) på alla sidor, så att Safari på iPhone föreslår appen.
+- Strukturerad data (`MobileApplication`, iOS, gratis) så att Google kan visa appen.
+- En knapp "Ladda ner appen i App Store" på startsidan och i sidfoten (alltså på alla indexerade sidor).
+
+Byt gärna textknappen mot Apples officiella "Download on the App Store"-märke (SVG finns i Apples marknadsföringsresurser, och ska användas oförändrat). Lägg kampanjparametrar på länken (`?pt=<leverantörstoken>&ct=<kampanj>`) för att se i App Store Connect vilka sidor som ger installationer.
