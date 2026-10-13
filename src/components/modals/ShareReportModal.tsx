@@ -6,6 +6,7 @@ import { renderMatchReport, MatchReportData } from '../../utils/matchReport';
 import { MatchHighlight } from '../../utils/matchHighlight';
 import { ReportFormat } from '../../utils/shareCanvas';
 import { BadgeId } from '../../utils/badges';
+import { AwardId } from '../../utils/awards';
 import { maybeAskForReview } from '../../utils/reviewPrompt';
 
 interface ShareReportModalProps {
@@ -15,6 +16,7 @@ interface ShareReportModalProps {
     actions: { label: string; count: number; type?: 'positive' | 'negative' }[];
     highlight?: MatchHighlight | null;
     badges?: BadgeId[];
+    award?: AwardId | null;
   }) | null;
 }
 
@@ -35,7 +37,7 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
   const handleClose = () => {
     if (stage === 'share') {
       const s = data.stats;
-      let positive = (data.badges?.length ?? 0) > 0;
+      let positive = (data.badges?.length ?? 0) > 0 || !!data.award;
       if (s && s.games > 1) {
         const prevAvg = (s.avgPoints * s.games - data.points) / (s.games - 1);
         if (data.points > prevAvg) positive = true;
@@ -71,6 +73,7 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
       highlight={data.highlight ? t(data.highlight.key, data.highlight.params) : undefined}
       stats={data.stats}
       badges={data.badges}
+      award={data.award}
     />
     <ShareImageModal
       isOpen={isOpen && stage === 'share'}

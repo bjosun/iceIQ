@@ -8,6 +8,7 @@ import { useAiCredits } from '../hooks/useAiCredits';
 import { getDemoPlayerName, getDemoHistory, DEMO_STATS } from '../utils/demoData';
 import { pickMatchHighlight, MatchHighlight } from '../utils/matchHighlight';
 import { newBadges, BadgeId } from '../utils/badges';
+import { topAward, isPosition, AwardId } from '../utils/awards';
 import { isNativeApp } from '../utils/platform';
 import { onDataRefreshed, firestore as firestoreService } from '../services/firestore';
 import { MatchReportStats } from '../utils/matchReport';
@@ -113,7 +114,7 @@ export default function Dashboard() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [playerHistory, setPlayerHistory] = useState<any[]>([]); // Historik för AI
   const [seasonSummary, setSeasonSummary] = useState<ReturnType<typeof buildSeasonSummary>>(null);
-  const [seasonGames, setSeasonGames] = useState<{ date: string; points: number }[]>([]);
+  const [seasonGames, setSeasonGames] = useState<{ date: string; points: number; template?: string; counts?: Record<string, number> }[]>([]);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>(draft?.selectedPlayerName || '');
   const [playerEmail, setPlayerEmail] = useState('');
   const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
@@ -132,6 +133,7 @@ export default function Dashboard() {
     highlight?: MatchHighlight | null;
     stats?: MatchReportStats;
     badges?: BadgeId[];
+    award?: AwardId | null;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -283,7 +285,7 @@ export default function Dashboard() {
               .filter(g => g.playerName === currentPlayerName)
               .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             setSeasonSummary(buildSeasonSummary(playerGames));
-            setSeasonGames(playerGames.map(g => ({ date: g.date, points: g.points || 0 })));
+            setSeasonGames(playerGames.map(g => ({ date: g.date, points: g.points || 0, template: g.template, counts: g.counts })));
 
             const history = allGames
               .filter(g => g.playerName === currentPlayerName) 
@@ -493,6 +495,22 @@ export default function Dashboard() {
         // ingenting. Kortet visar höjdpunkten i stället.
         : undefined;
 
+      // Utmärkelsen matchen gav. Nycklarna i sparade matcher är de ENGELSKA
+      // aktionsnamnen, så vi bygger samma form här (se usePlayerData.saveGame).
+      const countsEn: Record<string, number> = {};
+      Object.entries(actionCounts).forEach(([key, count]) => {
+        try {
+          const keyObj = JSON.parse(key);
+          countsEn[keyObj.en || keyObj.sv] = count;
+        } catch {
+          countsEn[key] = count;
+        }
+      });
+      const negativeNames = new Set(
+        (currentTemplate?.actions ?? []).filter(a => a.type === 'negative').map(a => a.name.en),
+      );
+      const award = isPosition(currentTemplateId) ? topAward(currentTemplateId, countsEn, negativeNames) : null;
+
       setReportData({
         playerName: selectedPlayerName,
         team: teamName,
@@ -502,6 +520,7 @@ export default function Dashboard() {
         highlight,
         stats: seasonStats,
         badges: newBadges(seasonGames.map(g => g.points || 0), totals.actionsPoints),
+        award,
       });
 
       // Rensa formuläret (men behåll saldot som nu är uppdaterat)
@@ -748,6 +767,7 @@ export default function Dashboard() {
               playerName={selectedPlayerName}
               games={seasonGames}
               summary={seasonSummary}
+              templateId={currentTemplateId}
             />
           )}
         </div>

@@ -5,6 +5,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { prefersReducedMotion, tapFeedback } from '../../utils/feedback';
 import { BadgeId } from '../../utils/badges';
 import { BADGE_ICONS } from '../dashboard/BadgeShelf';
+import { AwardId, AWARDS } from '../../utils/awards';
+import AwardGem, { readGemStyle } from '../dashboard/AwardGem';
 
 interface MatchSummaryRevealProps {
   isOpen: boolean;
@@ -18,6 +20,8 @@ interface MatchSummaryRevealProps {
   stats?: { games: number; avgPoints: number; bestGame: number };
   /** Märken som just den här matchen låste upp. */
   badges?: BadgeId[];
+  /** Utmärkelsen den här matchen gav, eller null/undefined. */
+  award?: AwardId | null;
 }
 
 // Spelar upp resultatet i stället för att visa en tabell: poängen räknas upp,
@@ -46,7 +50,7 @@ function useCountUp(target: number, run: boolean, durationMs = 900): number {
 }
 
 export default function MatchSummaryReveal({
-  isOpen, onContinue, onClose, playerName, points, actions, highlight, stats, badges = [],
+  isOpen, onContinue, onClose, playerName, points, actions, highlight, stats, badges = [], award,
 }: MatchSummaryRevealProps) {
   const { t } = useLanguage();
   const shown = useCountUp(points, isOpen);
@@ -134,6 +138,25 @@ export default function MatchSummaryReveal({
               <span className="font-semibold">{focus.label}</span> <span className="text-slate-300">×{focus.count}</span>
             </p>
             <p className="text-xs text-slate-400 mt-1">{t('summary.focusNote')}</p>
+          </div>
+        )}
+
+        {award && (
+          <div
+            className="flex items-center gap-4 mb-5 px-4 py-3 rounded-2xl bg-gray-800/70 border border-gray-600 text-left animate-slide-in motion-reduce:animate-none"
+            style={{ animationDelay: '1.75s' }}
+          >
+            <AwardGem
+              id={award}
+              ring={AWARDS.find((a) => a.id === award)?.ring ?? 'fire'}
+              style={readGemStyle()}
+              size={64}
+            />
+            <span>
+              <span className="block text-[10px] uppercase tracking-widest text-cyan-400">{t('awards.unlocked')}</span>
+              <span className="block text-lg font-bold text-white">{t(`awards.${award}.name`)}</span>
+              <span className="block text-xs text-gray-400">{t(`awards.${award}.desc`)}</span>
+            </span>
           </div>
         )}
 

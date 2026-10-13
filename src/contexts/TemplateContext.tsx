@@ -29,7 +29,7 @@ interface TemplateContextType {
   deleteAction: (actionIndex: number) => void;
 }
 
-const defaultTemplates: Record<string, Template> = {
+export const defaultTemplates: Record<string, Template> = {
   defenseman: {
     id: 'defenseman',
     name: { sv: 'Back', en: 'Defenseman' },

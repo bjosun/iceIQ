@@ -12,13 +12,16 @@ import { Line } from 'react-chartjs-2';
 import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import Card from '../ui/Card';
 import BadgeShelf from './BadgeShelf';
+import AwardShelf from './AwardShelf';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 interface SeasonOverviewProps {
   playerName: string;
-  games: { date: string; points: number }[]; // sorterade äldst -> nyast
+  games: { date: string; points: number; template?: string; counts?: Record<string, number> }[]; // sorterade äldst -> nyast
+  /** Spelarens position/mall — styr vilka utmärkelser som visas. */
+  templateId?: string;
   summary: {
     games: number;
     avgPoints: number;
@@ -29,7 +32,7 @@ interface SeasonOverviewProps {
 
 // Synlig utvecklingsvy utanför chatten: poängkurva över säsongens alla
 // matcher plus nyckeltal, så utvecklingen syns direkt i dashboarden.
-export default function SeasonOverview({ playerName, games, summary }: SeasonOverviewProps) {
+export default function SeasonOverview({ playerName, games, summary, templateId }: SeasonOverviewProps) {
   const { t, language } = useLanguage();
 
   const locale = language === 'sv' ? 'sv-SE' : 'en-GB';
@@ -141,6 +144,7 @@ export default function SeasonOverview({ playerName, games, summary }: SeasonOve
       )}
 
       {games.length >= 1 && <BadgeShelf games={games} />}
+      {games.length >= 1 && templateId && <AwardShelf games={games} templateId={templateId} />}
     </Card>
   );
 }
