@@ -46,6 +46,9 @@ xcodebuild archive -project ios/App/App.xcodeproj -scheme App -configuration Rel
 ### Bygge 6 (arkiverat 2026-10-15)
 Innehåller: Face ID-lås, Apple-/Google-inloggning, native delning (Snapchat m.fl.), betygsrutan, cache först, appfält och flikrad, "Stäng länken", "Ladda ner mina uppgifter", återkalla AI-samtycke, coachens anteckningar, skrivskyddad spelarlänk. Arkivet ligger som `IceIQ-b6.xcarchive` i Organizer. **Det är inte uppladdat** (det kräver ditt Apple-konto i Xcode).
 
+### Bygge 7 (förberett 2026-10-13, ej arkiverat)
+Som bygge 6 plus: dashboardtopp med spelare/säsong/lag, säsongsval och säsongsjämförelse, aktiveringsmejl (serversidan), supportsida på webben. **Endast iPhone** (`TARGETED_DEVICE_FAMILY = 1`), så iPad-skärmdumpar behövs inte. Webbkopian byggdes från ren HEAD (utan röstlabbet) och synkades med `cap sync ios`.
+
 ## 3. Reglage och konfiguration
 
 | Reglage | Var | Standard | Betydelse |
