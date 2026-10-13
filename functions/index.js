@@ -1797,6 +1797,194 @@ exports.runWeeklyDigestNow = functions
     }
   });
 
+// ==========================================
+//  AKTIVERINGSNUDGE (DAG 1-MEJL)
+// ==========================================
+// Registrerade, men kom aldrig till sin första match. Två fall med olika
+// budskap: ingen spelare alls (fastnade i att komma igång) eller spelare men
+// noll matcher (fastnade i att logga). Skickas högst en gång per konto —
+// activationNudgeSentAt på användardokumentet är spärren.
+const NUDGE_MIN_AGE_MS = 24 * 60 * 60 * 1000;
+const NUDGE_MAX_AGE_MS = 5 * 24 * 60 * 60 * 1000; // äldre konton nudgas inte i efterhand
+
+const buildActivationNudgeEmail = (lang, displayName, kind) => {
+  const en = lang === 'en';
+  const name = displayName ? displayName.split(' ')[0] : '';
+  const noPlayer = kind === 'noPlayer';
+
+  const subject = noPlayer
+    ? (en ? "Your Ice IQ account is ready — add a player" : "Ditt Ice IQ-konto är redo — lägg till en spelare")
+    : (en ? "Your first game takes about two minutes" : "Din första match tar ett par minuter");
+
+  const steps = noPlayer
+    ? (en
+        ? [
+            ["Open Ice IQ", "You'll see example data first, so you know what it looks like when it's filled in."],
+            ["Add your player", "Name is enough. You can add the rest later."],
+            ["Log a game", "Tap the actions as they happen, or fill them in afterwards."],
+          ]
+        : [
+            ["Öppna Ice IQ", "Du ser först exempeldata, så att du vet hur det ser ut när det är ifyllt."],
+            ["Lägg till din spelare", "Namnet räcker. Resten kan du fylla i senare."],
+            ["Logga en match", "Tryck på händelserna medan de sker, eller fyll i efteråt."],
+          ])
+    : (en
+        ? [
+            ["Open Ice IQ", "Your player is already there."],
+            ["Tap the actions from the game", "Whatever you remember is fine — it doesn't have to be perfect."],
+            ["Press Save Match & Reset", "That's your first score on the board. The trend and the AI coach start from there."],
+          ]
+        : [
+            ["Öppna Ice IQ", "Din spelare finns redan där."],
+            ["Tryck in händelserna från matchen", "Det du minns räcker — det behöver inte vara perfekt."],
+            ["Tryck på Spara Match & Nollställ", "Då ligger första poängsumman på tavlan. Utvecklingen och AI-coachen utgår från den."],
+          ]);
+
+  const stepRows = steps.map(([title, desc], i) => `
+    <tr>
+      <td style="padding:10px 12px 10px 0;vertical-align:top;width:28px;">
+        <div style="width:22px;height:22px;border-radius:999px;background:#0891b2;color:#ffffff;font-size:12px;font-weight:bold;text-align:center;line-height:22px;">${i + 1}</div>
+      </td>
+      <td style="padding:10px 0;vertical-align:top;">
+        <strong style="color:#111827;">${title}</strong><br/>
+        <span style="color:#6b7280;font-size:14px;">${desc}</span>
+      </td>
+    </tr>`).join('');
+
+  const intro = noPlayer
+    ? (en
+        ? "You created an Ice IQ account but haven't added a player yet. It only takes a moment — after each game the player gets a score, with points won and lost, and the next game is the chance to beat it."
+        : "Du skapade ett Ice IQ-konto men har inte lagt till någon spelare än. Det tar en liten stund — efter varje match får spelaren en poängsumma, med poäng vunna och förlorade, och nästa match är chansen att slå den.")
+    : (en
+        ? "Every game becomes a score: points for the good plays, points lost for the mistakes — and the next game is the chance to beat it. Your player is set up, so here's the short version."
+        : "Varje match blir en poängsumma: poäng för det som går bra, poängavdrag för misstagen — och nästa match är chansen att slå den. Din spelare är redo, så här gör du, kortfattat.");
+
+  const html = `
+    <div style="font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
+      <h2 style="margin:24px 0 4px;">Ice <span style="color:#0891b2;">IQ</span></h2>
+      <p style="margin:0 0 20px;color:#6b7280;">${en ? (name ? `Hi ${name},` : "Hi,") : (name ? `Hej ${name},` : "Hej,")}</p>
+      <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">${intro}</p>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">${stepRows}</table>
+      <p style="margin:28px 0;">
+        <a href="${APP_URL}/dashboard" style="background:#0891b2;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:bold;">
+          ${en ? "Open Ice IQ" : "Öppna Ice IQ"}
+        </a>
+      </p>
+      <p style="color:#6b7280;font-size:14px;line-height:1.6;">
+        ${en
+          ? "Stuck on something, or not sure how it works? Just reply to this email and tell us — we read everything."
+          : "Kört fast, eller oklart hur det funkar? Svara bara på det här mejlet och berätta — vi läser allt."}
+      </p>
+      <p style="color:#9ca3af;font-size:12px;margin-top:24px;">
+        ${en
+          ? "Ice IQ is part of SquareVerse Group, which is why this email arrives from squareversegroup.com. This is the only reminder we'll send."
+          : "Ice IQ är en del av SquareVerse Group, därför kommer det här mejlet från squareversegroup.com. Det här är den enda påminnelsen vi skickar."}
+      </p>
+    </div>`;
+
+  return { subject, html };
+};
+
+const runActivationNudge = async ({ dryRun = false, redirectTo = null, now = Date.now() } = {}) => {
+  const usersSnap = await getUsersCollection().get();
+  const candidates = [];
+  let sent = 0;
+
+  for (const userDoc of usersSnap.docs) {
+    const u = userDoc.data();
+    if (u.activationNudgeSentAt) continue;
+
+    const age = u.createdAt ? now - new Date(u.createdAt).getTime() : NaN;
+    if (!(age >= NUDGE_MIN_AGE_MS && age < NUDGE_MAX_AGE_MS)) continue;
+
+    const playersSnap = await userDoc.ref.collection('players').get();
+    let kind = 'noPlayer';
+    if (!playersSnap.empty) {
+      let hasGame = false;
+      for (const p of playersSnap.docs) {
+        const g = await p.ref.collection('games').limit(1).get();
+        if (!g.empty) { hasGame = true; break; }
+      }
+      if (hasGame) continue; // redan aktiverad — ingen nudge behövs
+      kind = 'noGame';
+    }
+
+    const email = await getUserEmail(userDoc.id);
+    if (!email) continue;
+
+    candidates.push({ uid: userDoc.id, email, kind });
+    if (dryRun) continue;
+
+    const { subject, html } = buildActivationNudgeEmail(u.language, u.displayName, kind);
+    try {
+      await sendEmail(redirectTo || email, subject, html, SUPPORT_REPLY_TO);
+      sent++;
+      // Spärren sätts bara vid skarpt utskick — en redirect till Bjorn för
+      // granskning får inte "förbruka" kontots enda nudge.
+      if (!redirectTo) {
+        await userDoc.ref.update({
+          activationNudgeSentAt: new Date().toISOString(),
+          activationNudgeKind: kind,
+        });
+      }
+    } catch (err) {
+      console.error(`Aktiveringsnudge misslyckades för ${userDoc.id}:`, err);
+    }
+  }
+
+  return { dryRun, redirectTo: redirectTo || null, candidates: candidates.length, sent, recipients: candidates };
+};
+
+// 16:00 svensk tid = 10:00 på USA:s östkust, 07:00 på västkusten — där
+// största delen av trafiken finns, så mejlet landar på morgonen och inte mitt
+// i natten.
+exports.activationNudge = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey] })
+  .pubsub.schedule('0 16 * * *')
+  .timeZone('Europe/Stockholm')
+  .onRun(async () => {
+    const { sent, candidates } = await runActivationNudge();
+    console.log(`📬 Aktiveringsnudge: ${sent} skickade av ${candidates} möjliga.`);
+    return null;
+  });
+
+// Manuell trigger, samma säkerhetsmönster som runWeeklyDigestNow:
+//   (inget)               -> torrkörning, listar vilka som skulle få nudge och vilken sort
+//   ?preview=noGame|noPlayer&to=adress&lang=en|sv -> skickar ett exempelmejl till bara den adressen
+//   ?to=adress            -> skickar riktiga kandidater till den adressen (förbrukar inget)
+//   ?live=true            -> skickar skarpt till alla kandidater
+exports.runActivationNudgeNow = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey, digestTestToken] })
+  .https.onRequest(async (req, res) => {
+    if (req.get('x-digest-token') !== digestTestToken.value()) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const to = typeof req.query.to === 'string' ? req.query.to : null;
+    const live = req.query.live === 'true';
+    const preview = typeof req.query.preview === 'string' ? req.query.preview : null;
+
+    try {
+      if (preview) {
+        if (!to || !['noGame', 'noPlayer'].includes(preview)) {
+          res.status(400).json({ error: 'preview kräver ?to= och noGame eller noPlayer' });
+          return;
+        }
+        const lang = req.query.lang === 'sv' ? 'sv' : 'en';
+        const { subject, html } = buildActivationNudgeEmail(lang, 'Björn', preview);
+        await sendEmail(to, subject, html, SUPPORT_REPLY_TO);
+        res.json({ preview, lang, sentTo: to });
+        return;
+      }
+      const result = await runActivationNudge({ dryRun: !to && !live, redirectTo: to });
+      res.json(result);
+    } catch (err) {
+      console.error('runActivationNudgeNow misslyckades:', err);
+      res.status(500).json({ error: 'Failed', message: err.message });
+    }
+  });
+
 // Permanent rapportverktyg (till skillnad från de tillfälliga test-
 // endpointsen ovan) — svarar på "vilken kanal ger faktiskt betalande
 // kunder", inte bara "hur många registrerade sig". Bara aggregerade
@@ -1898,6 +2086,8 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
   let noPlayers = 0;
   let playersNoGames = 0;
   let activated = 0;
+  // Konton som fått aktiveringsnudgen, och om de loggat en match efter den.
+  const nudges = [];
 
   for (const userDoc of usersSnap.docs) {
     const u = userDoc.data();
@@ -1952,6 +2142,26 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
       if (latestGameDate >= inactiveCutoffISO) break;
     }
 
+    // Aktiveringsnudgen: loggade kontot en match EFTER utskicket? Matchens
+    // createdAt är en exakt tidsstämpel (till skillnad från `date`, som är
+    // användarens eget matchdatum), så den går att jämföra mot utskicket.
+    if (typeof u.activationNudgeSentAt === 'string') {
+      let actedAfter = false;
+      for (const playerDoc of playersSnap.docs) {
+        const after = await playerDoc.ref.collection('games')
+          .where('createdAt', '>=', u.activationNudgeSentAt)
+          .limit(1)
+          .get();
+        if (!after.empty) { actedAfter = true; break; }
+      }
+      nudges.push({
+        uid,
+        kind: u.activationNudgeKind || '?',
+        sentAt: u.activationNudgeSentAt,
+        acted: actedAfter,
+      });
+    }
+
     if (playersSnap.empty) noPlayers++;
     else if (!latestGameDate) playersNoGames++;
     else {
@@ -1973,7 +2183,7 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
   // Ett uppslag för alla uid som faktiskt hamnade i rapporten. Konton som
   // hunnit raderas i Auth visas som uid:t — bättre än en tom rad.
   const emailByUid = await getUserEmails([
-    ...new Set([...newSignups, ...purchases, ...cancellations].map((r) => r.uid)),
+    ...new Set([...newSignups, ...purchases, ...cancellations, ...nudges].map((r) => r.uid)),
   ]);
   const label = (uid) => emailByUid.get(uid) || `(${uid})`;
 
@@ -1988,6 +2198,8 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
 
   const totalUsers = usersSnap.size;
   const newActivated = newSignups.filter((n) => n.activated).length;
+  const nudgesActed = nudges.filter((n) => n.acted).length;
+  const nudgeKindLabel = { noGame: 'har spelare, ingen match', noPlayer: 'ingen spelare' };
   // Andelen skrivs bara ut när den betyder något — "0 av 0 = 0 %" ser ut som
   // ett resultat, men är bara ett tomt underlag.
   const share = (n) => (totalUsers > 0 ? ` (${Math.round((n / totalUsers) * 100)} %)` : '');
@@ -2025,6 +2237,17 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
         </tr>
       </table>
 
+      ${nudges.length ? `
+        <h3 style="font-size:14px;margin:0 0 8px;">Nudge-uppföljning</h3>
+        <p style="margin:0 0 10px;color:#6b7280;font-size:13px;">
+          ${nudgesActed} av ${nudges.length} har loggat en match efter påminnelsen (alla hittills). Ingen kontrollgrupp &mdash; en riktning, inte ett bevis.
+        </p>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:13px;">${listRows(
+          [...nudges].sort((a, b) => b.sentAt.localeCompare(a.sentAt)), 20,
+          (n) => `<tr><td style="padding:4px 12px;">${label(n.uid)}</td><td style="padding:4px 12px;color:#9ca3af;">${n.sentAt.slice(0, 10)} · ${nudgeKindLabel[n.kind] || n.kind} · ${n.acted ? '<span style="color:#047857;font-weight:bold;">loggade match</span>' : 'ingen match än'}</td></tr>`
+        )}</table>
+      ` : ''}
+
       ${newSignups.length ? `
         <h3 style="font-size:14px;margin:0 0 8px;">Nya konton</h3>
         <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">${listRows(newSignups, 20, (s) => `<tr><td style="padding:4px 12px;">${label(s.uid)}</td><td style="padding:4px 12px;color:#9ca3af;">${s.lang} · ${s.activated ? 'loggat match' : 'ingen match än'}</td></tr>`)}</table>
@@ -2057,6 +2280,8 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
     playersNoGames,
     activated,
     newActivated,
+    nudgesSent: nudges.length,
+    nudgesActed,
   };
 
   if (dryRun) return { dryRun: true, stats };
