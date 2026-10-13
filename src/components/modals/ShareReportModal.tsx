@@ -14,7 +14,7 @@ import { maybeAskForReview } from '../../utils/reviewPrompt';
 interface ShareReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  data: (Omit<MatchReportData, 'labels' | 'highlight' | 'format' | 'actions'> & {
+  data: (Omit<MatchReportData, 'labels' | 'highlight' | 'format' | 'actions' | 'award'> & {
     actions: { label: string; count: number; type?: 'positive' | 'negative' }[];
     highlight?: MatchHighlight | null;
     badges?: BadgeId[];

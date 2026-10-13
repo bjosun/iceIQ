@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTemplates } from '../contexts/TemplateContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAiCredits } from '../hooks/useAiCredits';
-import { getDemoPlayerName, getDemoHistory, DEMO_STATS } from '../utils/demoData';
+import { getDemoPlayerName, getDemoHistory } from '../utils/demoData';
 import { pickMatchHighlight, MatchHighlight } from '../utils/matchHighlight';
 import { newBadges, BadgeId } from '../utils/badges';
 import { topAward, isPosition, AwardId } from '../utils/awards';
@@ -34,7 +34,6 @@ import SignupForm from '../components/auth/SignupForm';
 // Ikoner
 import { 
   BarChart3, 
-  Users, 
   Target, 
   TrendingUp, 
   Zap, 
@@ -139,18 +138,8 @@ export default function Dashboard() {
   const [isSaving, setIsSaving] = useState(false);
 
 
-  // Alla spelares matcher (bara datum + poäng) för toppkortens säsongsvy,
-  // och vald säsong. null = senaste säsongen som har matcher.
-  const [allGamesLite, setAllGamesLite] = useState<{ date: string; points: number }[]>([]);
+  // Vald säsong. null = spelarens senaste säsong med matcher.
   const [selectedSeason, setSelectedSeason] = useState<SeasonKey | null>(null);
-
-  // State för dashboard-statistik
-  const [stats, setStats] = useState({
-    players: 0,
-    matches: 0,
-    avgPoints: 0,
-    thisWeek: 0
-  });
 
   useEffect(() => {
     if (location.state?.isSignup !== undefined) {
@@ -254,8 +243,6 @@ export default function Dashboard() {
             const demoGames = [...demoHistory].reverse().map(g => ({ date: g.date, points: g.points }));
             setSeasonSummary(buildSeasonSummary(demoGames));
             setSeasonGames(demoGames);
-            setStats(DEMO_STATS);
-            setAllGamesLite(demoGames);
             return;
           }
           setIsDemoMode(false);
@@ -270,22 +257,7 @@ export default function Dashboard() {
         const gamesResults = await Promise.all(gamesPromises);
         const allGames = gamesResults.flat();
         console.log("HELA MATCHEN FRÅN DB:", allGames[0]); 
-        // Räkna ut snitt (Dashboard Stats)
-        const avgPoints = allGames.length > 0 
-          ? (allGames.reduce((sum, g) => sum + (g.points || 0), 0) / allGames.length).toFixed(1) 
-          : 0;
-          
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        
         if (isMounted) {
-          setAllGamesLite(allGames.map(g => ({ date: g.date, points: g.points || 0 })));
-          setStats({
-            players: fetchedPlayers.length,
-            matches: allGames.length,
-            avgPoints: Number(avgPoints),
-            thisWeek: allGames.filter(g => new Date(g.date) >= oneWeekAgo).length
-          });
 
           // --- FIXEN FÖR AI-HISTORIKEN (Nu bygger vi läsbar data för coachen) ---
           if (currentPlayerName) {
@@ -602,16 +574,22 @@ export default function Dashboard() {
   }
 
   const hasUnsavedActions = Object.keys(actionCounts).length > 0;
-  // Säsonger som finns bland alla spelares matcher. Toppkorten och
-  // utvecklingsvyn följer vald säsong; "Totalt" visar allt.
-  const seasonKeys = seasonsIn(allGamesLite);
-  const effSeason: SeasonKey = selectedSeason ?? (seasonKeys[0] ?? 'all');
-  const periodGames = inSeason(allGamesLite, effSeason);
-  const periodStats = {
-    matches: periodGames.length,
-    avgPoints: avgOf(periodGames),
-  };
+  // Säsonger som finns för vald spelare. Korten, grafen och jämförelsen
+  // följer spelaren och vald säsong; "Totalt" visar allt.
+  const seasonKeys = seasonsIn(seasonGames);
+  const effSeason: SeasonKey =
+    selectedSeason === 'all' || (selectedSeason !== null && seasonKeys.includes(selectedSeason))
+      ? selectedSeason
+      : (seasonKeys[0] ?? 'all');
   const playerPeriodGames = inSeason(seasonGames, effSeason);
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const periodStats = {
+    matches: playerPeriodGames.length,
+    avgPoints: avgOf(playerPeriodGames),
+    best: playerPeriodGames.length > 0 ? Math.max(...playerPeriodGames.map(g => g.points || 0)) : 0,
+    thisWeek: playerPeriodGames.filter(g => new Date(g.date) >= weekAgo).length,
+  };
   const playerPeriodSummary = buildSeasonSummary(playerPeriodGames);
   const seasonTeams = Array.from(new Set(
     playerPeriodGames.map(g => (g.team || '').trim()).filter(Boolean),
@@ -657,13 +635,8 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Top Stats Cards */}
+        {/* Toppkort: följer vald spelare och säsong */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="text-center p-4">
-            <Users className="text-cyan-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : stats.players}</p>
-            <p className="text-xs text-gray-400">{t('players')}</p>
-          </Card>
           <Card className="text-center p-4">
             <BarChart3 className="text-green-400 mx-auto mb-2" size={20} />
             <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : periodStats.matches}</p>
@@ -671,12 +644,17 @@ export default function Dashboard() {
           </Card>
           <Card className="text-center p-4">
             <Target className="text-yellow-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{isDemoMode ? '–' : (periodStats.matches > 0 ? periodStats.avgPoints : '–')}</p>
+            <p className="text-2xl font-bold text-white">{isDemoMode || periodStats.matches === 0 ? '–' : periodStats.avgPoints}</p>
             <p className="text-xs text-gray-400">{t('avgPoints')}</p>
           </Card>
           <Card className="text-center p-4">
+            <Trophy className="text-cyan-400 mx-auto mb-2" size={20} />
+            <p className="text-2xl font-bold text-white">{isDemoMode || periodStats.matches === 0 ? '–' : periodStats.best}</p>
+            <p className="text-xs text-gray-400">{t('bestGame')}</p>
+          </Card>
+          <Card className="text-center p-4">
             <TrendingUp className="text-red-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : stats.thisWeek}</p>
+            <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : periodStats.thisWeek}</p>
             <p className="text-xs text-gray-400">{t('dashboard.thisWeek')}</p>
           </Card>
         </div>
