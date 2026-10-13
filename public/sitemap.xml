@@ -36,6 +36,13 @@
     <priority>0.3</priority>
   </url>
 
+  <url>
+    <loc>https://www.iceiq.app/support</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
   <!-- Engelska nyckelordslandningssidor (se src/pages/landing/). Egna
        title/description/canonical sätts client-side via useSEO, så det här
        är rätt plats trots att index.html i sig delar taggar mellan routes. -->

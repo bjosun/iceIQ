@@ -20,7 +20,7 @@ export default function Footer() {
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
           <Link to="/terms" className="text-gray-400 hover:text-cyan-400 transition-colors">{t('termsLink')}</Link>
           <Link to="/privacy" className="text-gray-400 hover:text-cyan-400 transition-colors">{t('privacyLink')}</Link>
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="text-gray-400 hover:text-cyan-400 transition-colors">{t('supportContact')}</a>
+          <Link to="/support" className="text-gray-400 hover:text-cyan-400 transition-colors">{t('supportContact')}</Link>
         </div>
         <p className="text-gray-500 text-xs mt-3">© {currentYear} Ice IQ — {COMPANY_NAME}</p>
       </footer>

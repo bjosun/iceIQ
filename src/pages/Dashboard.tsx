@@ -9,7 +9,6 @@ import { getDemoPlayerName, getDemoHistory, DEMO_STATS } from '../utils/demoData
 import { pickMatchHighlight, MatchHighlight } from '../utils/matchHighlight';
 import { newBadges, BadgeId } from '../utils/badges';
 import { topAward, isPosition, AwardId } from '../utils/awards';
-import { isNativeApp } from '../utils/platform';
 import { onDataRefreshed, firestore as firestoreService } from '../services/firestore';
 import { MatchReportStats } from '../utils/matchReport';
 import { moneyModeUnit } from '../utils/pricing';
@@ -21,6 +20,8 @@ import PlayerForm from '../components/dashboard/PlayerForm';
 import ActionGrid from '../components/dashboard/ActionGrid';
 import SummarySection from '../components/dashboard/SummarySection';
 import SeasonOverview from '../components/dashboard/SeasonOverview';
+import SeasonCompare from '../components/dashboard/SeasonCompare';
+import { seasonsIn, inSeason, seasonLabel, avgOf, SeasonKey } from '../utils/season';
 import AiCoach from '../components/ai/AiCoach'; 
 import PlayerHistoryModal from '../components/modals/PlayerHistoryModal';
 import TemplateEditorModal from '../components/modals/TemplateEditorModal';
@@ -114,7 +115,7 @@ export default function Dashboard() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [playerHistory, setPlayerHistory] = useState<any[]>([]); // Historik för AI
   const [seasonSummary, setSeasonSummary] = useState<ReturnType<typeof buildSeasonSummary>>(null);
-  const [seasonGames, setSeasonGames] = useState<{ date: string; points: number; template?: string; counts?: Record<string, number> }[]>([]);
+  const [seasonGames, setSeasonGames] = useState<{ date: string; points: number; team?: string; template?: string; counts?: Record<string, number> }[]>([]);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>(draft?.selectedPlayerName || '');
   const [playerEmail, setPlayerEmail] = useState('');
   const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
@@ -137,6 +138,11 @@ export default function Dashboard() {
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+
+  // Alla spelares matcher (bara datum + poäng) för toppkortens säsongsvy,
+  // och vald säsong. null = senaste säsongen som har matcher.
+  const [allGamesLite, setAllGamesLite] = useState<{ date: string; points: number }[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<SeasonKey | null>(null);
 
   // State för dashboard-statistik
   const [stats, setStats] = useState({
@@ -249,6 +255,7 @@ export default function Dashboard() {
             setSeasonSummary(buildSeasonSummary(demoGames));
             setSeasonGames(demoGames);
             setStats(DEMO_STATS);
+            setAllGamesLite(demoGames);
             return;
           }
           setIsDemoMode(false);
@@ -272,6 +279,7 @@ export default function Dashboard() {
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         
         if (isMounted) {
+          setAllGamesLite(allGames.map(g => ({ date: g.date, points: g.points || 0 })));
           setStats({
             players: fetchedPlayers.length,
             matches: allGames.length,
@@ -285,7 +293,7 @@ export default function Dashboard() {
               .filter(g => g.playerName === currentPlayerName)
               .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             setSeasonSummary(buildSeasonSummary(playerGames));
-            setSeasonGames(playerGames.map(g => ({ date: g.date, points: g.points || 0, template: g.template, counts: g.counts })));
+            setSeasonGames(playerGames.map(g => ({ date: g.date, points: g.points || 0, team: g.team, template: g.template, counts: g.counts })));
 
             const history = allGames
               .filter(g => g.playerName === currentPlayerName) 
@@ -593,56 +601,81 @@ export default function Dashboard() {
   }
 
   const hasUnsavedActions = Object.keys(actionCounts).length > 0;
-  // Förnamnet till hälsningen i appen: första ordet i namnet, eller det som står
-  // före första punkt/understreck i e-postadressen (björn.sundberg -> Björn).
-  const rawName = user.displayName || user.email?.split('@')[0] || '';
-  const firstWord = rawName.split(/[\s._-]+/)[0] || '';
-  const firstName = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+  // Säsonger som finns bland alla spelares matcher. Toppkorten och
+  // utvecklingsvyn följer vald säsong; "Totalt" visar allt.
+  const seasonKeys = seasonsIn(allGamesLite);
+  const effSeason: SeasonKey = selectedSeason ?? (seasonKeys[0] ?? 'all');
+  const periodGames = inSeason(allGamesLite, effSeason);
+  const periodStats = {
+    matches: periodGames.length,
+    avgPoints: avgOf(periodGames),
+  };
+  const playerPeriodGames = inSeason(seasonGames, effSeason);
+  const playerPeriodSummary = buildSeasonSummary(playerPeriodGames);
+  const seasonTeams = Array.from(new Set(
+    playerPeriodGames.map(g => (g.team || '').trim()).filter(Boolean),
+  )).slice(0, 3);
+  const headerSubtitle = [
+    effSeason === 'all' ? t('seasonView.allSeasons') : `${t('dashboard.season')} ${seasonLabel(effSeason)}`,
+    ...seasonTeams,
+  ].join(' · ');
 
   // --- RENDER DASHBOARD ---
   return (
     <div className={`min-h-screen md:pb-8 ${hasUnsavedActions ? 'pb-44' : 'pb-20'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Header */}
-        {isNativeApp ? (
-          // Telefon: en kort hälsning på en rad med bara förnamnet. Det långa
-          // "Välkommen tillbaka, Förnamn Efternamn" tog två rader och
-          // undertexten ytterligare en, och trängde ner själva innehållet.
-          <div className="mb-5">
-            <h1 className="text-2xl font-bold text-white truncate">
-              {t('dashboard.hi', { name: firstName })}
+        {/* Header: spelare + säsong + lag. Ingen hälsningsfras. Samma spelare
+            kan byta klubb eller spela i flera lag (J18/J20), så lagen listas
+            ur matcherna i stället för att vara ett fast fält. */}
+        {selectedPlayerName && (
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white truncate">
+              {selectedPlayerName}
             </h1>
+            <p className="text-gray-400 text-sm mt-1 truncate">{headerSubtitle}</p>
           </div>
-        ) : (
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">
-            {t('dashboard.welcome')} {user.displayName || user.email?.split('@')[0]}
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">{t('dashboardSubtitle')}</p>
-        </div>
+        )}
+
+        {/* Säsongsval: syns när det finns matcher från fler än en säsong */}
+        {seasonKeys.length >= 2 && !isDemoMode && (
+          <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
+            {([...seasonKeys, 'all'] as SeasonKey[]).map(k => (
+              <button
+                key={String(k)}
+                onClick={() => setSelectedSeason(k)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                  effSeason === k
+                    ? 'bg-cyan-500/15 border-cyan-500/60 text-cyan-300'
+                    : 'border-gray-700 text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                {k === 'all' ? t('seasonView.allSeasons') : seasonLabel(k)}
+              </button>
+            ))}
+          </div>
         )}
 
         {/* Top Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="text-center p-4">
             <Users className="text-cyan-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{stats.players}</p>
+            <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : stats.players}</p>
             <p className="text-xs text-gray-400">{t('players')}</p>
           </Card>
           <Card className="text-center p-4">
             <BarChart3 className="text-green-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{stats.matches}</p>
+            <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : periodStats.matches}</p>
             <p className="text-xs text-gray-400">{t('matches')}</p>
           </Card>
           <Card className="text-center p-4">
             <Target className="text-yellow-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{stats.avgPoints}</p>
+            <p className="text-2xl font-bold text-white">{isDemoMode ? '–' : (periodStats.matches > 0 ? periodStats.avgPoints : '–')}</p>
             <p className="text-xs text-gray-400">{t('avgPoints')}</p>
           </Card>
           <Card className="text-center p-4">
             <TrendingUp className="text-red-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{stats.thisWeek}</p>
+            <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : stats.thisWeek}</p>
             <p className="text-xs text-gray-400">{t('dashboard.thisWeek')}</p>
           </Card>
         </div>
@@ -765,10 +798,16 @@ export default function Dashboard() {
           {selectedPlayerName && (
             <SeasonOverview
               playerName={selectedPlayerName}
-              games={seasonGames}
-              summary={seasonSummary}
+              games={playerPeriodGames}
+              allGames={seasonGames}
+              summary={playerPeriodSummary}
               templateId={currentTemplateId}
             />
+          )}
+
+          {/* JÄMFÖR SÄSONGER */}
+          {selectedPlayerName && !isDemoMode && (
+            <SeasonCompare games={seasonGames} selected={effSeason} onSelect={setSelectedSeason} />
           )}
         </div>
       </div>

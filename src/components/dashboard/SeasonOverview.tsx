@@ -19,7 +19,9 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip,
 
 interface SeasonOverviewProps {
   playerName: string;
-  games: { date: string; points: number; template?: string; counts?: Record<string, number> }[]; // sorterade äldst -> nyast
+  games: { date: string; points: number; template?: string; counts?: Record<string, number> }[]; // vald period, äldst -> nyast
+  /** Hela karriären: märken och utmärkelser följer spelaren, inte säsongen. */
+  allGames?: { date: string; points: number; template?: string; counts?: Record<string, number> }[];
   /** Spelarens position/mall — styr vilka utmärkelser som visas. */
   templateId?: string;
   summary: {
@@ -32,7 +34,7 @@ interface SeasonOverviewProps {
 
 // Synlig utvecklingsvy utanför chatten: poängkurva över säsongens alla
 // matcher plus nyckeltal, så utvecklingen syns direkt i dashboarden.
-export default function SeasonOverview({ playerName, games, summary, templateId }: SeasonOverviewProps) {
+export default function SeasonOverview({ playerName, games, allGames, summary, templateId }: SeasonOverviewProps) {
   const { t, language } = useLanguage();
 
   const locale = language === 'sv' ? 'sv-SE' : 'en-GB';
@@ -143,8 +145,8 @@ export default function SeasonOverview({ playerName, games, summary, templateId 
         </>
       )}
 
-      {games.length >= 1 && <BadgeShelf games={games} />}
-      {games.length >= 1 && templateId && <AwardShelf games={games} templateId={templateId} />}
+      {(allGames ?? games).length >= 1 && <BadgeShelf games={allGames ?? games} />}
+      {(allGames ?? games).length >= 1 && templateId && <AwardShelf games={allGames ?? games} templateId={templateId} />}
     </Card>
   );
 }

@@ -145,7 +145,9 @@ Demo account
 Email: <TESTKONTOT>
 Password: <LÖSENORDET>
 
-Ice IQ is a tool for parents and coaches to log a hockey player's games and follow their development. There are no purchases in this version of the app.
+Ice IQ is a tool for parents and coaches to log a hockey player's games and follow their development.
+
+Purchases: this iOS version has no in-app purchases and no purchase flow; all upgrade screens, prices and links to purchase are hidden in the app. Ice IQ also offers an optional paid subscription on our website, billed by Stripe. A subscription bought there unlocks the same features in the app after signing in. The demo account is on the free plan (limit of three players). In-app purchase for iOS users is planned for a later version.
 
 How to test:
 1. Sign in with the demo account (email and password). Sign in with Apple and Google are also available.

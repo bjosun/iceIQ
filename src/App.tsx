@@ -18,6 +18,7 @@ import Home from './pages/Home'
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Terms = lazy(() => import('./pages/Terms'))
 const Privacy = lazy(() => import('./pages/Privacy'))
+const Support = lazy(() => import('./pages/Support'))
 const Success = lazy(() => import('./pages/Success'))
 const MatchTracker = lazy(() => import('./pages/MatchTracker'))
 const PlayerLinkPage = lazy(() => import('./pages/PlayerLinkPage'))
@@ -81,6 +82,7 @@ function AppContent() {
               <Route path="/match" element={<MatchTracker />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
+              <Route path="/support" element={<Support />} />
               {/* Engelska nyckelordslandningssidor. Egna title/description/canonical
                  sätts via useSEO (se LandingPage.tsx) eftersom index.html annars
                  delar samma tre taggar för alla routes. */}

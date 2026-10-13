@@ -103,6 +103,9 @@ export const translations = {
 
     // Season development view
     seasonView: {
+      compareTitle: "Season by season",
+      compareHint: "Average points per season. Compares the player with themselves over time.",
+      allSeasons: "Total",
       title: "Development",
       last5: "Last 5 avg",
       trendUp: "Above season average",
@@ -566,6 +569,7 @@ export const translations = {
     dashboard: {
       welcome: "Welcome back,",
       hi: "Hi, {name}",
+      season: "Season",
       thisWeek: "This Week",
       noStatsYet: "No stats recorded yet.",
       settleConfirm: "Settle balance for {name}?",
@@ -776,6 +780,9 @@ export const translations = {
 
     // Season development view
     seasonView: {
+      compareTitle: "Säsong för säsong",
+      compareHint: "Snittpoäng per säsong. Jämför spelaren med sig själv över tid.",
+      allSeasons: "Totalt",
       title: "Utveckling",
       last5: "Snitt senaste 5",
       trendUp: "Över säsongssnittet",
@@ -1227,6 +1234,7 @@ export const translations = {
     dashboard: {
       welcome: "Välkommen tillbaka,",
       hi: "Hej, {name}",
+      season: "Säsong",
       thisWeek: "Denna vecka",
       noStatsYet: "Ingen statistik registrerad än.",
       settleConfirm: "Reglera saldo för {name}?",
