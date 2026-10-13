@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { Lock } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { defaultTemplates } from '../../contexts/TemplateContext';
-import { RINGS, awardsForPosition, earnedAwards, isPosition, Position } from '../../utils/awards';
+import { RINGS, awardsForPosition, earnedAwards, isPosition, Position, TemplateNames } from '../../utils/awards';
 import AwardGem, { GemStyle, readGemStyle, saveGemStyle } from './AwardGem';
 
-function negativesFor(position: Position): ReadonlySet<string> {
+function namesFor(position: Position): TemplateNames {
   const actions = defaultTemplates[position]?.actions ?? [];
-  return new Set(actions.filter((a) => a.type === 'negative').map((a) => a.name.en));
+  return {
+    negative: new Set(actions.filter((a) => a.type === 'negative').map((a) => a.name.en)),
+    positive: new Set(actions.filter((a) => a.type !== 'negative').map((a) => a.name.en)),
+  };
 }
 
 // Utmärkelsehylla: det man har i färg, resten dämpat. Visar bara det som
@@ -25,7 +28,7 @@ export default function AwardShelf({
   // Egna mallar har inga stabila aktionsnamn att matcha på — då visar vi inget.
   if (!isPosition(templateId)) return null;
 
-  const earned = earnedAwards(games, negativesFor);
+  const earned = earnedAwards(games, namesFor);
   const awards = awardsForPosition(templateId);
 
   const pick = (next: GemStyle) => {

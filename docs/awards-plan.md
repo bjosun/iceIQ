@@ -37,11 +37,18 @@ Se `AWARDS` i `src/utils/awards.ts` — det är sanningen. Aktioner matchas på 
 - **Efter sparad match:** kort i matchsammanfattningen (`MatchSummaryReveal`).
 - **Hylla:** under märkena i säsongsvyn (`SeasonOverview` → `AwardShelf`). I exempelläget visas hyllan med alla gems låsta.
 
+## Trösklar
+Kalibrerade 2026-10-13 mot 20 sparade backmatcher: ungefär hälften av matcherna ger en utmärkelse (11 av 20) och de som loggar lite får ingen. De vanligaste utmärkelserna träffar ungefär var sjunde match, de svåra mer sällan. Underlaget är en enda spelare på en position — forward- och målvaktsvärdena är utlästa i förhållande till backarna och bör ses över när det finns riktiga matcher.
+
+Äldre matcher kan ha sparat aktioner under hela namnobjektet som JSON-nyckel; det normaliseras i `awards.ts`. Aktioner som mallen inte känner igen räknas som okända och blockerar "Rent bord".
+
+## Delbar matchbild
+Gemet och utmärkelsens namn ritas vid poängsiffran i bilden (`matchReport.ts`). Grafiken kommer från `utils/awardGem.ts`, samma källa som komponenten i appen, och följer den stil spelaren valt på hyllan.
+
 ## Återstår
-- [ ] Rita tillbehör till övriga utmärkelser (idag har bara Hattrick, Målkungen, Spelfördelaren, Muren, Jägaren, Iceman och Nollan egna). Förslag: hjälm (Dörrvakten), målvaktsmask (Räddningsmaskinen), katana (Skarpskytten).
-- [ ] Justera trösklar när riktiga matcher finns (nuvarande siffror är gissningar för barnhockey).
+- [ ] Justera trösklarna för forward och målvakt när riktiga matcher finns.
 - [ ] Nivåer (brons/silver/guld) på samma gem vid upprepade utmärkelser.
 - [ ] Låt AI formulera en kort textrad vid utmärkelsen när coachen ändå frågats (valfritt).
-- [ ] Visa gemet även i den delbara matchbilden (`shareCanvas.ts`).
 - [ ] Besluta om samuraj-titlarna (`sub`) ska vara synliga för barnen.
-- [ ] Låta barnen själva välja stil och utvärdera i produktion innan `deploy:prod`.
+- [ ] Låta barnen själva välja stil och utvärdera i produktion.
+- [ ] Rita om tillbehör som inte känns igen när de testats av målgruppen.

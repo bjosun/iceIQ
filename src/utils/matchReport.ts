@@ -25,6 +25,12 @@ export interface MatchReportData {
   highlight?: string;
   /** Säsongen till och med den här matchen. Utelämnas för spelarens första match. */
   stats?: MatchReportStats;
+  /**
+   * Utmärkelsen matchen gav: färdig SVG (se utils/awardGem.ts) och översatt
+   * namn. Ritas vid poängsiffran, där det finns luft, så att den inte tränger
+   * undan aktionsraderna.
+   */
+  award?: { svg: string; name: string };
   format?: ReportFormat;
   labels: {
     reportTitle: string; // "Matchrapport"
@@ -93,6 +99,17 @@ const STORY: Metrics = {
   actionSize: 38, rowH: 70, maxActions: 4,
   footerY: 1586, footerSize: 30, footerGap: 44,
 };
+
+// SVG -> bild som canvasen kan rita. Gemet är en egen statisk SVG utan externa
+// beroenden, så den laddas direkt; ett fel får aldrig stoppa själva rapporten.
+function loadSvgImage(svg: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  });
+}
 
 export async function renderMatchReport(data: MatchReportData): Promise<Blob> {
   const M = data.format === 'story' ? STORY : SQUARE;
@@ -164,6 +181,8 @@ export async function renderMatchReport(data: MatchReportData): Promise<Blob> {
     y += M.bandH + M.gap;
   }
 
+  const awardImg = data.award ? await loadSvgImage(data.award.svg) : null;
+
   // Stor poängsiffra
   ctx.textAlign = 'center';
   ctx.font = sans('900', M.pointsSize);
@@ -172,11 +191,30 @@ export async function renderMatchReport(data: MatchReportData): Promise<Blob> {
   grad.addColorStop(1, '#6366f1');
   ctx.fillStyle = grad;
   ctx.fillText(`${data.points > 0 ? '+' : ''}${data.points}`, W / 2, y);
+
+  // Utmärkelsen sitter till höger om poängsiffran. Siffran är centrerad och
+  // smal nog att lämna den sidan fri, så gemet kostar ingen extra höjd.
+  if (awardImg && data.award) {
+    // Något större än siffran och lyft en aning, så att gemet fyller höjden
+    // och inte flyter som en liten ikon. Stannar ovanför namnraden under.
+    const gemH = M.pointsSize * 1.2;
+    const gemW = gemH * (awardImg.naturalWidth / awardImg.naturalHeight || 0.8);
+    ctx.drawImage(awardImg, W - pad - gemW, y - M.pointsSize * 0.1, gemW, gemH);
+  }
   y += M.pointsSize + M.gap;
 
   ctx.font = sans('700', M.pointsLabelSize);
   ctx.fillStyle = '#cbd5e1';
   ctx.fillText(data.labels.pointsLabel.toUpperCase(), W / 2, y);
+  if (awardImg && data.award) {
+    // Namnet under gemet, högerställt mot marginalen. Maxbredden stannar
+    // utanför etiketten i mitten.
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#fde68a';
+    const maxW = W - pad - (W / 2 + 120);
+    ctx.fillText(fitText(ctx, data.award.name, maxW, M.pointsLabelSize, '700'), W - pad, y);
+    ctx.textAlign = 'center';
+  }
   y += M.pointsLabelSize + M.gap;
   ctx.textAlign = 'left';
 

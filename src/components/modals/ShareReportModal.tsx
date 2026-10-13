@@ -6,7 +6,9 @@ import { renderMatchReport, MatchReportData } from '../../utils/matchReport';
 import { MatchHighlight } from '../../utils/matchHighlight';
 import { ReportFormat } from '../../utils/shareCanvas';
 import { BadgeId } from '../../utils/badges';
-import { AwardId } from '../../utils/awards';
+import { AwardId, AWARDS } from '../../utils/awards';
+import { gemSvgDocument } from '../../utils/awardGem';
+import { readGemStyle } from '../dashboard/AwardGem';
 import { maybeAskForReview } from '../../utils/reviewPrompt';
 
 interface ShareReportModalProps {
@@ -47,10 +49,22 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
     onClose();
   };
 
+  // Utmärkelsen följer den stil spelaren valt på hyllan, så bilden och
+  // resultatskärmen visar samma gem.
+  const awardDef = data.award ? AWARDS.find((a) => a.id === data.award) : undefined;
+  const gemStyle = readGemStyle();
+  const award = awardDef
+    ? {
+        svg: gemSvgDocument(awardDef.id, awardDef.ring, gemStyle, 360),
+        name: t(`awards.${awardDef.id}.name`),
+      }
+    : undefined;
+
   const renderReport = (format: ReportFormat) =>
     renderMatchReport({
       ...data,
       format,
+      award,
       highlight: data.highlight ? t(data.highlight.key, data.highlight.params) : undefined,
       labels: {
         reportTitle: t('share.reportTitle'),
@@ -81,7 +95,7 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
       title={t('share.title')}
       desc={t('share.desc')}
       fileNameBase={`iceiq-${data.playerName.replace(/\s+/g, '-').toLowerCase()}-${data.date}`}
-      renderKey={`${data.playerName}|${data.date}|${data.points}|${data.highlight?.key ?? ''}|${data.stats?.games ?? 0}`}
+      renderKey={`${data.playerName}|${data.date}|${data.points}|${data.highlight?.key ?? ''}|${data.stats?.games ?? 0}|${data.award ?? ''}|${gemStyle}`}
       render={renderReport}
     />
     </>

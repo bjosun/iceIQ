@@ -514,10 +514,11 @@ export default function Dashboard() {
           countsEn[key] = count;
         }
       });
-      const negativeNames = new Set(
-        (currentTemplate?.actions ?? []).filter(a => a.type === 'negative').map(a => a.name.en),
-      );
-      const award = isPosition(currentTemplateId) ? topAward(currentTemplateId, countsEn, negativeNames) : null;
+      const templateNames = {
+        negative: new Set((currentTemplate?.actions ?? []).filter(a => a.type === 'negative').map(a => a.name.en)),
+        positive: new Set((currentTemplate?.actions ?? []).filter(a => a.type !== 'negative').map(a => a.name.en)),
+      };
+      const award = isPosition(currentTemplateId) ? topAward(currentTemplateId, countsEn, templateNames) : null;
 
       setReportData({
         playerName: selectedPlayerName,
