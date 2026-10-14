@@ -96,3 +96,12 @@ Integritetspolicyn och villkoren är rättade för sakfel enligt listan ovan. Ob
 | Dagsgräns per länk och anonym mätning är kvar | Oförändrat |
 
 Kvar att besluta: automatisk rensning av inaktiva konton, och om marknadsföringskällan (UTM) ska sparas alls.
+
+## Svensk version och GDPR-avsnitt 2026-10-14
+
+`src/pages/Privacy.tsx` finns nu på svenska och engelska (samma fil, samma avsnittsordning, byts efter appens språk). Nya avsnitt i båda: **Legal Basis (GDPR)**, **Transfers Outside the EU/EEA**, **Automated Decisions**, samt utökade **Your Rights** (begränsning, portabilitet, återkallat samtycke, klagomål till IMY) och **Data Retention** (samtyckeslogg, bokföring sju år).
+
+**Utkast som jurist ska bekräfta eller ändra** (publiceras på sidan, men är arbetshypoteser):
+- Rättslig grund per behandling: konto/prenumeration/servicemejl = avtal (b); spelardata, spelarlänk, AI-coach, anteckningar, lyssnaklipp = samtycke (a) via vårdnadshavarens bekräftelse; bokföring = rättslig förpliktelse (c); veckomejl/påminnelser/säkerhet/kanalmätning = berättigat intresse (f). Rad 2 i tabellen ovan (barnets uppgifter) är fortfarande den öppna frågan.
+- Tredjelandsmekanismen är formulerad generellt ("Data Privacy Framework eller standardavtalsklausuler"). Verifiera vad respektive leverantör (Google, Stripe, Resend) faktiskt stöder.
+- Aktiveringsmejlet har inget eget avregistreringsval i appen, bara veckomejlet kan stängas av. Marknadsföringslagen kan kräva det (rad 15).
