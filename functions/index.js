@@ -182,16 +182,40 @@ const getResend = () => {
   return resend;
 };
 
-const sendEmail = async (to, subject, html, replyTo) => {
+const sendEmail = async (to, subject, html, replyTo, headers) => {
   const { error } = await getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject,
     html,
     ...(replyTo ? { reply_to: replyTo } : {}),
+    ...(headers ? { headers } : {}),
   });
   if (error) throw new Error(`Resend: ${error.message || JSON.stringify(error)}`);
 };
+
+// ==========================================
+//  AVREGISTRERING FRÅN MEJL
+// ==========================================
+// Länken i veckomejlet och påminnelsen. Den bär kontots id och en signatur
+// (HMAC), så ingen kan avregistrera någon annan genom att gissa ett id, och
+// den kräver ingen inloggning. Nyckeln är den befintliga DIGEST_TEST_TOKEN
+// med ett eget prefix, så att ingen ny hemlighet behöver sättas.
+// Adressen går mot www direkt: en POST (List-Unsubscribe-Post) får inte
+// passera iceiq.app -> www-omdirigeringen, då blir den en GET.
+const UNSUBSCRIBE_BASE = "https://www.iceiq.app/unsubscribe";
+
+const unsubscribeToken = (uid) =>
+  crypto.createHmac("sha256", digestTestToken.value()).update(`unsubscribe:${uid}`).digest("hex");
+
+const unsubscribeUrl = (uid, lang) =>
+  `${UNSUBSCRIBE_BASE}?u=${encodeURIComponent(uid)}&t=${unsubscribeToken(uid)}&l=${lang === "en" ? "en" : "sv"}`;
+
+// RFC 8058: mejlklienter (Gmail, Apple Mail) visar en egen "Avregistrera"-knapp.
+const unsubscribeHeaders = (uid, lang) => ({
+  "List-Unsubscribe": `<${unsubscribeUrl(uid, lang)}>`,
+  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+});
 
 // Firebase Auth är enda sanningen för en användares e-postadress. Tidigare
 // låg den även som fältet `email` på users-dokumentet, skrivet en enda gång
@@ -1735,8 +1759,8 @@ const runWeeklyDigest = async ({ dryRun = false, redirectTo = null, limit = 0 } 
         </p>
         <p style="color:#9ca3af;font-size:12px;">
           ${en
-            ? "You get this email because you use Ice IQ. Turn it off under My Account in the app."
-            : "Du får det här mejlet för att du använder Ice IQ. Stäng av det under Mitt konto i appen."}
+            ? `You get this email because you use Ice IQ. Turn it off under My Account in the app, or <a href="${unsubscribeUrl(userDoc.id, userData.language)}" style="color:#6b7280;">unsubscribe here</a>.`
+            : `Du får det här mejlet för att du använder Ice IQ. Stäng av det under Mitt konto i appen, eller <a href="${unsubscribeUrl(userDoc.id, userData.language)}" style="color:#6b7280;">avregistrera dig här</a>.`}
         </p>
         <p style="color:#9ca3af;font-size:12px;">
           ${en
@@ -1748,7 +1772,7 @@ const runWeeklyDigest = async ({ dryRun = false, redirectTo = null, limit = 0 } 
     try {
       // Samma svarsadress som övriga kundmejl — utan den går svar till
       // noreply-adressen och försvinner.
-      await sendEmail(redirectTo || email, subject, html, SUPPORT_REPLY_TO);
+      await sendEmail(redirectTo || email, subject, html, SUPPORT_REPLY_TO, unsubscribeHeaders(userDoc.id, userData.language));
       sent++;
     } catch (err) {
       console.error(`Veckomejl misslyckades för ${userDoc.id}:`, err);
@@ -1760,7 +1784,7 @@ const runWeeklyDigest = async ({ dryRun = false, redirectTo = null, limit = 0 } 
 };
 
 exports.weeklyDigest = functions
-  .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey] })
+  .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey, digestTestToken] })
   .pubsub.schedule('0 8 * * 1') // Måndagar 08:00
   .timeZone('Europe/Stockholm')
   .onRun(async () => {
@@ -1807,7 +1831,7 @@ exports.runWeeklyDigestNow = functions
 const NUDGE_MIN_AGE_MS = 24 * 60 * 60 * 1000;
 const NUDGE_MAX_AGE_MS = 5 * 24 * 60 * 60 * 1000; // äldre konton nudgas inte i efterhand
 
-const buildActivationNudgeEmail = (lang, displayName, kind) => {
+const buildActivationNudgeEmail = (lang, displayName, kind, uid) => {
   const en = lang === 'en';
   const name = displayName ? displayName.split(' ')[0] : '';
   const noPlayer = kind === 'noPlayer';
@@ -1880,6 +1904,9 @@ const buildActivationNudgeEmail = (lang, displayName, kind) => {
           ? "Ice IQ is part of SquareVerse Group, which is why this email arrives from squareversegroup.com. This is the only reminder we'll send."
           : "Ice IQ är en del av SquareVerse Group, därför kommer det här mejlet från squareversegroup.com. Det här är den enda påminnelsen vi skickar."}
       </p>
+      ${uid ? `<p style="color:#9ca3af;font-size:12px;">
+        <a href="${unsubscribeUrl(uid, lang)}" style="color:#9ca3af;">${en ? "Unsubscribe from reminders and summaries" : "Avregistrera dig från påminnelser och sammanfattningar"}</a>
+      </p>` : ""}
     </div>`;
 
   return { subject, html };
@@ -1893,6 +1920,7 @@ const runActivationNudge = async ({ dryRun = false, redirectTo = null, now = Dat
   for (const userDoc of usersSnap.docs) {
     const u = userDoc.data();
     if (u.activationNudgeSentAt) continue;
+    if (u.emailDigest === false) continue; // har avregistrerat sig
 
     const age = u.createdAt ? now - new Date(u.createdAt).getTime() : NaN;
     if (!(age >= NUDGE_MIN_AGE_MS && age < NUDGE_MAX_AGE_MS)) continue;
@@ -1915,9 +1943,9 @@ const runActivationNudge = async ({ dryRun = false, redirectTo = null, now = Dat
     candidates.push({ uid: userDoc.id, email, kind });
     if (dryRun) continue;
 
-    const { subject, html } = buildActivationNudgeEmail(u.language, u.displayName, kind);
+    const { subject, html } = buildActivationNudgeEmail(u.language, u.displayName, kind, userDoc.id);
     try {
-      await sendEmail(redirectTo || email, subject, html, SUPPORT_REPLY_TO);
+      await sendEmail(redirectTo || email, subject, html, SUPPORT_REPLY_TO, unsubscribeHeaders(userDoc.id, u.language));
       sent++;
       // Spärren sätts bara vid skarpt utskick — en redirect till Bjorn för
       // granskning får inte "förbruka" kontots enda nudge.
@@ -1939,7 +1967,7 @@ const runActivationNudge = async ({ dryRun = false, redirectTo = null, now = Dat
 // största delen av trafiken finns, så mejlet landar på morgonen och inte mitt
 // i natten.
 exports.activationNudge = functions
-  .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey] })
+  .runWith({ memory: "512MB", timeoutSeconds: 540, secrets: [resendApiKey, digestTestToken] })
   .pubsub.schedule('0 16 * * *')
   .timeZone('Europe/Stockholm')
   .onRun(async () => {
@@ -1972,7 +2000,7 @@ exports.runActivationNudgeNow = functions
           return;
         }
         const lang = req.query.lang === 'sv' ? 'sv' : 'en';
-        const { subject, html } = buildActivationNudgeEmail(lang, 'Björn', preview);
+        const { subject, html } = buildActivationNudgeEmail(lang, 'Björn', preview, 'preview-user');
         await sendEmail(to, subject, html, SUPPORT_REPLY_TO);
         res.json({ preview, lang, sentTo: to });
         return;
@@ -1983,6 +2011,77 @@ exports.runActivationNudgeNow = functions
       console.error('runActivationNudgeNow misslyckades:', err);
       res.status(500).json({ error: 'Failed', message: err.message });
     }
+  });
+
+// Landningssida + åtgärd för avregistreringslänken. GET visar bara en
+// bekräftelse (mejlskannrar förhandsöppnar länkar, och en GET får inte
+// avregistrera någon); POST gör ändringen, och är också vad
+// List-Unsubscribe-Post skickar. Stänger av veckomejl och påminnelser via
+// samma fält som knappen i appen (emailDigest). Servicemejl om konto och
+// köp berörs inte.
+exports.unsubscribeEmail = functions
+  .runWith({ secrets: [digestTestToken] })
+  .https.onRequest(async (req, res) => {
+    const uid = String(req.query.u || "");
+    const token = String(req.query.t || "");
+    const sv = req.query.l !== "en";
+
+    const page = (title, body, status = 200) => {
+      res.status(status).set("Content-Type", "text/html; charset=utf-8").send(`<!doctype html>
+<html lang="${sv ? "sv" : "en"}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>${title} – Ice IQ</title></head>
+<body style="margin:0;background:#f3f4f6;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:#111827;">
+<div style="max-width:440px;margin:48px auto;padding:0 16px;">
+<div style="background:#ffffff;border-radius:16px;padding:28px;">
+<h2 style="margin:0 0 16px;">Ice <span style="color:#0891b2;">IQ</span></h2>
+${body}
+</div></div></body></html>`);
+    };
+
+    let valid = false;
+    if (uid && token.length === 64) {
+      const expected = Buffer.from(unsubscribeToken(uid));
+      const given = Buffer.from(token);
+      valid = expected.length === given.length && crypto.timingSafeEqual(expected, given);
+    }
+    if (!valid) {
+      return page(
+        sv ? "Ogiltig länk" : "Invalid link",
+        `<p>${sv ? "Länken är ogiltig eller har gått ut. Öppna Ice IQ och stäng av veckosammanfattningen under Mitt konto, eller mejla" : "This link is invalid or has expired. Open Ice IQ and turn off the weekly summary under My Account, or email"} <a href="mailto:${SUPPORT_REPLY_TO}">${SUPPORT_REPLY_TO}</a>.</p>`,
+        400,
+      );
+    }
+
+    if (req.method === "POST") {
+      try {
+        await getUsersCollection().doc(uid).set(
+          { emailDigest: false, emailUnsubscribedAt: new Date().toISOString() },
+          { merge: true },
+        );
+      } catch (err) {
+        console.error("unsubscribeEmail misslyckades:", err);
+        return page(sv ? "Något gick fel" : "Something went wrong",
+          `<p>${sv ? "Det gick inte att spara. Försök igen om en stund." : "We could not save that. Please try again in a moment."}</p>`, 500);
+      }
+      // En-klicks-POST från mejlklienten behöver bara ett 2xx-svar.
+      return page(
+        sv ? "Avregistrerad" : "Unsubscribed",
+        `<p style="font-size:16px;"><strong>${sv ? "Du är avregistrerad." : "You are unsubscribed."}</strong></p>
+         <p style="color:#6b7280;">${sv
+           ? "Du får inga fler veckosammanfattningar eller påminnelser. Servicemejl om ditt konto och dina köp kan du fortfarande få. Du kan slå på sammanfattningen igen under Mitt konto i appen."
+           : "You will not get more weekly summaries or reminders. You may still get service emails about your account and purchases. You can turn the summary back on under My Account in the app."}</p>`,
+      );
+    }
+
+    return page(
+      sv ? "Avregistrera" : "Unsubscribe",
+      `<p style="font-size:16px;">${sv ? "Vill du sluta få veckosammanfattningar och påminnelser från Ice IQ?" : "Do you want to stop getting weekly summaries and reminders from Ice IQ?"}</p>
+       <form method="POST" action="${UNSUBSCRIBE_BASE}?u=${encodeURIComponent(uid)}&amp;t=${token}&amp;l=${sv ? "sv" : "en"}">
+         <button type="submit" style="background:#0891b2;color:#ffffff;border:0;padding:12px 20px;border-radius:10px;font-weight:bold;font-size:15px;cursor:pointer;">${sv ? "Ja, avregistrera mig" : "Yes, unsubscribe me"}</button>
+       </form>`,
+    );
   });
 
 // Permanent rapportverktyg (till skillnad från de tillfälliga test-
