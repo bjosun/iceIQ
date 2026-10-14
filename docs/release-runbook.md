@@ -49,10 +49,16 @@ Innehåller: Face ID-lås, Apple-/Google-inloggning, native delning (Snapchat m.
 ### Bygge 7 (förberett 2026-10-13, ej arkiverat)
 Som bygge 6 plus: dashboardtopp med spelare/säsong/lag, säsongsval och säsongsjämförelse, aktiveringsmejl (serversidan), supportsida på webben. **Endast iPhone** (`TARGETED_DEVICE_FAMILY = 1`), så iPad-skärmdumpar behövs inte. Webbkopian byggdes från ren HEAD (utan röstlabbet) och synkades med `cap sync ios`.
 
+### Bygge 8 (förberett 2026-10-14, ej arkiverat)
+Som bygge 7 men med webbkopian från senare HEAD: **svensk integritetspolicy med GDPR-avsnitt** (appens `/privacy` är en inbyggd kopia, så den följer inte med webbdeployen), toppkort som följer vald spelare, och säsongsval. Byggnummer 8, endast iPhone.
+
+> Appens inbyggda sidor (policy, villkor, support) är en egen kopia av webben. En ändring i dem på iceiq.app syns i appen först med nytt bygge. Apples länk till policyn pekar mot webben och är alltid aktuell.
+
 ## 3. Reglage och konfiguration
 
 | Reglage | Var | Standard | Betydelse |
 |---|---|---|---|
+| `DIGEST_TEST_TOKEN` | Secret Manager (`firebase functions:secrets:set DIGEST_TEST_TOKEN`) | satt | **Två jobb.** (1) Header `x-digest-token` som skyddar testtrigger-funktionerna (`runWeeklyDigestNow`, `runActivationNudgeNow`, `runOpsDigestNow`). (2) **Signeringsnyckel (HMAC) för avregistreringslänkarna i mejlen** (`unsubscribeToken` i `functions/index.js`). **Byts den blir alla redan utskickade avregistreringslänkar ogiltiga** (sidan visar "Ogiltig länk"). Rotera den därför bara om den läckt, och räkna med att äldre mejls länkar slutar fungera. Funktioner som skapar eller kontrollerar länkar måste ha den bunden i `secrets: [...]` (`weeklyDigest`, `activationNudge`, `unsubscribeEmail`, testtriggrarna). |
 | `LISTEN_VOICE_SV_F` / `_M`, `LISTEN_VOICE_EN_F` / `_M` | `functions/.env` | Chirp 3 HD: Zephyr (kvinna), Umbriel (man) | Röster för lyssnaklippen. Byt namn och deploya `getListenAudio` |
 | `INACTIVE_CLEANUP_ENABLED` | `functions/.env` | av (bara loggning) | Slår på varning och radering av konton inaktiva i 24 månader |
 | `ROUTINE_LOGGING_ENABLED` | `functions/.env` | av | Spelarlänken sparar rutindatum. Av i v1 (länken är skrivskyddad) |
