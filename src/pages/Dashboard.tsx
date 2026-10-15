@@ -9,6 +9,7 @@ import { getDemoPlayerName, getDemoHistory } from '../utils/demoData';
 import { pickMatchHighlight, MatchHighlight } from '../utils/matchHighlight';
 import { newBadges, BadgeId } from '../utils/badges';
 import { topAward, isPosition, AwardId } from '../utils/awards';
+import { trackFunnel } from '../utils/funnel';
 import { onDataRefreshed, firestore as firestoreService } from '../services/firestore';
 import { MatchReportStats } from '../utils/matchReport';
 import { moneyModeUnit } from '../utils/pricing';
@@ -382,15 +383,34 @@ export default function Dashboard() {
     };
   }, [actionCounts, currentTemplate, bonusFactor, carriedOverBalance, isMoneyMode]); 
   
+  // --- MÄTPUNKTER I FÖRSTA ANVÄNDNINGEN (utils/funnel.ts) ---
+  useEffect(() => {
+    if (user) void trackFunnel(user.uid, 'dashboardViewed');
+  }, [user]);
+
+  // Spåras vid själva tryckningen, inte på ändrade antal: ett utkast som
+  // återställs från förra sessionen ska inte räknas som en ny tryckning.
+  const handleActionCountChange = (counts: Record<string, number>) => {
+    setActionCounts(counts);
+    if (user) void trackFunnel(user.uid, isDemoMode ? 'demoActionTapped' : 'actionTapped');
+  };
+
+  const openPlayerSelect = () => {
+    if (user) void trackFunnel(user.uid, 'addPlayerOpened');
+    setShowPlayerSelect(true);
+  };
+
   // --- SPARA MATCH ---
   // --- SPARA MATCH & UPPDATERA SALDO ---
   const handleSaveGame = async () => {
     if (isSaving) return;
     if (isDemoMode) {
+      if (user) void trackFunnel(user.uid, 'demoSaveBlocked');
       toast(t('demo.saveBlocked'), { icon: '👋' });
       setShowPlayerSelect(true);
       return;
     }
+    if (user) void trackFunnel(user.uid, 'saveTapped');
     if (!selectedPlayerName) {
       toast.error(t('selectPlayerFirst'));
       return;
@@ -434,6 +454,7 @@ export default function Dashboard() {
       setCarriedOverBalance(newBalance);
 
       if (teamName) localStorage.setItem('lastUsedTeam', teamName);
+      if (user) void trackFunnel(user.uid, 'gameSaved');
 
       // Bygg underlaget till den delbara matchrapporten INNAN formuläret rensas
       const reportActions = Object.entries(actionCounts)
@@ -669,7 +690,7 @@ export default function Dashboard() {
               <p className="text-gray-200 text-sm">{t('demo.banner')}</p>
             </div>
             <button
-              onClick={() => setShowPlayerSelect(true)}
+              onClick={openPlayerSelect}
               className="shrink-0 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-cyan-600/20"
             >
               {t('demo.cta')}
@@ -708,7 +729,7 @@ export default function Dashboard() {
             onTeamNameChange={setTeamName}
             gameDate={gameDate}
             onGameDateChange={setGameDate}
-            onOpenPlayerSelect={() => setShowPlayerSelect(true)}
+            onOpenPlayerSelect={openPlayerSelect}
             onShowHistory={() => setShowHistoryModal(true)}
             onEditTemplate={() => setShowTemplateEditor(true)}
             playerEmail={playerEmail}
@@ -718,7 +739,7 @@ export default function Dashboard() {
           
           {/* The Stats Grid (Buttons) */}
           <div id="section-match" className="scroll-mt-16">
-            <ActionGrid actionCounts={actionCounts} onCountChange={setActionCounts} />
+            <ActionGrid actionCounts={actionCounts} onCountChange={handleActionCountChange} />
           </div>
           
           {/* Bonus Weighting - VISAS BARA I MONEY MODE */}

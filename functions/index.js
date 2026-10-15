@@ -2187,6 +2187,16 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
   let activated = 0;
   // Konton som fått aktiveringsnudgen, och om de loggat en match efter den.
   const nudges = [];
+  // Mätpunkter i första användningen (src/utils/funnel.ts): hur många konton
+  // som nått varje steg, och varifrån nya konton kommer.
+  const FUNNEL_STEPS = ['dashboardViewed', 'addPlayerOpened', 'demoActionTapped', 'demoSaveBlocked', 'actionTapped', 'saveTapped', 'gameSaved'];
+  const funnelCounts = Object.fromEntries(FUNNEL_STEPS.map((s) => [s, 0]));
+  let funnelAccounts = 0;
+  const referrers = {};
+  const landings = {};
+  const monthAgoDate = new Date();
+  monthAgoDate.setDate(monthAgoDate.getDate() - 30);
+  const monthAgoISO = monthAgoDate.toISOString();
 
   for (const userDoc of usersSnap.docs) {
     const u = userDoc.data();
@@ -2195,6 +2205,17 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
     // kan vara inaktuellt eller saknas helt på nyare konton.
     const uid = userDoc.id;
     const isNewThisWeek = typeof u.createdAt === 'string' && u.createdAt >= weekAgoISO;
+
+    if (u.funnel && typeof u.funnel === 'object') {
+      funnelAccounts++;
+      for (const step of FUNNEL_STEPS) if (u.funnel[step]) funnelCounts[step]++;
+    }
+    if (typeof u.createdAt === 'string' && u.createdAt >= monthAgoISO) {
+      const ref = u.acquisition?.referrer || 'direkt';
+      const landing = u.acquisition?.landing || '(okänd)';
+      referrers[ref] = (referrers[ref] || 0) + 1;
+      landings[landing] = (landings[landing] || 0) + 1;
+    }
 
     if (u.subscriptionStatus === 'active' && u.subscriptionPlan === 'elite') activeElite++;
     else if (u.subscriptionStatus === 'active' && u.subscriptionPlan === 'premium') activePremium++;
@@ -2336,6 +2357,35 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
         </tr>
       </table>
 
+      ${funnelAccounts > 0 || Object.keys(referrers).length ? `
+        <h3 style="font-size:14px;margin:0 0 8px;">Första användningen</h3>
+        <p style="margin:0 0 10px;color:#6b7280;font-size:13px;">
+          Räknas från att mätningen startade, och bara konton som öppnat appen efter det (${funnelAccounts} st).
+          Visar var kedjan tar slut &mdash; inte varför.
+        </p>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px;">${[
+          ['dashboardViewed', 'Öppnade dashboarden'],
+          ['addPlayerOpened', "Öppnade 'lägg till spelare'"],
+          ['demoActionTapped', 'Tryckte en aktion i exempelläget'],
+          ['demoSaveBlocked', 'Försökte spara i exempelläget'],
+          ['actionTapped', 'Tryckte en aktion med egen spelare'],
+          ['saveTapped', 'Tryckte spara'],
+          ['gameSaved', 'Sparade en match'],
+        ].map(([step, label], i) => `<tr${i % 2 === 0 ? ' style="background:#f3f4f6;"' : ''}><td style="padding:6px 12px;">${label}</td><td style="padding:6px 12px;text-align:right;font-weight:bold;">${funnelCounts[step]}</td></tr>`).join('')}</table>
+        ${Object.keys(referrers).length ? `
+          <p style="margin:0 0 6px;color:#6b7280;font-size:13px;">Nya konton senaste 30 dagarna kommer ifrån</p>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:13px;">${
+            Object.entries(referrers).sort((a, b) => b[1] - a[1]).slice(0, 6)
+              .map(([k, n]) => `<tr><td style="padding:4px 12px;">${k}</td><td style="padding:4px 12px;text-align:right;font-weight:bold;">${n}</td></tr>`).join('')
+          }</table>
+          <p style="margin:0 0 6px;color:#6b7280;font-size:13px;">och landade på</p>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:13px;">${
+            Object.entries(landings).sort((a, b) => b[1] - a[1]).slice(0, 6)
+              .map(([k, n]) => `<tr><td style="padding:4px 12px;">${k}</td><td style="padding:4px 12px;text-align:right;font-weight:bold;">${n}</td></tr>`).join('')
+          }</table>
+        ` : ''}
+      ` : ''}
+
       ${nudges.length ? `
         <h3 style="font-size:14px;margin:0 0 8px;">Nudge-uppföljning</h3>
         <p style="margin:0 0 10px;color:#6b7280;font-size:13px;">
@@ -2381,6 +2431,8 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
     newActivated,
     nudgesSent: nudges.length,
     nudgesActed,
+    funnelAccounts,
+    funnel: funnelCounts,
   };
 
   if (dryRun) return { dryRun: true, stats };

@@ -5,6 +5,7 @@ import { SubscriptionProvider } from './contexts/SubscriptionContext'
 import { TemplateProvider } from './contexts/TemplateContext'
 import { LanguageProvider } from './contexts/LanguageContext'
 import { captureUtmParams } from './utils/helpers'
+import { captureAcquisitionContext } from './utils/acquisitionContext'
 
 // 1. Importera Toaster och CSS
 import { Toaster } from 'react-hot-toast'
@@ -40,6 +41,11 @@ function AppContent() {
   useEffect(() => {
     captureUtmParams();
   }, [location.search]);
+
+  // Avsändare och landningssida: bara första besöket räknas, så den körs en gång.
+  useEffect(() => {
+    captureAcquisitionContext();
+  }, []);
 
   // /p/:token är spelarens egen, inloggningsfria sida (se PlayerLinkPage) —
   // ska aldrig visa förälderns Header/nav.

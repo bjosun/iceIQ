@@ -17,6 +17,7 @@ import { Capacitor } from '@capacitor/core'
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
 import { auth } from '../services/firebase'
 import { consumeUtmParams } from '../utils/helpers'
+import { consumeAcquisitionContext } from '../utils/acquisitionContext'
 
 interface AuthContextType {
   user: User | null
@@ -48,7 +49,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // 1. HELT NY ANVÄNDARE (eller föräldralös)
         // consumeUtmParams() töms samtidigt (engångsläsning) — täcker både
         // e-post- och Google-signup, eftersom båda går via den här funktionen.
-        const acquisition = consumeUtmParams();
+        // Källan kan vara UTM-parametrar, avsändare/landningssida, eller båda.
+        const utm = consumeUtmParams();
+        const context = consumeAcquisitionContext();
+        const acquisition = utm || context ? { ...(utm ?? {}), ...(context ?? {}) } : null;
         // Ingen `email` här: adressen bor i Firebase Auth, och ett fält som
         // bara skrivs vid signup blir tyst fel den dag användaren byter
         // adress. Alla utskick slår upp den i Auth i stället (getUserEmail i
