@@ -769,7 +769,7 @@ exports.askCoach = functions
       - zonspel: tydligt mönster i zoninträden eller zonförsvar
       - avslut: tydligt mönster i skottavslut eller skapade målchanser
       - defensivt_ansvar: tydligt mönster i blockerade skott, klarerade lägen eller insläppta mål mot
-      - tekningar: tydligt mönster i tekningsstatistik (bara relevant för forwards)
+      - tekningar: tydligt mönster i tekningsstatistik (bara relevant för forwards och centrar)
       - malvaktsspel: tydligt mönster i räddningar eller returer (bara relevant för målvakter)
       - fokus_press: se villkoret ovan — mental press, inte prestationssvacka
 

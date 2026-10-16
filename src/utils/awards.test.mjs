@@ -90,3 +90,20 @@ test('äldre matcher med JSON-nycklar läses som engelska namn', () => {
 test('alla utmärkelser har unikt id', () => {
   assert.equal(new Set(AWARDS.map((a) => a.id)).size, AWARDS.length);
 });
+
+test('centern får forwardens utmärkelser och räknar tekningar per zon', () => {
+  const NEG_C = names(
+    ['Faceoff Loss', 'Faceoff Loss (Defensive Zone)', 'Missed Shot', 'Offensive Zone Turnover', 'Offside', 'Penalty',
+      'On Ice For Goal (AGAINST)', 'Loses Defensive Coverage'],
+    ['Goal', 'Assist', 'Faceoff Win', 'Faceoff Win (Defensive Zone)', 'Faceoff Win (Offensive Zone)', 'Shot on Goal'],
+  );
+  assert.equal(topAward('center', { Goal: 3 }, NEG_C), 'hattrick');
+  const zones = { 'Faceoff Win': 2, 'Faceoff Win (Defensive Zone)': 2, 'Faceoff Win (Offensive Zone)': 1, 'Faceoff Loss': 1 };
+  assert.ok(awardsForGame('center', zones, NEG_C).includes('faceoffKing'));
+});
+
+test('forwardens täckningar räknas som defensivt arbete för tvåvägsspelaren', () => {
+  const NEG_F = names(['Penalty', 'On Ice For Goal (AGAINST)'], ['Goal', 'Low Slot Coverage', 'Covers the Point', 'Supports Defenseman Down Low', 'Tackle', 'Wins Board Battle']);
+  const counts = { Goal: 1, 'Low Slot Coverage': 3, 'Covers the Point': 3, 'Supports Defenseman Down Low': 2 };
+  assert.ok(awardsForGame('forward', counts, NEG_F).includes('twoWay'));
+});

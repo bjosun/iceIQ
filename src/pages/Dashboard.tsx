@@ -13,6 +13,7 @@ import { trackFunnel } from '../utils/funnel';
 import { onDataRefreshed, firestore as firestoreService } from '../services/firestore';
 import { MatchReportStats } from '../utils/matchReport';
 import { moneyModeUnit } from '../utils/pricing';
+import { BONUS_FACTOR_DEFAULT } from '../utils/constants';
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
 // Komponenter
@@ -90,6 +91,25 @@ function buildSeasonSummary(games: { date: string; points?: number }[]) {
   };
 }
 
+// Standardvärdet för multiplikatorn i Money Mode: x2 tills användaren väljer
+// något annat. Det senast valda värdet sparas på enheten och blir nästa
+// standard.
+const BONUS_FACTORS = [0.5, 1, 2, 5, 10, 50, 100];
+const BONUS_FACTOR_KEY = 'iceiq-default-bonus-factor';
+function readDefaultBonusFactor(): number {
+  try {
+    const saved = Number(localStorage.getItem(BONUS_FACTOR_KEY));
+    return BONUS_FACTORS.includes(saved) ? saved : BONUS_FACTOR_DEFAULT;
+  } catch {
+    return BONUS_FACTOR_DEFAULT;
+  }
+}
+function saveDefaultBonusFactor(value: number) {
+  try {
+    localStorage.setItem(BONUS_FACTOR_KEY, String(value));
+  } catch { /* privat läge: då gäller valet bara den här sessionen */ }
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { t, language } = useLanguage(); 
@@ -122,7 +142,7 @@ export default function Dashboard() {
   const [gameDate, setGameDate] = useState<string>(draft?.gameDate || new Date().toISOString().split('T')[0]);
   
   // State för poäng och inställningar
-  const [bonusFactor, setBonusFactor] = useState<number>(draft?.bonusFactor ?? 10); 
+  const [bonusFactor, setBonusFactor] = useState<number>(draft?.bonusFactor ?? readDefaultBonusFactor()); 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [actionCounts, setActionCounts] = useState<Record<string, number>>(draft?.actionCounts || {});
   const [carriedOverBalance, setCarriedOverBalance] = useState<number>(0); 
@@ -754,10 +774,14 @@ export default function Dashboard() {
               </div>
               <select 
                 value={bonusFactor}
-                onChange={(e) => setBonusFactor(Number(e.target.value))}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  setBonusFactor(value);
+                  saveDefaultBonusFactor(value);
+                }}
                 className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-cyan-400 font-bold outline-none"
               >
-                {[0.5, 1, 2, 5, 10, 50, 100].map(v => <option key={v} value={v}>{v}x</option>)}
+                {BONUS_FACTORS.map(v => <option key={v} value={v}>{v}x</option>)}
               </select>
             </Card>
           )}

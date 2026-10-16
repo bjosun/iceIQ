@@ -16,7 +16,7 @@
 // och bör ses över när det finns riktiga matcher (se docs/awards-plan.md).
 
 export type Ring = 'fire' | 'water' | 'earth' | 'wind' | 'void';
-export type Position = 'forward' | 'defenseman' | 'goalie';
+export type Position = 'forward' | 'center' | 'defenseman' | 'goalie';
 
 export type AwardId =
   | 'hattrick' | 'goalKing' | 'pointKing' | 'twoWay' | 'plusGame' | 'cleanSheet'
@@ -34,6 +34,10 @@ export const DEFENSIVE_ACTIONS = [
   'Wins Board Battle',
   'Poke Check',
   'Denies Entry (Gap Control)',
+  'Low Slot Coverage',
+  'Covers the Point',
+  'Supports Defenseman Down Low',
+  'Third Man High Coverage',
 ];
 
 interface Ctx {
@@ -54,8 +58,9 @@ interface AwardDef {
   test: (c: Ctx) => boolean;
 }
 
-const SKATER: Position[] = ['forward', 'defenseman'];
-const ALL: Position[] = ['forward', 'defenseman', 'goalie'];
+const FORWARDS: Position[] = ['forward', 'center'];
+const SKATER: Position[] = ['forward', 'center', 'defenseman'];
+const ALL: Position[] = ['forward', 'center', 'defenseman', 'goalie'];
 
 export const AWARDS: AwardDef[] = [
   // Alla utespelare
@@ -67,15 +72,19 @@ export const AWARDS: AwardDef[] = [
   { id: 'cleanSheet', ring: 'void', positions: ALL, priority: 40, test: (c) => c.positives >= 5 && c.negatives === 0 && c.unknown === 0 },
 
   // Forward
-  { id: 'playmaker', ring: 'water', positions: ['forward'], priority: 75, test: (c) => c.n('Assist') >= 3 },
-  { id: 'sniper', ring: 'fire', positions: ['forward'], priority: 74, test: (c) => c.n('Shot on Goal') >= 5 },
-  { id: 'faceoffKing', ring: 'earth', positions: ['forward'], priority: 55, test: (c) => c.n('Faceoff Win') >= 5 && c.n('Faceoff Win') > c.n('Faceoff Loss') },
-  { id: 'deker', ring: 'water', positions: ['forward'], priority: 58, test: (c) => c.n('Successful Deke') >= 3 },
-  { id: 'hunter', ring: 'wind', positions: ['forward'], priority: 56, test: (c) => c.n('Forecheck Puck Recovery') >= 3 },
-  { id: 'homework', ring: 'wind', positions: ['forward'], priority: 54, test: (c) => c.n('Backcheck Puck Recovery') >= 3 },
-  { id: 'tackler', ring: 'earth', positions: ['forward'], priority: 52, test: (c) => c.n('Tackle') >= 5 },
-  { id: 'boardWorker', ring: 'earth', positions: ['forward'], priority: 53, test: (c) => c.n('Wins Board Battle') >= 5 },
-  { id: 'tightBack', ring: 'void', positions: ['forward'], priority: 45, test: (c) => c.defensive >= 3 && c.n('On Ice For Goal (AGAINST)') === 0 },
+  { id: 'playmaker', ring: 'water', positions: FORWARDS, priority: 75, test: (c) => c.n('Assist') >= 3 },
+  { id: 'sniper', ring: 'fire', positions: FORWARDS, priority: 74, test: (c) => c.n('Shot on Goal') >= 5 },
+  { id: 'faceoffKing', ring: 'earth', positions: FORWARDS, priority: 55, test: (c) => {
+    const wins = c.n('Faceoff Win') + c.n('Faceoff Win (Defensive Zone)') + c.n('Faceoff Win (Offensive Zone)');
+    const losses = c.n('Faceoff Loss') + c.n('Faceoff Loss (Defensive Zone)');
+    return wins >= 5 && wins > losses;
+  } },
+  { id: 'deker', ring: 'water', positions: FORWARDS, priority: 58, test: (c) => c.n('Successful Deke') >= 3 },
+  { id: 'hunter', ring: 'wind', positions: FORWARDS, priority: 56, test: (c) => c.n('Forecheck Puck Recovery') >= 3 },
+  { id: 'homework', ring: 'wind', positions: FORWARDS, priority: 54, test: (c) => c.n('Backcheck Puck Recovery') >= 3 },
+  { id: 'tackler', ring: 'earth', positions: FORWARDS, priority: 52, test: (c) => c.n('Tackle') >= 5 },
+  { id: 'boardWorker', ring: 'earth', positions: FORWARDS, priority: 53, test: (c) => c.n('Wins Board Battle') >= 5 },
+  { id: 'tightBack', ring: 'void', positions: FORWARDS, priority: 45, test: (c) => c.defensive >= 3 && c.n('On Ice For Goal (AGAINST)') === 0 },
 
   // Back
   { id: 'goalBack', ring: 'fire', positions: ['defenseman'], priority: 88, test: (c) => c.n('Goal') >= 1 },
@@ -124,7 +133,7 @@ function normalizeCounts(counts: Record<string, number>): Record<string, number>
 }
 
 export function isPosition(template: string | undefined): template is Position {
-  return template === 'forward' || template === 'defenseman' || template === 'goalie';
+  return template === 'forward' || template === 'center' || template === 'defenseman' || template === 'goalie';
 }
 
 export function awardsForPosition(position: Position): AwardDef[] {

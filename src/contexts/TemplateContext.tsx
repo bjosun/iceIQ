@@ -29,72 +29,104 @@ interface TemplateContextType {
   deleteAction: (actionIndex: number) => void;
 }
 
+const pos = (sv: string, en: string, points: number, isBonus?: boolean): TemplateAction =>
+  ({ name: { sv, en }, points, type: 'positive', ...(isBonus ? { isBonus } : {}) });
+const neg = (sv: string, en: string, points: number): TemplateAction =>
+  ({ name: { sv, en }, points, type: 'negative' });
+
+// Gemensam bas för alla utespelare (back, forward, center). Rollerna lägger
+// sedan till det lilla extra som just den rollen ska få poäng för. De
+// engelska namnen är nyckeln i sparade matcher, utmärkelser och coachen, så
+// byt aldrig namn på en befintlig aktion, lägg bara till nya.
+// Skott på mål ger olika poäng per roll (back 2, övriga 3), därför en parameter.
+const skaterBase = (shotPoints: number): TemplateAction[] => [
+  pos('Kontrollerat zoninträde', 'Controlled Zone Entry', 2),
+  pos('Lyckad passning', 'Successful Pass', 1),
+  pos('Tackling', 'Tackle', 2),
+  pos('Vunnen sargduell', 'Wins Board Battle', 3),
+  pos('Poke check (Puckvinst)', 'Poke Check', 2),
+  pos('Blockerat skott', 'Blocked Shot', 3),
+  pos('Skott på mål', 'Shot on Goal', shotPoints),
+  pos('Mål', 'Goal', 10),
+  pos('Assist', 'Assist', 5),
+  pos('På isen vid mål (FRAMÅT)', 'On Ice For Goal (FOR)', 3),
+  neg('Misslyckad passning', 'Failed Pass', -1),
+  neg('Pucktapp (turnover)', 'Turnover', -3),
+  neg('Utvisning', 'Penalty', -4),
+  neg('På isen vid mål (BAKÅT)', 'On Ice For Goal (AGAINST)', -3),
+];
+
+// Backens extra: hålla ihop försvaret och lösa press.
+const defensemanExtras: TemplateAction[] = [
+  pos('Avvärjer anfall (Bra gap)', 'Denies Entry (Gap Control)', 3),
+  pos('Löser stressad situation', 'Solves Pressured Situation', 5),
+  pos('Kontrollerad defensiv rensning', 'Controlled Defensive Clear', 3),
+  pos('Höll blålinjen', 'Kept Zone', 2),
+  neg('Panikrensning / Slänger bort pucken', 'Panic Turnover / Throwaway', -2),
+];
+
+// Forwardens extra: skapa chanser och jobba framåt, men också hjälpa till
+// bakåt (täcka fickan, backen vid blå linje, backen i hörnet).
+const forwardExtras: TemplateAction[] = [
+  pos('Vunnen tekning', 'Faceoff Win', 2),
+  pos('Lyckad dribbling', 'Successful Deke', 2),
+  pos('Skapad målchans', 'Scoring Chance Created', 4),
+  pos('Forechecking med puckvinst', 'Forecheck Puck Recovery', 4),
+  pos('Backcheck med puckvinst', 'Backcheck Puck Recovery', 3),
+  pos('Täcker fickan', 'Low Slot Coverage', 2),
+  pos('Täcker backen vid blå', 'Covers the Point', 2),
+  pos('Hjälper backen i hörnet', 'Supports Defenseman Down Low', 2),
+  neg('Förlorad tekning', 'Faceoff Loss', -1),
+  neg('Missat skott', 'Missed Shot', -1),
+  neg('Pucktapp (offensiv zon)', 'Offensive Zone Turnover', -4),
+  neg('Offside', 'Offside', -1),
+  neg('Tappar sin täckning', 'Loses Defensive Coverage', -2),
+];
+
+// Centern ärver forwardens aktioner och får tekningar per zon samt jobb i
+// egen och offensiv zon.
+const centerExtras: TemplateAction[] = [
+  pos('Vunnen tekning i egen zon', 'Faceoff Win (Defensive Zone)', 3),
+  pos('Vunnen tekning i offensiv zon', 'Faceoff Win (Offensive Zone)', 3),
+  pos('Täcker högt som tredje man', 'Third Man High Coverage', 2),
+  pos('Ger utspelsstöd', 'Breakout Support', 2),
+  pos('Står framför mål', 'Net-Front Presence', 3),
+  pos('Skyddar pucken (kring)', 'Puck Protection (Cycle)', 2),
+  neg('Förlorad tekning i egen zon', 'Faceoff Loss (Defensive Zone)', -2),
+];
+
 export const defaultTemplates: Record<string, Template> = {
   defenseman: {
     id: 'defenseman',
     name: { sv: 'Back', en: 'Defenseman' },
-    actions: [
-      { name: {sv: 'Kontrollerat zoninträde', en: 'Controlled Zone Entry'}, points: 2, type: 'positive' },
-      { name: {sv: 'Lyckad passning', en: 'Successful Pass'}, points: 1, type: 'positive' },
-      { name: {sv: 'Tackling', en: 'Tackle'}, points: 2, type: 'positive' },
-      { name: {sv: 'Vunnen sargduell', en: 'Wins Board Battle'}, points: 3, type: 'positive' }, // NY!
-      { name: {sv: 'Poke check (Puckvinst)', en: 'Poke Check'}, points: 2, type: 'positive' }, // NY!
-      { name: {sv: 'Avvärjer anfall (Bra gap)', en: 'Denies Entry (Gap Control)'}, points: 3, type: 'positive' }, // NY!
-      { name: {sv: 'Löser stressad situation', en: 'Solves Pressured Situation'}, points: 5, type: 'positive' },
-      { name: {sv: 'Kontrollerad defensiv rensning', en: 'Controlled Defensive Clear'}, points: 3, type: 'positive' },
-      { name: {sv: 'Höll blålinjen', en: 'Kept Zone'}, points: 2, type: 'positive' },
-      { name: {sv: 'Blockerat skott', en: 'Blocked Shot'}, points: 3, type: 'positive' },
-      { name: {sv: 'Skott på mål', en: 'Shot on Goal'}, points: 2, type: 'positive' },
-      { name: {sv: 'Mål', en: 'Goal'}, points: 10, type: 'positive' },
-      { name: {sv: 'Assist', en: 'Assist'}, points: 5, type: 'positive' },
-      { name: {sv: 'På isen vid mål (FRAMÅT)', en: 'On Ice For Goal (FOR)'}, points: 3, type: 'positive' },
-      { name: {sv: 'Misslyckad passning', en: 'Failed Pass'}, points: -1, type: 'negative' },
-      { name: {sv: 'Pucktapp (turnover)', en: 'Turnover'}, points: -3, type: 'negative' },
-      { name: {sv: 'Panikrensning / Slänger bort pucken', en: 'Panic Turnover / Throwaway'}, points: -2, type: 'negative' },
-      { name: {sv: 'Utvisning', en: 'Penalty'}, points: -4, type: 'negative' },
-      { name: {sv: 'På isen vid mål (BAKÅT)', en: 'On Ice For Goal (AGAINST)'}, points: -3, type: 'negative' },
-    ]
+    actions: [...skaterBase(2), ...defensemanExtras],
   },
   forward: {
     id: 'forward',
     name: { sv: 'Forward', en: 'Forward' },
-    actions: [
-      { name: {sv: 'Kontrollerat zoninträde', en: 'Controlled Zone Entry'}, points: 2, type: 'positive' }, // NY!
-      { name: {sv: 'Vunnen sargduell', en: 'Wins Board Battle'}, points: 3, type: 'positive' }, // NY!
-      { name: {sv: 'Vunnen tekning', en: 'Faceoff Win'}, points: 2, type: 'positive' },
-      { name: {sv: 'Lyckad dribbling', en: 'Successful Deke'}, points: 2, type: 'positive' },
-      { name: {sv: 'Skapad målchans', en: 'Scoring Chance Created'}, points: 4, type: 'positive' },
-      { name: {sv: 'Skott på mål', en: 'Shot on Goal'}, points: 3, type: 'positive' },
-      { name: {sv: 'Mål', en: 'Goal'}, points: 10, type: 'positive' },
-      { name: {sv: 'Assist', en: 'Assist'}, points: 5, type: 'positive' },
-      { name: {sv: 'Forechecking med puckvinst', en: 'Forecheck Puck Recovery'}, points: 4, type: 'positive' },
-      { name: {sv: 'Backcheck med puckvinst', en: 'Backcheck Puck Recovery'}, points: 3, type: 'positive' },
-      { name: {sv: 'Tackling', en: 'Tackle'}, points: 2, type: 'positive' },
-      { name: {sv: 'På isen vid mål (FRAMÅT)', en: 'On Ice For Goal (FOR)'}, points: 3, type: 'positive' },
-      { name: {sv: 'Förlorad tekning', en: 'Faceoff Loss'}, points: -1, type: 'negative' },
-      { name: {sv: 'Missat skott', en: 'Missed Shot'}, points: -1, type: 'negative' },
-      { name: {sv: 'Pucktapp (offensiv zon)', en: 'Offensive Zone Turnover'}, points: -4, type: 'negative' },
-      { name: {sv: 'Offside', en: 'Offside'}, points: -1, type: 'negative' },
-      { name: {sv: 'Utvisning', en: 'Penalty'}, points: -4, type: 'negative' },
-      { name: {sv: 'På isen vid mål (BAKÅT)', en: 'On Ice For Goal (AGAINST)'}, points: -3, type: 'negative' },
-    ]
+    actions: [...skaterBase(3), ...forwardExtras],
+  },
+  center: {
+    id: 'center',
+    name: { sv: 'Center', en: 'Center' },
+    actions: [...skaterBase(3), ...forwardExtras, ...centerExtras],
   },
   goalie: {
     id: 'goalie',
     name: { sv: 'Målvakt', en: 'Goalie' },
     actions: [
-      { name: {sv: 'Räddning', en: 'Save'}, points: 2, type: 'positive' },
-      { name: {sv: 'Svår räddning', en: 'Difficult Save'}, points: 4, type: 'positive' },
-      { name: {sv: 'Hållen nolla (period)', en: 'Shutout (Period)'}, points: 5, type: 'positive' },
-      { name: {sv: 'Kontrollerad retur', en: 'Controlled Rebound'}, points: 2, type: 'positive' },
-      { name: {sv: 'Spela pucken (lyckat)', en: 'Successful Puck Play'}, points: 1, type: 'positive' },
-      { name: {sv: 'Assist', en: 'Assist'}, points: 10, type: 'positive' },
-      { name: {sv: 'Insläppt mål', en: 'Goal Against'}, points: -10, type: 'negative' },
-      { name: {sv: 'Dålig retur', en: 'Bad Rebound'}, points: -3, type: 'negative' },
-      { name: {sv: 'Spela pucken (misslyckat)', en: 'Failed Puck Play'}, points: -4, type: 'negative' },
-      { name: {sv: 'Utvisning', en: 'Penalty'}, points: -4, type: 'negative' },
-    ]
-  }
+      pos('Räddning', 'Save', 2),
+      pos('Svår räddning', 'Difficult Save', 4),
+      pos('Hållen nolla (period)', 'Shutout (Period)', 5),
+      pos('Kontrollerad retur', 'Controlled Rebound', 2),
+      pos('Spela pucken (lyckat)', 'Successful Puck Play', 1),
+      pos('Assist', 'Assist', 10),
+      neg('Insläppt mål', 'Goal Against', -10),
+      neg('Dålig retur', 'Bad Rebound', -3),
+      neg('Spela pucken (misslyckat)', 'Failed Puck Play', -4),
+      neg('Utvisning', 'Penalty', -4),
+    ],
+  },
 };
 const TemplateContext = createContext<TemplateContextType | undefined>(undefined);
 

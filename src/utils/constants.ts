@@ -27,13 +27,14 @@ export const STRIPE_CONFIG = {
 export const DEFAULT_TEMPLATES = {
   defenseman: 'defenseman',
   forward: 'forward',
+  center: 'center',
   goalie: 'goalie'
 } as const;
 
 // Game Constants
 export const MAX_FREE_PLAYERS = 1;
 export const MAX_FREE_GAMES_PER_PLAYER = 10;
-export const BONUS_FACTOR_DEFAULT = 10;
+export const BONUS_FACTOR_DEFAULT = 2;
 
 // UI Constants
 export const BREAKPOINTS = {
