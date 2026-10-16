@@ -622,6 +622,8 @@ exports.askCoach = functions
   
   // VIKTIGT: Hämta 'lang' här också!
   const { playerStats, question, history, lang } = data;
+  // Specialistläge: 'match' (standard, matchanalys) eller 'mental'. Allt annat blir 'match'.
+  const mode = data.mode === 'mental' ? 'mental' : 'match';
 
   // 2. Hämta användaren (dokumentet kanske inte finns ännu för helt nya konton)
   const userRef = getUsersCollection().doc(userId);
@@ -776,6 +778,15 @@ exports.askCoach = functions
       - Lägg till EN NY post (med dagens datum, ${today}) bara om du lärt dig något varaktigt nytt i det här samtalet — inte vid varje litet svar. Om inget nytt tillkommit: returnera listan oförändrad.
       - Listan får ALDRIG innehålla fler än 8 poster. Är den redan full när du vill lägga till en ny: slå ihop de två minst relevanta/äldsta posterna till en, så det finns plats. Radera aldrig hela historiken.
       - Varje post: max ~150 tecken, bara varaktigt relevanta fakta — inga engångsdetaljer om just dagens fråga.
+      ${mode === 'mental' ? `
+      SPECIALISTLÄGE: MENTAL TRÄNING (har valts av spelaren eller föräldern — detta ersätter punkt 3 och FORMATERA-blocket ovan)
+      - Du är nu en mental coach för ungdomshockey, inte en statistikrapport. Svara inte med rubrikerna Trend, Styrkor och Fokusområde.
+      - Utgå från hur spelaren tänker och känner på isen: press, nervositet, fokus, att släppa ett misstag, självförtroende, rutiner före och mellan byten. Använd matchdatan som stöd bara när den belyser något mentalt (till exempel paniktappningar under press, eller en svacka efter ett misstag).
+      - Ge två till fyra små, konkreta övningar eller tankesätt som går att testa på nästa träning eller match: en andningsrutin på bänken, en kort nyckelfras, att se första bytet framför sig, en "nästa puck"-rutin efter ett misstag. Korta meningar och enkelt språk som ett barn kan läsa.
+      - Håll dig till vedertagna, enkla begrepp (rutiner, fokusord, scanning, visualisering). Hitta aldrig på forskning, procenttal eller löften om resultat.
+      - Du är inte psykolog och ställer inga diagnoser. Handlar frågan om ångest, att må dåligt på riktigt, sömn, ätande, ensamhet eller mobbning: svara varmt och kort, uppmuntra spelaren att prata med en vuxen hen litar på (förälder, tränare, skolhälsovård eller vårdcentral) och ge INGA övningar för det. Be aldrig om hälsouppgifter.
+      - thinkAbout ska i det här läget vara en mental fråga att bära med sig, inte en statistikobservation.
+      ` : ''}
   `;
   // "Personligheten" (systemInstruction) ligger i konfigurationen och skickas
   // med varje anrop. JSON-schemat tvingar fram flera fält i samma anrop —
@@ -872,6 +883,10 @@ exports.askCoach = functions
       - Tidigare tidslinje om spelaren: ${existingTimeline.length > 0 ? JSON.stringify(existingTimeline) : '(ingen ännu — första samtalet med den här spelaren)'}
     `;
 
+    const defaultQuestion = mode === 'mental'
+      ? 'Ge mig en kort mental träningsplan inför nästa match, utifrån mina senaste matcher.'
+      : 'Ge en analys baserat på min statistik.';
+
     const userMessage = isFollowUp
       ? `
       Spelarens uppföljningsfråga: "${question}"
@@ -882,7 +897,7 @@ exports.askCoach = functions
     `
       : `
       Data för analys:${dataBlock}
-      Spelarens fråga: "${question || 'Ge en analys baserat på min statistik.'}"
+      Spelarens fråga: "${question || defaultQuestion}"
     `;
 
     // Slå ihop eventuella på varandra följande turer med samma roll

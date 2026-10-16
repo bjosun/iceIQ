@@ -86,6 +86,8 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
   const [insightToShare, setInsightToShare] = useState<{ text: string; kind: 'strength' | 'think' } | null>(null);
   const [showBreathing, setShowBreathing] = useState(false);
   const [showMemory, setShowMemory] = useState(false);
+  // Specialistläge: matchanalys (standard) eller mental träning.
+  const [coachMode, setCoachMode] = useState<'match' | 'mental'>('match');
 
   // Andningsövningen är medvetet öppen för alla. Den kostar ingenting att
   // köra — helt klientsidig, inga API-anrop, inga krediter — och att låsa
@@ -130,7 +132,9 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
     }
   };
 
-  const quickQuestions = [t('ai.quick1'), t('ai.quick2'), t('ai.quick3')];
+  const quickQuestions = coachMode === 'mental'
+    ? [t('ai.mental1'), t('ai.mental2'), t('ai.mental3')]
+    : [t('ai.quick1'), t('ai.quick2'), t('ai.quick3')];
   const loadingSteps = [t('ai.loading1'), t('ai.loading2'), t('ai.loading3')];
 
   // Återställ den aktiva chatten vid mount / spelarbyte
@@ -224,7 +228,8 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
         question: specificQuestion || "",
         // Tidigare turer så coachen minns sina egna svar vid följdfrågor
         history: messages.slice(-10).map(m => ({ role: m.role, text: m.text })),
-        lang: language
+        lang: language,
+        mode: coachMode
       });
 
       if (result.data.success) {
@@ -495,6 +500,24 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
             <p className="text-gray-300 text-sm mb-6 max-w-md mx-auto leading-relaxed">
               {t('ai.readyDesc')}
             </p>
+
+            {/* Vad vill du prata om? Matchanalys eller mental träning */}
+            <div className="flex justify-center gap-2 mb-4" role="group" aria-label={t('ai.modeLabel')}>
+              {(['match', 'mental'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setCoachMode(m)}
+                  aria-pressed={coachMode === m}
+                  className={`px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                    coachMode === m
+                      ? 'bg-primary-500/25 border-primary-400 text-primary-100'
+                      : 'border-white/10 text-gray-400 hover:text-gray-200'
+                  }`}
+                >
+                  {m === 'match' ? t('ai.modeMatch') : t('ai.modeMental')}
+                </button>
+              ))}
+            </div>
 
             {/* Snabbfrågor som chips */}
             <div className="flex flex-wrap justify-center gap-2 mb-6 max-w-lg mx-auto">
