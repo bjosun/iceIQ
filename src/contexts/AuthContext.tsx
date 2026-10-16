@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import {
   User,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   createUserWithEmailAndPassword,
   signInWithPopup,
   signInWithCredential,
@@ -27,6 +28,7 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>
   loginWithApple: () => Promise<void>
   logout: () => Promise<void>
+  sendPasswordReset: (email: string, language?: string) => Promise<void>
   deleteAccount: (cleanupCallback?: () => Promise<void>) => Promise<void>
 }
 
@@ -110,6 +112,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithEmailAndPassword(auth, email, password)
     } catch (error) {
       console.error('Login error:', error)
+      throw error
+    }
+  }
+
+  // Skickar Firebases återställningsmejl. Mejlet skrivs på appens språk. Svaret
+  // avslöjar inte om adressen har ett konto (Firebase svarar lika oavsett).
+  const sendPasswordReset = async (email: string, language?: string) => {
+    try {
+      auth.languageCode = language === 'sv' ? 'sv' : 'en'
+      await sendPasswordResetEmail(auth, email.trim())
+    } catch (error) {
+      console.error('Password reset error:', error)
       throw error
     }
   }
@@ -257,6 +271,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loginWithGoogle,
     loginWithApple,
     logout,
+    sendPasswordReset,
     deleteAccount
   }
 

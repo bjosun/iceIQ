@@ -8,16 +8,33 @@ import Input from '../ui/Input';
 
 interface LoginFormProps {
   onSwitchToSignup: () => void;
-  onForgotPassword: () => void;
 }
 
-export default function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps) {
-  const { login, loginWithGoogle } = useAuth();
-  const { t } = useLanguage();
+export default function LoginForm({ onSwitchToSignup }: LoginFormProps) {
+  const { login, loginWithGoogle, sendPasswordReset } = useAuth();
+  const { t, language } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+
+  // "Glömt lösenord?": skickar återställningsmejl till adressen i e-postfältet.
+  const handleForgotPassword = async () => {
+    setError('');
+    setNotice('');
+    if (!email.trim()) {
+      setError(t('auth.resetNeedEmail'));
+      return;
+    }
+    try {
+      await sendPasswordReset(email, language);
+      setNotice(t('auth.resetSent'));
+    } catch (err: any) {
+      // Ogiltig adress får ett tydligt svar; i övrigt ett allmänt fel.
+      setError(err?.code === 'auth/invalid-email' ? t('auth.resetInvalidEmail') : t('auth.resetError'));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +74,12 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginF
         <p className="text-gray-400">Enter your credentials to access your dashboard</p>
       </div>
 
+      {notice && (
+        <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+          <span className="text-green-400 text-sm">{notice}</span>
+        </div>
+      )}
+
       {error && (
         <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center">
           <AlertCircle className="text-red-400 mr-3" size={20} />
@@ -91,7 +114,7 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginF
           />
           <button
             type="button"
-            onClick={onForgotPassword}
+            onClick={handleForgotPassword}
             className="mt-2 text-sm text-cyan-400 hover:text-cyan-300"
           >
             {t('forgotPassword')}

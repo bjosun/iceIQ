@@ -588,7 +588,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
-          {showSignup ? <SignupForm onSwitchToLogin={() => setShowSignup(false)} /> : <LoginForm onSwitchToSignup={() => setShowSignup(true)} onForgotPassword={() => {}} />}
+          {showSignup ? <SignupForm onSwitchToLogin={() => setShowSignup(false)} /> : <LoginForm onSwitchToSignup={() => setShowSignup(true)} />}
         </Card>
       </div>
     );
