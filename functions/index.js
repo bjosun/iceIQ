@@ -840,18 +840,6 @@ exports.askCoach = functions
 
   // 5. Hantera användarens unika data och fråga
   try {
-    const userMessage = `
-      Data för analys:
-      - Pågående session (dagens match): ${JSON.stringify(playerStats.stats || {})}
-      - Historik (senaste 3 matcherna): ${JSON.stringify(playerStats.history || [])}
-      - Säsongsöversikt (alla registrerade matcher): ${JSON.stringify(playerStats.season || {})}
-      - Poäng denna match: ${playerStats.totals?.actionsPoints ?? 0}
-      - Totalt saldo (kan inkludera överfört värde från tidigare matcher): ${playerStats.totals?.total ?? 0}
-      - Tidigare tidslinje om spelaren: ${existingTimeline.length > 0 ? JSON.stringify(existingTimeline) : '(ingen ännu — första samtalet med den här spelaren)'}
-
-      Spelarens fråga: "${question || 'Ge en analys baserat på min statistik.'}"
-    `;
-
     // Chatthistorik -> flerturskonversation, så följdfrågor har kontext.
     // Klientdata valideras och begränsas: max 10 turer, 4000 tecken per tur.
     const safeHistory = (Array.isArray(history) ? history : [])
@@ -867,6 +855,35 @@ exports.askCoach = functions
     if (safeHistory.length > 0 && safeHistory[0].role === 'model') {
       safeHistory.unshift({ role: 'user', parts: [{ text: 'Ge en analys baserat på min statistik.' }] });
     }
+
+    // Uppföljningsfråga = en specifik fråga efter att coachen redan svarat.
+    // Då ska svaret gälla frågan, inte en ny rapport. Flash (utan tänkande)
+    // föll annars tillbaka på öppningsanalysen när frågan var långt och
+    // pratig, så frågan kommer först och datan märks som bakgrund.
+    const isFollowUp = !!(question && String(question).trim())
+      && safeHistory.some((m) => m.role === 'model');
+
+    const dataBlock = `
+      - Pågående session (dagens match): ${JSON.stringify(playerStats.stats || {})}
+      - Historik (senaste 3 matcherna): ${JSON.stringify(playerStats.history || [])}
+      - Säsongsöversikt (alla registrerade matcher): ${JSON.stringify(playerStats.season || {})}
+      - Poäng denna match: ${playerStats.totals?.actionsPoints ?? 0}
+      - Totalt saldo (kan inkludera överfört värde från tidigare matcher): ${playerStats.totals?.total ?? 0}
+      - Tidigare tidslinje om spelaren: ${existingTimeline.length > 0 ? JSON.stringify(existingTimeline) : '(ingen ännu — första samtalet med den här spelaren)'}
+    `;
+
+    const userMessage = isFollowUp
+      ? `
+      Spelarens uppföljningsfråga: "${question}"
+
+      Svara direkt och konkret på just den frågan, med två till fyra konkreta förslag eller övningar spelaren kan göra. Kör INTE om Trend, Styrkor och Fokusområde och upprepa inte ditt förra svar. Datan nedan är bara bakgrund: använd den när den hjälper dig svara.
+
+      Bakgrundsdata:${dataBlock}
+    `
+      : `
+      Data för analys:${dataBlock}
+      Spelarens fråga: "${question || 'Ge en analys baserat på min statistik.'}"
+    `;
 
     // Slå ihop eventuella på varandra följande turer med samma roll
     // (kan uppstå om ett AI-svar misslyckades mellan två frågor)
@@ -952,6 +969,34 @@ exports.askCoach = functions
       // svar). Då visar vi ändå rådatan för spelaren i stället för att
       // misslyckas helt — bara minnesuppdateringen uteblir den gången.
       console.warn(`askCoach: kunde inte tolka JSON-svaret för ${userId}: ${e.message}`);
+    }
+
+    // Skyddsnät: upprepar svaret bara det förra (ordagrant början) gör vi ett
+    // nytt försök med en tydligare instruktion. Kostar en extra modellkörning
+    // men aldrig en extra kredit.
+    if (isFollowUp) {
+      const prevAi = [...safeHistory].reverse().find((m) => m.role === 'model');
+      const norm = (t) => String(t || '').replace(/\s+/g, ' ').trim().toLowerCase();
+      if (prevAi && norm(analysis).slice(0, 200) === norm(prevAi.parts[0].text).slice(0, 200)) {
+        console.warn(`askCoach: följdfrågesvaret upprepade förra svaret för ${userId}, försöker igen`);
+        try {
+          const retry = await vertex_ai.models.generateContent({
+            model: modelName,
+            contents: [
+              ...contents.slice(0, -1),
+              {
+                role: 'user',
+                parts: [{ text: userMessage + '\n\nVIKTIGT: ditt förra försök upprepade bara öppningsanalysen. Svara nu ENBART på uppföljningsfrågan ovan, med helt nya formuleringar och konkreta råd.' }],
+              },
+            ],
+            config: generationConfig,
+          });
+          const rp = JSON.parse(retry.text || '{}');
+          if (typeof rp.analysis === 'string' && rp.analysis.trim()) analysis = rp.analysis;
+        } catch (e) {
+          console.warn(`askCoach: nytt försök misslyckades för ${userId}: ${e.message}`);
+        }
+      }
     }
 
     if (playerRef && coachTimeline && !memoryOff) {
