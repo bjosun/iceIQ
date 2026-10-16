@@ -105,3 +105,7 @@ Kvar att besluta: automatisk rensning av inaktiva konton, och om marknadsföring
 - Rättslig grund per behandling: konto/prenumeration/servicemejl = avtal (b); spelardata, spelarlänk, AI-coach, anteckningar, lyssnaklipp = samtycke (a) via vårdnadshavarens bekräftelse; bokföring = rättslig förpliktelse (c); veckomejl/påminnelser/säkerhet/kanalmätning = berättigat intresse (f). Rad 2 i tabellen ovan (barnets uppgifter) är fortfarande den öppna frågan.
 - Tredjelandsmekanismen är formulerad generellt ("Data Privacy Framework eller standardavtalsklausuler"). Verifiera vad respektive leverantör (Google, Stripe, Resend) faktiskt stöder.
 - Aktiveringsmejlet har inget eget avregistreringsval i appen, bara veckomejlet kan stängas av. Marknadsföringslagen kan kräva det (rad 15).
+
+## Barn och spelarlänken, rättat 2026-10-16
+
+Meningen "tjänsten riktar sig inte till barn under 13" i integritetspolicyn stämde inte med spelarlänken, som en förälder kan skicka till barnet. Nu står: konton är bara för vuxna; en förälder kan dela en privat, skrivskyddad sida med barnet som inte ber om eller sparar något från barnet. Åldersbetyget i App Store förblir 13+ (gäller appen, som används av vuxna). **Jurist bör bekräfta** att en skrivskyddad barnsida utan insamling inte kräver mer (COPPA, GDPR art. 8 och vårdnadshavarens samtycke).

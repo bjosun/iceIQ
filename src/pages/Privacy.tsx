@@ -28,7 +28,7 @@ interface PrivacyContent {
 }
 
 const EN: PrivacyContent = {
-  lastUpdated: 'Last updated: 14 October 2026',
+  lastUpdated: 'Last updated: 16 October 2026',
   principles: [
     { title: 'Data Protection', description: 'Our cloud providers encrypt data in transit and at rest.' },
     {
@@ -196,7 +196,7 @@ const EN: PrivacyContent = {
       title: "Children's Privacy",
       blocks: [
         {
-          p: 'Children do not create accounts and the service is not directed to children under 13. Parents and guardians may record information about their own child as a player, for example name and game statistics. We treat that information with extra care, use it only to provide the service you ask for, and do not use it for advertising. If you believe a child has created an account, contact us and we will remove it.',
+          p: 'Accounts are for adults only, and children do not create accounts. A parent or guardian can choose to share a private, read-only page with their child (the player link). That page does not ask the child for anything and does not save anything from the child; it only shows the player's own results and can read them aloud. Parents and guardians may record information about their own child as a player, for example name and game statistics. We treat that information with extra care, use it only to provide the service you ask for, and do not use it for advertising. If you believe a child has created an account, contact us and we will remove it.',
         },
       ],
     },
@@ -213,7 +213,7 @@ const EN: PrivacyContent = {
 };
 
 const SV: PrivacyContent = {
-  lastUpdated: 'Senast uppdaterad: 14 oktober 2026',
+  lastUpdated: 'Senast uppdaterad: 16 oktober 2026',
   principles: [
     { title: 'Dataskydd', description: 'Våra molnleverantörer krypterar data under överföring och vid lagring.' },
     {
@@ -381,7 +381,7 @@ const SV: PrivacyContent = {
       title: 'Barns integritet',
       blocks: [
         {
-          p: 'Barn skapar inte konton och tjänsten riktar sig inte till barn under 13 år. Föräldrar och vårdnadshavare kan lägga in uppgifter om sitt eget barn som spelare, till exempel namn och matchstatistik. Vi hanterar de uppgifterna med extra omsorg, använder dem bara för att tillhandahålla den tjänst du ber om och använder dem inte för reklam. Tror du att ett barn har skapat ett konto, kontakta oss så tar vi bort det.',
+          p: 'Konton är bara för vuxna, och barn skapar inte konton. En förälder eller vårdnadshavare kan välja att dela en privat, skrivskyddad sida med sitt barn (spelarlänken). Sidan ber inte barnet om något och sparar ingenting från barnet; den visar bara spelarens egna resultat och kan läsa upp dem. Föräldrar och vårdnadshavare kan lägga in uppgifter om sitt eget barn som spelare, till exempel namn och matchstatistik. Vi hanterar de uppgifterna med extra omsorg, använder dem bara för att tillhandahålla den tjänst du ber om och använder dem inte för reklam. Tror du att ett barn har skapat ett konto, kontakta oss så tar vi bort det.',
         },
       ],
     },
