@@ -119,6 +119,15 @@ export const translations = {
     },
 
     // Weekly email digest
+    actionGrid: {
+      more: "More…",
+      moreTitle: "More actions and today's focus",
+      focusTitle: "Today's focus",
+      focusHint: "Pick what the player is working on today. These get their own buttons in the grid.",
+      pickFocus: "Pick focus",
+      noFocus: "— None —",
+      done: "Done",
+    },
     digest: {
       title: "Weekly email summary",
       desc: "A short Monday recap of last week's games. Only sent when there is something to report."
@@ -808,6 +817,15 @@ export const translations = {
     },
 
     // Weekly email digest
+    actionGrid: {
+      more: "Mer…",
+      moreTitle: "Fler aktioner och dagens fokus",
+      focusTitle: "Dagens fokus",
+      focusHint: "Välj vad spelaren jobbar på i dag. De får egna knappar i rutnätet.",
+      pickFocus: "Välj fokus",
+      noFocus: "— Ingen —",
+      done: "Klart",
+    },
     digest: {
       title: "Veckosammanfattning via e-post",
       desc: "En kort måndagssummering av förra veckans matcher. Skickas bara när det finns något att berätta."

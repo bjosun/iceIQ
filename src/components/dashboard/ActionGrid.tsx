@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Minus, Sun, Sparkles } from 'lucide-react';
+import { Minus, Sun, Sparkles, Star, Plus } from 'lucide-react';
 import NoSleep from 'nosleep.js';
 import toast from 'react-hot-toast';
-import { useTemplates } from '../../contexts/TemplateContext';
+import { useTemplates, defaultTemplates } from '../../contexts/TemplateContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Card from '../ui/Card';
+import Modal from '../ui/Modal';
+import { loadFocus, resolveGrid, saveFocus, shortName } from '../../utils/gridLayout';
 import { BIG_POINTS, effectsEnabled, setEffectsEnabled, tapFeedback } from '../../utils/feedback';
 
 interface ActionGridProps {
@@ -41,6 +43,15 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
 
   // Effekter vid tryck: en flytande "+N" och för stora händelser (mål) även
   // konfetti. Rensas efter en stund så de inte staplas i DOM:en.
+  // Dagens fokus: vilka aktioner som ligger på de lediga platserna i rutnätet.
+  // Sparas per mall på enheten (se utils/gridLayout.ts).
+  const [focusNames, setFocusNames] = useState<string[] | null>(null);
+  const [showMore, setShowMore] = useState(false);
+  const templateId = currentTemplate?.id;
+  useEffect(() => {
+    setFocusNames(templateId ? loadFocus(templateId) : null);
+  }, [templateId]);
+
   const [effects, setEffects] = useState<boolean>(() => effectsEnabled());
   const [fx, setFx] = useState<Record<string, { id: number; big: boolean; text: string }>>({});
   const fxCounter = useRef(0);
@@ -120,6 +131,20 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
   const positiveActions = currentTemplate.actions.filter(a => a.type === 'positive');
   const negativeActions = currentTemplate.actions.filter(a => a.type === 'negative');
 
+  // Fast rutnät (tolv pluss, sex minus) när mallen har en layout, annars hela
+  // listan som förut (egna mallar).
+  const layout = currentTemplate.layout ?? defaultTemplates[currentTemplate.id]?.layout;
+  const grid = resolveGrid(currentTemplate, layout, focusNames);
+
+  const chooseFocus = (slot: number, en: string) => {
+    if (!grid) return;
+    const next: string[] = Array.from({ length: grid.slots }, (_, i) => grid.focusChosen[i] ?? '');
+    next[slot] = en;
+    const cleaned = next.filter(Boolean);
+    setFocusNames(cleaned);
+    saveFocus(currentTemplate.id, cleaned);
+  };
+
   const handleEffectsToggle = () => {
     setEffectsEnabled(!effects);
     setEffects(!effects);
@@ -159,12 +184,20 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
     }, 0);
   };
 
-  const renderTiles = (actions: typeof positiveActions, isPositive: boolean) => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+  const renderTiles = (
+    actions: typeof positiveActions,
+    isPositive: boolean,
+    opts: { compact?: boolean; gridClass?: string; extra?: React.ReactNode; focusStar?: Set<string> } = {},
+  ) => (
+    <div className={opts.gridClass ?? (opts.compact
+      ? 'grid grid-cols-3 gap-2'
+      : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3')}>
       {actions.map((action, index) => {
         const key = JSON.stringify(action.name);
         const count = actionCounts[key] || 0;
-        const actionName = action.name[language] || action.name.en;
+        const fullName = action.name[language] || action.name.en;
+        const actionName = opts.compact ? shortName(action, language) : fullName;
+        const isFocus = !!opts.focusStar?.has(action.name.en);
         const activeClasses = isPositive
           ? 'border-green-500/60 bg-green-500/10'
           : 'border-red-500/60 bg-red-500/10';
@@ -177,20 +210,22 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
                 updateCount(action.name, 1);
                 playFx(key, action.points, isPositive);
               }}
-              className={`w-full min-h-[96px] p-3 rounded-xl border text-left flex flex-col justify-between gap-2 transition-all active:scale-[0.96] touch-manipulation select-none ${
+              title={fullName}
+              className={`w-full ${opts.compact ? 'min-h-[84px] p-2' : 'min-h-[96px] p-3'} rounded-xl border text-left flex flex-col justify-between gap-2 transition-all active:scale-[0.96] touch-manipulation select-none ${
                 count > 0
                   ? activeClasses
                   : 'border-gray-700 bg-gray-700/30 hover:border-gray-600'
               }`}
             >
-              <p className="font-semibold text-white text-sm leading-snug pr-7">
+              <p className={`font-semibold text-white leading-tight pr-6 ${opts.compact ? 'text-xs' : 'text-sm leading-snug pr-7'}`}>
+                {isFocus && <Star size={10} className="inline -mt-0.5 mr-1 text-yellow-400 fill-yellow-400" aria-label={t('actionGrid.focusTitle')} />}
                 {actionName}
               </p>
               <div className="flex items-end justify-between">
                 <span className="text-xs text-gray-400">
                   {action.points > 0 ? '+' : ''}{action.points} p
                 </span>
-                <span className={`text-3xl font-black leading-none ${count > 0 ? countColor : 'text-gray-600'}`}>
+                <span className={`${opts.compact ? 'text-2xl' : 'text-3xl'} font-black leading-none ${count > 0 ? countColor : 'text-gray-600'}`}>
                   <span key={count} className="inline-block animate-count-pop motion-reduce:animate-none">{count}</span>
                 </span>
               </div>
@@ -226,8 +261,8 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
             {count > 0 && (
               <button
                 onClick={() => updateCount(action.name, -1)}
-                aria-label={`${actionName} -1`}
-                className="absolute top-2 right-2 w-8 h-8 bg-gray-800/90 hover:bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center text-gray-300 transition-colors touch-manipulation"
+                aria-label={`${fullName} -1`}
+                className={`absolute ${opts.compact ? 'top-1 right-1 w-7 h-7' : 'top-2 right-2 w-8 h-8'} bg-gray-800/90 hover:bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center text-gray-300 transition-colors touch-manipulation`}
               >
                 <Minus size={15} />
               </button>
@@ -235,8 +270,23 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
           </div>
         );
       })}
+      {opts.extra}
     </div>
   );
+
+  // Tom fokusplats: öppnar valet.
+  const emptySlotTiles = grid
+    ? Array.from({ length: grid.emptySlots }, (_, i) => (
+        <button
+          key={`empty-${i}`}
+          onClick={() => setShowMore(true)}
+          className="min-h-[84px] p-2 rounded-xl border border-dashed border-gray-600 text-gray-400 text-xs flex flex-col items-center justify-center gap-1 touch-manipulation"
+        >
+          <Plus size={16} />
+          {t('actionGrid.pickFocus')}
+        </button>
+      ))
+    : null;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -302,7 +352,13 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
             +{calculatePoints(positiveActions)} pts
           </span>
         </div>
-        {renderTiles(positiveActions, true)}
+        {grid
+          ? renderTiles(grid.positive, true, {
+              compact: true,
+              extra: emptySlotTiles,
+              focusStar: new Set(grid.focusChosen),
+            })
+          : renderTiles(positiveActions, true)}
       </Card>
 
       {/* Negative Actions */}
@@ -315,8 +371,78 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
             {calculatePoints(negativeActions)} pts
           </span>
         </div>
-        {renderTiles(negativeActions, false)}
+        {grid ? renderTiles(grid.negative, false, { compact: true }) : renderTiles(negativeActions, false)}
       </Card>
+
+      {grid && (grid.more.length > 0 || grid.slots > 0) && (
+        <div className="lg:col-span-2">
+          <button
+            onClick={() => setShowMore(true)}
+            className="w-full py-3 rounded-xl border border-gray-600 bg-gray-800/60 text-gray-200 text-sm font-semibold touch-manipulation hover:border-gray-500 transition-colors"
+          >
+            {grid.more.length > 0
+              ? `${t('actionGrid.more')} (${grid.more.length})`
+              : t('actionGrid.focusTitle')}
+          </button>
+        </div>
+      )}
+
+      {grid && (
+        <Modal
+          isOpen={showMore}
+          onClose={() => setShowMore(false)}
+          title={t('actionGrid.moreTitle')}
+          size="lg"
+        >
+          <div className="space-y-6">
+            {grid.slots > 0 && (
+              <div>
+                <h3 className="text-sm font-bold text-yellow-400 flex items-center gap-1.5 mb-1">
+                  <Star size={14} className="fill-yellow-400" /> {t('actionGrid.focusTitle')}
+                </h3>
+                <p className="text-xs text-gray-400 mb-3">{t('actionGrid.focusHint')}</p>
+                <div className="space-y-2">
+                  {Array.from({ length: grid.slots }, (_, i) => (
+                    <select
+                      key={i}
+                      value={grid.focusChosen[i] ?? ''}
+                      onChange={(e) => chooseFocus(i, e.target.value)}
+                      className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2.5 text-white"
+                    >
+                      <option value="">{t('actionGrid.noFocus')}</option>
+                      {grid.focusCandidates.map((a) => (
+                        <option key={a.name.en} value={a.name.en}>
+                          {a.name[language] || a.name.en} ({a.points > 0 ? '+' : ''}{a.points})
+                        </option>
+                      ))}
+                    </select>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {grid.more.some((a) => a.type === 'positive') && (
+              <div>
+                <h3 className="text-sm font-bold text-green-400 mb-2">{t('positiveActions')}</h3>
+                {renderTiles(grid.more.filter((a) => a.type === 'positive'), true, { gridClass: 'grid grid-cols-2 gap-2' })}
+              </div>
+            )}
+            {grid.more.some((a) => a.type === 'negative') && (
+              <div>
+                <h3 className="text-sm font-bold text-red-400 mb-2">{t('negativeActions')}</h3>
+                {renderTiles(grid.more.filter((a) => a.type === 'negative'), false, { gridClass: 'grid grid-cols-2 gap-2' })}
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowMore(false)}
+              className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold"
+            >
+              {t('actionGrid.done')}
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

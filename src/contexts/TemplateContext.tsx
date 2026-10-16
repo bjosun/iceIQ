@@ -8,11 +8,22 @@ export interface TemplateAction {
   isBonus?: boolean;
 }
 
+// Hur knapparna läggs ut på telefonen (se utils/gridLayout.ts). Namnen är de
+// ENGELSKA aktionsnamnen. `positive` är de fasta platserna, resten av tolv
+// är "dagens fokus" (förvalen i `focus`). Utan layout visas hela listan.
+export interface TemplateLayout {
+  positive: string[];
+  negative: string[];
+  focus: string[];
+  focusSlots?: number;
+}
+
 export interface Template {
   id: string;
   name: { sv: string; en: string };
   actions: TemplateAction[];
   isDefault?: boolean;
+  layout?: TemplateLayout;
 }
 
 interface TemplateContextType {
@@ -100,16 +111,40 @@ export const defaultTemplates: Record<string, Template> = {
     id: 'defenseman',
     name: { sv: 'Back', en: 'Defenseman' },
     actions: [...skaterBase(2), ...defensemanExtras],
+    layout: {
+      positive: [
+        'Goal', 'Assist', 'Shot on Goal', 'Successful Pass', 'Controlled Zone Entry', 'Denies Entry (Gap Control)',
+        'Solves Pressured Situation', 'Controlled Defensive Clear', 'Blocked Shot', 'Wins Board Battle', 'Tackle',
+      ],
+      negative: ['Turnover', 'Failed Pass', 'Panic Turnover / Throwaway', 'Penalty', 'On Ice For Goal (AGAINST)'],
+      focus: ['Kept Zone'],
+    },
   },
   forward: {
     id: 'forward',
     name: { sv: 'Forward', en: 'Forward' },
     actions: [...skaterBase(3), ...forwardExtras],
+    layout: {
+      positive: [
+        'Goal', 'Assist', 'Shot on Goal', 'Scoring Chance Created', 'Successful Pass', 'Controlled Zone Entry',
+        'Forecheck Puck Recovery', 'Backcheck Puck Recovery', 'Wins Board Battle', 'Tackle', 'Low Slot Coverage',
+      ],
+      negative: ['Turnover', 'Failed Pass', 'Missed Shot', 'Penalty', 'On Ice For Goal (AGAINST)', 'Loses Defensive Coverage'],
+      focus: ['Covers the Point'],
+    },
   },
   center: {
     id: 'center',
     name: { sv: 'Center', en: 'Center' },
     actions: [...skaterBase(3), ...forwardExtras, ...centerExtras],
+    layout: {
+      positive: [
+        'Goal', 'Assist', 'Shot on Goal', 'Scoring Chance Created', 'Faceoff Win', 'Successful Pass',
+        'Controlled Zone Entry', 'Forecheck Puck Recovery', 'Backcheck Puck Recovery', 'Wins Board Battle', 'Low Slot Coverage',
+      ],
+      negative: ['Turnover', 'Failed Pass', 'Faceoff Loss', 'Penalty', 'On Ice For Goal (AGAINST)', 'Loses Defensive Coverage'],
+      focus: ['Net-Front Presence'],
+    },
   },
   goalie: {
     id: 'goalie',
@@ -126,6 +161,13 @@ export const defaultTemplates: Record<string, Template> = {
       neg('Spela pucken (misslyckat)', 'Failed Puck Play', -4),
       neg('Utvisning', 'Penalty', -4),
     ],
+    // Målvakten ryms på ett varv: inga fokusplatser och inget "Mer…".
+    layout: {
+      positive: ['Save', 'Difficult Save', 'Controlled Rebound', 'Successful Puck Play', 'Shutout (Period)', 'Assist'],
+      negative: ['Goal Against', 'Bad Rebound', 'Failed Puck Play', 'Penalty'],
+      focus: [],
+      focusSlots: 0,
+    },
   },
 };
 const TemplateContext = createContext<TemplateContextType | undefined>(undefined);
