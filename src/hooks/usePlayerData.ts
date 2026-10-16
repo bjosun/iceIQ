@@ -71,15 +71,13 @@ export function usePlayerData() {
         ...(gameData.softSkillCounts && { softSkillCounts: gameData.softSkillCounts })
       };
 
-      const allPlayers = await firestore.getPlayers(user.uid);
-      const currentPlayerData = allPlayers.find((p: any) => p.name === playerName);
-      const oldBalance = currentPlayerData?.currentBalance || 0;
-      const newBalance = oldBalance + totalPoints;
-
+      // Saldot (currentBalance) uppdateras INTE här. Det gör Dashboard efteråt
+      // med matchens värde i rätt enhet (kronor i Money Mode, poäng annars).
+      // Tidigare lades matchens POÄNG till här också, och sedan matchens värde
+      // en gång till av Dashboard: 65 poäng x10 blev 715 i stället för 650.
       await firestore.savePlayer(user.uid, playerName, {
         name: playerName,
         lastGameDate: gameRecord.date,
-        currentBalance: newBalance,
         lastTeam: gameData.team.trim()
       });
 
@@ -91,7 +89,7 @@ export function usePlayerData() {
         await firestore.updateUserData(user.uid, { carriedOverBonus });
       }
 
-      return { success: true, gameRecord, newBalance };
+      return { success: true, gameRecord };
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save game');
       throw err;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Smartphone, Pencil } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
@@ -22,6 +22,16 @@ export default function SwishButton({ playerName, amount }: SwishButtonProps) {
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
+
+  // Numret hör till spelaren. Komponenten monteras ofta innan spelarnamnet är
+  // valt (och blir kvar när man byter spelare), så state måste följa namnet,
+  // annars visas fel eller inget sparat nummer.
+  useEffect(() => {
+    setNumber(getSwishNumber(playerName));
+    setEditing(false);
+    setInput('');
+    setError('');
+  }, [playerName]);
 
   if (!swishAvailable(language) || !playerName || amount <= 0) return null;
 
