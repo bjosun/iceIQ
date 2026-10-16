@@ -196,7 +196,7 @@ const EN: PrivacyContent = {
       title: "Children's Privacy",
       blocks: [
         {
-          p: 'Accounts are for adults only, and children do not create accounts. A parent or guardian can choose to share a private, read-only page with their child (the player link). That page does not ask the child for anything and does not save anything from the child; it only shows the player's own results and can read them aloud. Parents and guardians may record information about their own child as a player, for example name and game statistics. We treat that information with extra care, use it only to provide the service you ask for, and do not use it for advertising. If you believe a child has created an account, contact us and we will remove it.',
+          p: 'Accounts are for adults only, and children do not create accounts. A parent or guardian can choose to share a private, read-only page with their child (the player link). That page does not ask the child for anything and does not save anything from the child; it only shows the player\'s own results and can read them aloud. Parents and guardians may record information about their own child as a player, for example name and game statistics. We treat that information with extra care, use it only to provide the service you ask for, and do not use it for advertising. If you believe a child has created an account, contact us and we will remove it.',
         },
       ],
     },
