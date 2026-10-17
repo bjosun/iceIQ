@@ -162,6 +162,18 @@ export default function Dashboard() {
   // Vald säsong. null = spelarens senaste säsong med matcher.
   const [selectedSeason, setSelectedSeason] = useState<SeasonKey | null>(null);
 
+  // Tre vyer: Spela in (det man gör vid rinken), Utveckling och Coach. Inmatningen
+  // ligger alltid kvar monterad (skärmlås, räknare och fokusval ska överleva ett
+  // byte av flik); de andra monteras första gången de öppnas och göms sedan med CSS.
+  type DashView = 'match' | 'dev' | 'coach';
+  const [view, setView] = useState<DashView>('match');
+  const [visited, setVisited] = useState<{ dev: boolean; coach: boolean }>({ dev: false, coach: false });
+  const goTo = (next: DashView) => {
+    setView(next);
+    if (next !== 'match') setVisited((prev) => ({ ...prev, [next]: true }));
+    window.scrollTo({ top: 0 });
+  };
+
   useEffect(() => {
     if (location.state?.isSignup !== undefined) {
       setShowSignup(location.state.isSignup);
@@ -177,24 +189,29 @@ export default function Dashboard() {
   // åt laddas sidan om från den färska cachen (se getDocsCacheFirst).
   useEffect(() => onDataRefreshed(() => setRefreshTrigger((prev) => prev + 1)), []);
 
-  // Flikraden i appen (MobileBottomNav) hoppar till en del av sidan.
+  // Flikraden i appen (MobileBottomNav) väljer vy: Hem och Ny match = Spela in,
+  // Coach = Coach. Ny match hoppar dessutom ner till knapparna.
   const scrollTarget: string | undefined = location.state?.scrollTo;
   useEffect(() => {
     const target = scrollTarget;
     if (!target) return;
-    const id = window.setTimeout(() => {
-      const el = target === 'match' ? document.getElementById('section-match')
-        : target === 'coach' ? document.getElementById('section-coach') : null;
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else if (target === 'coach') {
-        // Coachen hör till en spelare: utan vald spelare börjar man med att välja en.
+    if (target === 'coach') {
+      // Coachen hör till en spelare: utan vald spelare börjar man med att välja en.
+      if (!selectedPlayerName) {
         setShowPlayerSelect(true);
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
       }
-    }, 60);
-    return () => window.clearTimeout(id);
+      goTo('coach');
+      return;
+    }
+    goTo('match');
+    if (target === 'match') {
+      const id = window.setTimeout(() => {
+        document.getElementById('section-match')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+      return () => window.clearTimeout(id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.key, scrollTarget]);
 
   // --- EFFEKT: Hantera Bonus Factor baserat på läge ---
@@ -657,47 +674,25 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Säsongsval: syns när det finns matcher från fler än en säsong */}
-        {seasonKeys.length >= 2 && !isDemoMode && (
-          <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
-            {([...seasonKeys, 'all'] as SeasonKey[]).map(k => (
-              <button
-                key={String(k)}
-                onClick={() => setSelectedSeason(k)}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
-                  effSeason === k
-                    ? 'bg-cyan-500/15 border-cyan-500/60 text-cyan-300'
-                    : 'border-gray-700 text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                {k === 'all' ? t('seasonView.allSeasons') : seasonLabel(k)}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Toppkort: följer vald spelare och säsong */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="text-center p-4">
-            <BarChart3 className="text-green-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : periodStats.matches}</p>
-            <p className="text-xs text-gray-400">{t('matches')}</p>
-          </Card>
-          <Card className="text-center p-4">
-            <Target className="text-yellow-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{isDemoMode || periodStats.matches === 0 ? '–' : periodStats.avgPoints}</p>
-            <p className="text-xs text-gray-400">{t('avgPoints')}</p>
-          </Card>
-          <Card className="text-center p-4">
-            <Trophy className="text-cyan-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{isDemoMode || periodStats.matches === 0 ? '–' : periodStats.best}</p>
-            <p className="text-xs text-gray-400">{t('bestGame')}</p>
-          </Card>
-          <Card className="text-center p-4">
-            <TrendingUp className="text-red-400 mx-auto mb-2" size={20} />
-            <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : periodStats.thisWeek}</p>
-            <p className="text-xs text-gray-400">{t('dashboard.thisWeek')}</p>
-          </Card>
+        {/* Flikar: Spela in / Utveckling / Coach */}
+        <div className="flex gap-1 p-1 mb-6 rounded-xl bg-gray-800/70 border border-gray-700" role="tablist">
+          {([
+            ['match', t('dashboard.tabMatch')],
+            ['dev', t('dashboard.tabDev')],
+            ['coach', t('dashboard.tabCoach')],
+          ] as [DashView, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={view === key}
+              onClick={() => (key === 'coach' && !selectedPlayerName ? openPlayerSelect() : goTo(key))}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors touch-manipulation ${
+                view === key ? 'bg-cyan-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* Onboarding-banner för exempeldata */}
@@ -718,15 +713,8 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* AI-krediter + Mode Toggle (Money vs Points) */}
-        <div className="flex justify-between items-center mb-6 gap-3 flex-wrap">
-          {/* Synlig innan chatten öppnas, så krediterna aldrig överraskar */}
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary-500/30 bg-primary-500/10">
-            <Sparkles size={14} className="text-yellow-400" />
-            <span className="text-xs font-bold text-primary-200 uppercase tracking-wider">
-              {aiCredits} {t('ai.credits')}
-            </span>
-          </div>
+        <div className={view === 'match' ? '' : 'hidden'}>
+          <div className="flex justify-end items-center mb-6 gap-3">
           <button 
             onClick={() => setIsMoneyMode(!isMoneyMode)}
             className={`flex items-center px-4 py-2 rounded-full border transition-all ${
@@ -738,7 +726,7 @@ export default function Dashboard() {
               {isMoneyMode ? t('dashboard.moneyMode') : t('dashboard.pointsMode')}
             </span>
           </button>
-        </div>
+          </div>
 
         <div className="space-y-6">
           {/* Player Configuration */}
@@ -803,21 +791,55 @@ export default function Dashboard() {
             bonusFactor={bonusFactor}
             isSaving={isSaving} // Skickar med lås-status
           />
+          </div>
+        </div>
 
-          {/* AI COACH INTEGRATION */}
-          {selectedPlayerName && (
-            <div id="section-coach" className="scroll-mt-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
-               <AiCoach
-                 playerStats={{
-                    ...currentSessionStats,
-                    history: playerHistory // Skickar med historiken för bättre analys
-                 }}
-                 playerEmail={playerEmail}
-                 onUpgrade={() => setShowSubscriptionModal(true)}
-               />
-            </div>
-          )}
+        {visited.dev && (
+          <div className={view === 'dev' ? '' : 'hidden'}>
+        {/* Säsongsval: syns när det finns matcher från fler än en säsong */}
+        {seasonKeys.length >= 2 && !isDemoMode && (
+          <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
+            {([...seasonKeys, 'all'] as SeasonKey[]).map(k => (
+              <button
+                key={String(k)}
+                onClick={() => setSelectedSeason(k)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                  effSeason === k
+                    ? 'bg-cyan-500/15 border-cyan-500/60 text-cyan-300'
+                    : 'border-gray-700 text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                {k === 'all' ? t('seasonView.allSeasons') : seasonLabel(k)}
+              </button>
+            ))}
+          </div>
+        )}
 
+        {/* Toppkort: följer vald spelare och säsong */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card className="text-center p-4">
+            <BarChart3 className="text-green-400 mx-auto mb-2" size={20} />
+            <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : periodStats.matches}</p>
+            <p className="text-xs text-gray-400">{t('matches')}</p>
+          </Card>
+          <Card className="text-center p-4">
+            <Target className="text-yellow-400 mx-auto mb-2" size={20} />
+            <p className="text-2xl font-bold text-white">{isDemoMode || periodStats.matches === 0 ? '–' : periodStats.avgPoints}</p>
+            <p className="text-xs text-gray-400">{t('avgPoints')}</p>
+          </Card>
+          <Card className="text-center p-4">
+            <Trophy className="text-cyan-400 mx-auto mb-2" size={20} />
+            <p className="text-2xl font-bold text-white">{isDemoMode || periodStats.matches === 0 ? '–' : periodStats.best}</p>
+            <p className="text-xs text-gray-400">{t('bestGame')}</p>
+          </Card>
+          <Card className="text-center p-4">
+            <TrendingUp className="text-red-400 mx-auto mb-2" size={20} />
+            <p className="text-2xl font-bold text-white">{isDemoMode ? 0 : periodStats.thisWeek}</p>
+            <p className="text-xs text-gray-400">{t('dashboard.thisWeek')}</p>
+          </Card>
+        </div>
+
+            <div className="space-y-6">
           {/* UTVECKLING ÖVER SÄSONGEN */}
           {selectedPlayerName && (
             <SeasonOverview
@@ -833,7 +855,59 @@ export default function Dashboard() {
           {selectedPlayerName && !isDemoMode && (
             <SeasonCompare games={seasonGames} selected={effSeason} onSelect={setSelectedSeason} />
           )}
-        </div>
+
+              {selectedPlayerName && (
+                <button
+                  onClick={() => setShowHistoryModal(true)}
+                  className="w-full py-3 rounded-xl border border-gray-600 bg-gray-800/60 text-gray-200 text-sm font-semibold touch-manipulation hover:border-gray-500 transition-colors"
+                >
+                  {t('showPlayerHistory') || 'History'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {visited.coach && (
+          <div className={view === 'coach' ? '' : 'hidden'}>
+            <div className="flex justify-between items-center mb-6 gap-3 flex-wrap">
+          {/* Synlig innan chatten öppnas, så krediterna aldrig överraskar */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary-500/30 bg-primary-500/10">
+            <Sparkles size={14} className="text-yellow-400" />
+            <span className="text-xs font-bold text-primary-200 uppercase tracking-wider">
+              {aiCredits} {t('ai.credits')}
+            </span>
+          </div>
+            </div>
+            <div className="space-y-6">
+          {/* AI COACH INTEGRATION */}
+          {selectedPlayerName && (
+            <div id="section-coach" className="scroll-mt-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+               <AiCoach
+                 playerStats={{
+                    ...currentSessionStats,
+                    history: playerHistory // Skickar med historiken för bättre analys
+                 }}
+                 playerEmail={playerEmail}
+                 onUpgrade={() => setShowSubscriptionModal(true)}
+               />
+            </div>
+          )}
+          {!selectedPlayerName && (
+            <Card className="text-center py-10">
+              <p className="text-gray-300 mb-4">{t('dashboard.coachNeedsPlayer')}</p>
+              <button
+                onClick={openPlayerSelect}
+                className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-6 py-3 rounded-xl"
+              >
+                {t('dashboard.pickPlayer')}
+              </button>
+            </Card>
+          )}
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Sticky spara-rad på mobil: syns så fort något registrerats, så man
