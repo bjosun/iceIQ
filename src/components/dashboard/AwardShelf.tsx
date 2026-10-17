@@ -18,12 +18,15 @@ function namesFor(position: Position): TemplateNames {
 export default function AwardShelf({
   games,
   templateId,
+  defaultStyle = 'kid',
 }: {
   games: { template?: string; counts?: Record<string, number> }[];
   templateId: string;
+  /** Stilen som gäller tills spelaren själv valt en (på länken: Street). */
+  defaultStyle?: GemStyle;
 }) {
   const { t } = useLanguage();
-  const [style, setStyle] = useState<GemStyle>(readGemStyle);
+  const [style, setStyle] = useState<GemStyle>(() => readGemStyle(defaultStyle));
 
   // Egna mallar har inga stabila aktionsnamn att matcha på — då visar vi inget.
   if (!isPosition(templateId)) return null;

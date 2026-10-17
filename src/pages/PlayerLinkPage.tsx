@@ -13,7 +13,7 @@ import { detectLang, translateFor } from '../utils/translate';
 
 interface PlayerLinkData {
   playerName: string;
-  games: { date: string; points: number }[];
+  games: { date: string; points: number; template?: string; counts?: Record<string, number> }[];
   summary: { games: number; avgPoints: number; bestGame: number; last5Avg: number } | null;
   latestCoachNote: string | null;
   /** Coachens korta rader från det senaste svaret (se askCoach). Kan saknas. */
@@ -198,7 +198,15 @@ export default function PlayerLinkPage() {
           <BreathingExercise />
         </div>
 
-        <SeasonOverview playerName={data.playerName} games={data.games} summary={data.summary} />
+        <SeasonOverview
+          playerName={data.playerName}
+          games={data.games}
+          allGames={data.games}
+          summary={data.summary}
+          templateId={[...data.games].reverse().find((g) => typeof g.template === 'string')?.template}
+          showShelves
+          gemStyle="pro"
+        />
 
         <div className="bg-gray-800 rounded-2xl p-6">
           <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">

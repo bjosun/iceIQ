@@ -5,11 +5,12 @@ export type { GemStyle };
 
 const STYLE_KEY = 'iceiq-gem-style';
 
-export function readGemStyle(): GemStyle {
+export function readGemStyle(fallback: GemStyle = 'kid'): GemStyle {
   try {
-    return localStorage.getItem(STYLE_KEY) === 'pro' ? 'pro' : 'kid';
+    const saved = localStorage.getItem(STYLE_KEY);
+    return saved === 'pro' || saved === 'kid' ? saved : fallback;
   } catch {
-    return 'kid';
+    return fallback;
   }
 }
 

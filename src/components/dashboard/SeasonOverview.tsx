@@ -24,6 +24,10 @@ interface SeasonOverviewProps {
   allGames?: { date: string; points: number; template?: string; counts?: Record<string, number> }[];
   /** Spelarens position/mall — styr vilka utmärkelser som visas. */
   templateId?: string;
+  /** Märken och utmärkelser hör till spelarens egen sida (länken), inte till den som matar in. */
+  showShelves?: boolean;
+  /** Gemstil som gäller tills spelaren valt en själv. */
+  gemStyle?: 'kid' | 'pro';
   summary: {
     games: number;
     avgPoints: number;
@@ -34,7 +38,7 @@ interface SeasonOverviewProps {
 
 // Synlig utvecklingsvy utanför chatten: poängkurva över säsongens alla
 // matcher plus nyckeltal, så utvecklingen syns direkt i dashboarden.
-export default function SeasonOverview({ playerName, games, allGames, summary, templateId }: SeasonOverviewProps) {
+export default function SeasonOverview({ playerName, games, allGames, summary, templateId, showShelves = false, gemStyle }: SeasonOverviewProps) {
   const { t, language } = useLanguage();
 
   const locale = language === 'sv' ? 'sv-SE' : 'en-GB';
@@ -145,8 +149,10 @@ export default function SeasonOverview({ playerName, games, allGames, summary, t
         </>
       )}
 
-      {(allGames ?? games).length >= 1 && <BadgeShelf games={allGames ?? games} />}
-      {(allGames ?? games).length >= 1 && templateId && <AwardShelf games={allGames ?? games} templateId={templateId} />}
+      {showShelves && (allGames ?? games).length >= 1 && <BadgeShelf games={allGames ?? games} />}
+      {showShelves && (allGames ?? games).length >= 1 && templateId && (
+        <AwardShelf games={allGames ?? games} templateId={templateId} defaultStyle={gemStyle} />
+      )}
     </Card>
   );
 }

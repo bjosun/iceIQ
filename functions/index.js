@@ -1256,7 +1256,17 @@ exports.getPlayerLinkData = functions
 
     // Enkelfälts-orderBy ('date') — kräver inget kompositindex.
     const gamesSnap = await playerRef.collection('games').orderBy('date', 'asc').get();
-    const games = gamesSnap.docs.map((d) => ({ date: d.data().date, points: d.data().points || 0 }));
+    // template och counts (antal per aktion) följer med så att spelarsidan kan
+    // visa utmärkelserna (gems). De räknas ut i klienten; inga namn skickas.
+    const games = gamesSnap.docs.map((d) => {
+      const g = d.data();
+      return {
+        date: g.date,
+        points: g.points || 0,
+        ...(typeof g.template === 'string' ? { template: g.template } : {}),
+        ...(g.counts && typeof g.counts === 'object' ? { counts: g.counts } : {}),
+      };
+    });
     const full = buildSeasonSummary(games);
     // Trimmat till exakt det SeasonOverview-komponenten behöver — inga
     // extra fält (totalPoints, firstGame, lastGame, worstGame) skickas
