@@ -10,7 +10,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { isNativeApp } from '../../utils/platform';
 import { appLockAvailable, appLockEnabled, setAppLockEnabled, unlockWithBiometry } from '../../utils/appLock';
-import { usePlayerData } from '../../hooks/usePlayerData'; // För att rensa data
 import { createStripePortalSession } from '../../services/firestore'; // Från din städade firebase.ts
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -25,7 +24,6 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModalProps) {
   const { user, logout, deleteAccount } = useAuth();
-  const { deleteUserData: clearFirestoreData } = usePlayerData(); // Rename för tydlighet
   const { t, language } = useLanguage();
 
   // Hämta en kopia av sina uppgifter (rätten till tillgång/dataportabilitet).
@@ -102,6 +100,8 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
     }
   };
   const [deleteInput, setDeleteInput] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const usesPassword = !!user?.providerData.some((p) => p.providerId === 'password');
 
   // 1. Hantera Utloggning
   const handleLogout = async () => {
@@ -142,15 +142,24 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
       // Raderar all data i Firestore (spelare, matcher, användarrot) och därefter
       // användaren i Auth (vilket även triggar Stripe-raderingen). Apple-konton
       // loggar in på nytt först — se deleteAccount i AuthContext.
-      await deleteAccount(clearFirestoreData);
+      await deleteAccount(usesPassword ? deletePassword : undefined);
       
       toast.success(language === 'en' ? "Account deleted." : "Ditt konto har raderats.");
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Delete error:", error);
-      toast.error(language === 'en' 
-        ? "Please log in again and try immediately to confirm account deletion." 
-        : "Du måste logga ut och in igen för att bekräfta raderingen av kontot.");
+      const code = String(error?.message || '');
+      if (code === 'WRONG_PASSWORD' || code === 'PASSWORD_REQUIRED') {
+        toast.error(language === 'en' ? "Wrong password. Nothing was deleted." : "Fel lösenord. Inget har raderats.");
+      } else if (code === 'RECENT_LOGIN_REQUIRED') {
+        toast.error(language === 'en'
+          ? "Please log out and in again, then try right away. Nothing was deleted."
+          : "Logga ut och in igen och försök direkt. Inget har raderats.");
+      } else {
+        toast.error(language === 'en'
+          ? "Could not delete the account. Nothing was lost, please try again."
+          : "Det gick inte att radera kontot. Försök igen.");
+      }
     } finally {
       setLoading(false);
     }
@@ -301,17 +310,27 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
                 placeholder="DELETE"
                 className="w-full bg-gray-900 border border-red-500/30 rounded-lg px-3 py-2 text-white mb-3 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
               />
+              {usesPassword && (
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder={language === 'en' ? 'Your password' : 'Ditt lösenord'}
+                  autoComplete="current-password"
+                  className="w-full bg-gray-900 border border-red-500/30 rounded-lg px-3 py-2 text-white mb-3 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
+                />
+              )}
               <div className="flex space-x-3">
                 <Button 
                   variant="secondary" 
-                  onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }}
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); setDeletePassword(''); }}
                   fullWidth
                 >
                   {language === 'en' ? "Cancel" : "Avbryt"}
                 </Button>
                 <button
                   onClick={handleDeleteAccount}
-                  disabled={deleteInput !== 'DELETE' || loading}
+                  disabled={deleteInput !== 'DELETE' || (usesPassword && !deletePassword) || loading}
                   className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center text-sm"
                 >
                   {loading ? '...' : (language === 'en' ? "Delete All" : "Radera Allt")}

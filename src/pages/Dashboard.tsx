@@ -91,6 +91,10 @@ function buildSeasonSummary(games: { date: string; points?: number }[]) {
   };
 }
 
+// Senast använda lag hör till kontot, inte till enheten: ett annat konto på
+// samma telefon ska inte få det förra kontots lag.
+const teamKey = (uid?: string) => `lastUsedTeam:${uid ?? 'anon'}`;
+
 // Standardvärdet för multiplikatorn i Money Mode: x2 tills användaren väljer
 // något annat. Det senast valda värdet sparas på enheten och blir nästa
 // standard.
@@ -138,7 +142,7 @@ export default function Dashboard() {
   const [seasonGames, setSeasonGames] = useState<{ date: string; points: number; team?: string; template?: string; counts?: Record<string, number> }[]>([]);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>(draft?.selectedPlayerName || '');
   const [playerEmail, setPlayerEmail] = useState('');
-  const [teamName, setTeamName] = useState<string>(localStorage.getItem('lastUsedTeam') || '');
+  const [teamName, setTeamName] = useState<string>(localStorage.getItem(teamKey(user?.uid)) || '');
   const [gameDate, setGameDate] = useState<string>(draft?.gameDate || new Date().toISOString().split('T')[0]);
   
   // State för poäng och inställningar
@@ -490,7 +494,7 @@ export default function Dashboard() {
       // Uppdatera statet direkt så det syns
       setCarriedOverBalance(newBalance);
 
-      if (teamName) localStorage.setItem('lastUsedTeam', teamName);
+      if (teamName) localStorage.setItem(teamKey(user?.uid), teamName);
       if (user) void trackFunnel(user.uid, 'gameSaved');
 
       // Bygg underlaget till den delbara matchrapporten INNAN formuläret rensas

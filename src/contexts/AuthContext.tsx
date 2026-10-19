@@ -7,18 +7,20 @@ import {
   signInWithPopup,
   signInWithCredential,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  EmailAuthProvider,
   revokeAccessToken,
   GoogleAuthProvider,
   OAuthProvider,
   signOut,
-  onAuthStateChanged,
-  deleteUser
+  onAuthStateChanged
 } from 'firebase/auth'
 import { Capacitor } from '@capacitor/core'
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
 import { auth } from '../services/firebase'
 import { consumeUtmParams } from '../utils/helpers'
 import { consumeAcquisitionContext } from '../utils/acquisitionContext'
+import { clearUserLocalData, forgetLastUser, switchLocalUser } from '../utils/localData'
 
 interface AuthContextType {
   user: User | null
@@ -29,7 +31,7 @@ interface AuthContextType {
   loginWithApple: () => Promise<void>
   logout: () => Promise<void>
   sendPasswordReset: (email: string, language?: string) => Promise<void>
-  deleteAccount: (cleanupCallback?: () => Promise<void>) => Promise<void>
+  deleteAccount: (password?: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -86,6 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        // Byter någon konto på den här enheten ska det förra kontots lokala
+        // data (senast använda lag, utkast, Swish-nummer) inte följa med.
+        switchLocalUser(currentUser.uid)
         // Ett helt nytt konto måste ha sitt dokument innan appen visas. För
         // alla andra räcker det att kontrollen körs i bakgrunden: att vänta
         // på den (en Firestore-rundtur plus SDK-nedladdning) var det som
@@ -209,57 +214,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const deleteAccount = async (cleanupCallback?: () => Promise<void>) => {
+  // Raderar kontot helt. Användaren bekräftar först sin identitet (lösenord,
+  // Google eller Apple) så att inloggningen är färsk, sedan tar servern bort
+  // allt: spelare, matcher, coachchattar, spelarlänkar, betalkund och själva
+  // inloggningen (deleteMyAccount i functions/index.js). Inget raderas här i
+  // klienten, så ett avbrott kan inte lämna kvar ett konto utan data.
+  const deleteAccount = async (password?: string) => {
+    const current = auth.currentUser
+    if (!current) return
+
+    const providers = current.providerData.map((p) => p.providerId)
+    const native = Capacitor.isNativePlatform()
+
+    // 0. Logga in på nytt FÖRE raderingen. Avbryter användaren dialogen har inget raderats.
+    let appleAuthCode: string | undefined
+    if (native && providers.includes('apple.com')) {
+      // Apple ger också en engångskod som krävs för att dra tillbaka kopplingen till appen.
+      const nativeResult = await FirebaseAuthentication.signInWithApple()
+      appleAuthCode = nativeResult.credential?.authorizationCode
+      const credential = new OAuthProvider('apple.com').credential({
+        idToken: nativeResult.credential?.idToken,
+        rawNonce: nativeResult.credential?.nonce
+      })
+      await reauthenticateWithCredential(current, credential)
+    } else if (providers.includes('password')) {
+      if (!password) throw new Error('PASSWORD_REQUIRED')
+      try {
+        await reauthenticateWithCredential(current, EmailAuthProvider.credential(current.email || '', password))
+      } catch (error: any) {
+        if (error?.code === 'auth/wrong-password' || error?.code === 'auth/invalid-credential') {
+          throw new Error('WRONG_PASSWORD')
+        }
+        throw error
+      }
+    } else if (providers.includes('google.com')) {
+      if (native) {
+        const nativeResult = await FirebaseAuthentication.signInWithGoogle()
+        const credential = GoogleAuthProvider.credential(
+          nativeResult.credential?.idToken,
+          nativeResult.credential?.accessToken
+        )
+        await reauthenticateWithCredential(current, credential)
+      } else {
+        await reauthenticateWithPopup(current, new GoogleAuthProvider())
+      }
+    }
+    await current.getIdToken(true) // uppdaterar auth_time som servern kontrollerar
+
+    // 1. Dra tillbaka Apple-token (bästa försök: ett fel här ska inte hindra raderingen)
+    if (appleAuthCode) {
+      try {
+        await revokeAccessToken(auth, appleAuthCode)
+      } catch (revokeError) {
+        console.warn('Kunde inte dra tillbaka Apple-token:', revokeError)
+      }
+    }
+
+    // 2. Servern raderar allt, inloggningen sist.
     try {
-      const current = auth.currentUser;
-      if (current) {
-        // 0. Apple-konton: logga in med Apple på nytt FÖRE raderingen. Det
-        //    bekräftar att det är rätt person och ger en engångskod som Apple
-        //    kräver för att dra tillbaka kopplingen till appen när kontot
-        //    raderas. Görs först så att inget hunnit raderas om användaren
-        //    avbryter Apples dialog.
-        let appleAuthCode: string | undefined
-        if (Capacitor.isNativePlatform() && current.providerData.some((p) => p.providerId === 'apple.com')) {
-          const native = await FirebaseAuthentication.signInWithApple()
-          appleAuthCode = native.credential?.authorizationCode
-          const credential = new OAuthProvider('apple.com').credential({
-            idToken: native.credential?.idToken,
-            rawNonce: native.credential?.nonce
-          })
-          await reauthenticateWithCredential(current, credential)
-        }
-
-        // 1. Om vi skickade med en städfunktion, kör den FÖRST
-        if (cleanupCallback) {
-          await cleanupCallback();
-        }
-
-        // 2. Dra tillbaka Apple-token (bästa försök: ett fel här ska inte hindra raderingen)
-        if (appleAuthCode) {
-          try {
-            await revokeAccessToken(auth, appleAuthCode)
-          } catch (revokeError) {
-            console.warn('Kunde inte dra tillbaka Apple-token:', revokeError)
-          }
-        }
-
-        // 3. När städningen är klar, radera användaren i Auth
-        await deleteUser(current)
-
-        // 4. Appen: rensa också det som ligger sparat på telefonen
-        if (Capacitor.isNativePlatform()) {
-          const { clearLocalData } = await import('../services/firestore')
-          await clearLocalData()
-          window.location.reload()
-        }
-      }
+      const { euFunctions } = await import('../services/firestore')
+      const { httpsCallable } = await import('firebase/functions')
+      await httpsCallable(euFunctions, 'deleteMyAccount')({})
     } catch (error: any) {
-      console.error('Delete account error:', error);
-      
-      if (error.code === 'auth/requires-recent-login') {
-        throw new Error('RECENT_LOGIN_REQUIRED');
+      console.error('Delete account error:', error)
+      if (String(error?.message || '').includes('RECENT_LOGIN_REQUIRED')) {
+        throw new Error('RECENT_LOGIN_REQUIRED')
       }
-      throw error;
+      throw error
+    }
+
+    // 3. Lämna sessionen och rensa det som ligger sparat på enheten.
+    await signOut(auth).catch(() => {})
+    clearUserLocalData()
+    forgetLastUser()
+    if (native) {
+      await FirebaseAuthentication.signOut().catch(() => {})
+      const { clearLocalData } = await import('../services/firestore')
+      await clearLocalData()
+      window.location.reload()
     }
   }
 

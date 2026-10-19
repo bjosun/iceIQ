@@ -121,7 +121,6 @@ function Screen() {
             ]}
             highlight={lang === 'sv' ? 'Säsongsbästa, 18 poäng' : 'Season best, 18 points'}
             stats={{ games: 8, avgPoints: 12.6, bestGame: 18 }}
-            badges={['personalBest', 'threeAboveAverage']}
           />
         )}
         {slide === 3 && (

@@ -86,8 +86,6 @@ export default function ShareReportModal({ isOpen, onClose, data }: ShareReportM
       actions={data.actions}
       highlight={data.highlight ? t(data.highlight.key, data.highlight.params) : undefined}
       stats={data.stats}
-      badges={data.badges}
-      award={data.award}
     />
     <ShareImageModal
       isOpen={isOpen && stage === 'share'}

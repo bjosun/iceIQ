@@ -1514,6 +1514,61 @@ exports.deleteUserStripeAccount = functions
     }
   });
 
+// Raderar kontot helt, på servern. Den tidigare raderingen i klienten tog bara
+// spelare, matcher och rotdokumentet: coachchattarna (en underkollektion) och
+// spelarlänkarna blev kvar, och om raderingen av användaren i Auth sedan
+// misslyckades (den kräver nylig inloggning) var datan borta medan kontot
+// fanns kvar och gick att logga in på. Här tas allt bort i en följd, och Auth
+// sist, så att ett avbrott i mitten går att köra om.
+exports.deleteMyAccount = functions
+  .region('europe-west1')
+  .runWith({ secrets: [stripeSecretKey], memory: "512MB", timeoutSeconds: 300 })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
+    const uid = context.auth.uid;
+
+    // Klienten har loggat in på nytt precis innan (lösenord, Google eller Apple).
+    const authTime = (context.auth.token.auth_time || 0) * 1000;
+    if (Date.now() - authTime > 5 * 60 * 1000) {
+      throw new functions.https.HttpsError("failed-precondition", "RECENT_LOGIN_REQUIRED");
+    }
+
+    try {
+      const userRef = getUsersCollection().doc(uid);
+
+      // 1. Stripe-kunden (avslutar också prenumerationen). Ett fel här ska inte
+      //    stoppa raderingen av användarens egen data.
+      try {
+        const userDoc = await userRef.get();
+        const customerId = userDoc.exists ? userDoc.data().stripeCustomerId : null;
+        if (customerId) await getStripe().customers.del(customerId);
+      } catch (e) {
+        console.warn(`deleteMyAccount: Stripe-rensning misslyckades för ${uid}: ${e.message}`);
+      }
+
+      // 2. Spelarlänkarna: annars finns länkarna kvar och pekar på borttagen data.
+      const links = await db.collection('artifacts').doc(APP_ID).collection('playerLinks')
+        .where('userId', '==', uid).get();
+      for (const link of links.docs) await link.ref.delete();
+
+      // 3. Allt under användaren: spelare, matcher, coachchattar, köp, mallar.
+      await db.recursiveDelete(userRef);
+
+      // 4. Sist: inloggningen. Utan den kan ingen längre logga in.
+      try {
+        await admin.auth().deleteUser(uid);
+      } catch (e) {
+        if (e.code !== 'auth/user-not-found') throw e;
+      }
+
+      console.log(`deleteMyAccount: konto ${uid} raderat`);
+      return { success: true };
+    } catch (error) {
+      console.error(`deleteMyAccount misslyckades för ${uid}:`, error);
+      throw new functions.https.HttpsError("internal", "Kunde inte radera kontot. Försök igen.");
+    }
+  });
+
 exports.stripeWebhook = functions
   .runWith({ secrets: [stripeSecretKey, stripeWebhookSecret, resendApiKey], memory: "512MB" })
   .https.onRequest(async (req, res) => {
