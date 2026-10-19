@@ -56,6 +56,10 @@
           "function": "unsubscribeEmail"
         },
         {
+          "source": "/nudge-feedback",
+          "function": "nudgeFeedback"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -93,6 +97,10 @@
         {
           "source": "/unsubscribe",
           "function": "unsubscribeEmail"
+        },
+        {
+          "source": "/nudge-feedback",
+          "function": "nudgeFeedback"
         },
         {
           "source": "**",

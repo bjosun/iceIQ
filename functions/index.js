@@ -1,5 +1,6 @@
 const functions = require("firebase-functions/v1"); // VIKTIGT: /v1 krävs för att .runWith ska fungera med Node 20
 const crypto = require("crypto"); // För spelarlänk-tokens (randomBytes är inte globalt i Node)
+const nudgeFeedbackLib = require("./nudgeFeedback");
 const admin = require("firebase-admin");
 const Stripe = require("stripe");
 const { Resend } = require("resend");
@@ -1901,6 +1902,18 @@ exports.runWeeklyDigestNow = functions
 const NUDGE_MIN_AGE_MS = 24 * 60 * 60 * 1000;
 const NUDGE_MAX_AGE_MS = 5 * 24 * 60 * 60 * 1000; // äldre konton nudgas inte i efterhand
 
+// Ett klick säger vad som stoppade kontot (se nudgeFeedback.js). Länkarna bär
+// kontots id och en signatur och öppnar en bekräftelsesida, så att en
+// mejlskanner som hämtar länkarna inte registrerar något.
+const FEEDBACK_BASE = "https://www.iceiq.app/nudge-feedback";
+
+const feedbackBlockHtml = (uid, lang) => {
+  const en = lang === 'en';
+  const rows = nudgeFeedbackLib.REASONS.map((r) =>
+    `<tr><td style="padding:4px 0;"><a href="${nudgeFeedbackLib.feedbackUrl(FEEDBACK_BASE, digestTestToken.value(), uid, r, lang)}" style="color:#0891b2;text-decoration:none;font-size:14px;">&rarr; ${nudgeFeedbackLib.label(r, en ? 'en' : 'sv')}</a></td></tr>`).join('');
+  return `<p style="margin:24px 0 6px;font-size:14px;color:#111827;font-weight:bold;">${en ? 'What got in the way? One click is enough:' : 'Vad kom i vägen? Ett klick räcker:'}</p><table style="border-collapse:collapse;margin-bottom:8px;">${rows}</table>`;
+};
+
 const buildActivationNudgeEmail = (lang, displayName, kind, uid) => {
   const en = lang === 'en';
   const name = displayName ? displayName.split(' ')[0] : '';
@@ -1964,6 +1977,7 @@ const buildActivationNudgeEmail = (lang, displayName, kind, uid) => {
           ${en ? "Open Ice IQ" : "Öppna Ice IQ"}
         </a>
       </p>
+      ${uid ? feedbackBlockHtml(uid, lang) : ''}
       <p style="color:#6b7280;font-size:14px;line-height:1.6;">
         ${en
           ? "Stuck on something, or not sure how it works? Just reply to this email and tell us — we read everything."
@@ -2089,6 +2103,17 @@ exports.runActivationNudgeNow = functions
 // List-Unsubscribe-Post skickar. Stänger av veckomejl och påminnelser via
 // samma fält som knappen i appen (emailDigest). Servicemejl om konto och
 // köp berörs inte.
+// "Vad kom i vägen?" — se functions/nudgeFeedback.js. Adressen /nudge-feedback
+// pekar hit via hosting-rewrite, så länken i mejlet går mot iceiq.app.
+exports.nudgeFeedback = nudgeFeedbackLib.createNudgeFeedback({
+  functions,
+  getUsersCollection,
+  secret: digestTestToken,
+  baseUrl: FEEDBACK_BASE,
+  appUrl: APP_URL,
+  supportEmail: SUPPORT_REPLY_TO,
+});
+
 exports.unsubscribeEmail = functions
   .runWith({ secrets: [digestTestToken] })
   .https.onRequest(async (req, res) => {
@@ -2257,6 +2282,8 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
   let activated = 0;
   // Konton som fått aktiveringsnudgen, och om de loggat en match efter den.
   const nudges = [];
+  // Svar på "vad kom i vägen?" i nudge-mejlet (functions/nudgeFeedback.js).
+  const nudgeFeedbacks = [];
   // Mätpunkter i första användningen (src/utils/funnel.ts): hur många konton
   // som nått varje steg, och varifrån nya konton kommer.
   const FUNNEL_STEPS = ['dashboardViewed', 'addPlayerOpened', 'demoActionTapped', 'demoSaveBlocked', 'actionTapped', 'saveTapped', 'gameSaved'];
@@ -2276,6 +2303,9 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
     const uid = userDoc.id;
     const isNewThisWeek = typeof u.createdAt === 'string' && u.createdAt >= weekAgoISO;
 
+    if (u.nudgeFeedback && u.nudgeFeedback.reason) {
+      nudgeFeedbacks.push({ uid, reason: u.nudgeFeedback.reason, comment: u.nudgeFeedback.comment || '', at: u.nudgeFeedback.at || '' });
+    }
     if (u.funnel && typeof u.funnel === 'object') {
       funnelAccounts++;
       for (const step of FUNNEL_STEPS) if (u.funnel[step]) funnelCounts[step]++;
@@ -2373,7 +2403,7 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
   // Ett uppslag för alla uid som faktiskt hamnade i rapporten. Konton som
   // hunnit raderas i Auth visas som uid:t — bättre än en tom rad.
   const emailByUid = await getUserEmails([
-    ...new Set([...newSignups, ...purchases, ...cancellations, ...nudges].map((r) => r.uid)),
+    ...new Set([...newSignups, ...purchases, ...cancellations, ...nudges, ...nudgeFeedbacks].map((r) => r.uid)),
   ]);
   const label = (uid) => emailByUid.get(uid) || `(${uid})`;
 
@@ -2389,6 +2419,13 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
   const totalUsers = usersSnap.size;
   const newActivated = newSignups.filter((n) => n.activated).length;
   const nudgesActed = nudges.filter((n) => n.acted).length;
+  const feedbackCounts = { start: 0, auto: 0, notnow: 0 };
+  nudgeFeedbacks.forEach((f) => { if (f.reason in feedbackCounts) feedbackCounts[f.reason]++; });
+  const feedbackLabel = {
+    start: 'Visste inte hur de skulle komma igång',
+    auto: 'Väntade sig att den följer matchen automatiskt',
+    notnow: 'Inte något för dem just nu',
+  };
   const nudgeKindLabel = { noGame: 'har spelare, ingen match', noPlayer: 'ingen spelare' };
   // Andelen skrivs bara ut när den betyder något — "0 av 0 = 0 %" ser ut som
   // ett resultat, men är bara ett tomt underlag.
@@ -2456,6 +2493,17 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
         ` : ''}
       ` : ''}
 
+      ${nudgeFeedbacks.length ? `
+        <h3 style="font-size:14px;margin:0 0 8px;">Vad kom i vägen?</h3>
+        <p style="margin:0 0 10px;color:#6b7280;font-size:13px;">
+          Ett-klicks-svar från påminnelsen. ${nudgeFeedbacks.length} har svarat &mdash; en riktning, inte ett bevis.
+        </p>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13px;">${Object.entries(feedbackCounts).map(([k, n], i) =>
+          `<tr${i % 2 === 0 ? ' style="background:#f3f4f6;"' : ''}><td style="padding:6px 12px;">${feedbackLabel[k]}</td><td style="padding:6px 12px;text-align:right;font-weight:bold;">${n}</td></tr>`).join('')}</table>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:13px;">${[...nudgeFeedbacks].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 10).map((f) =>
+          `<tr><td style="padding:4px 12px;vertical-align:top;">${label(f.uid)}</td><td style="padding:4px 12px;color:#6b7280;">${feedbackLabel[f.reason] || f.reason}${f.comment ? ` &mdash; &ldquo;${String(f.comment).replace(/&/g, '&amp;').replace(/</g, '&lt;')}&rdquo;` : ''}</td></tr>`).join('')}</table>
+      ` : ''}
+
       ${nudges.length ? `
         <h3 style="font-size:14px;margin:0 0 8px;">Nudge-uppföljning</h3>
         <p style="margin:0 0 10px;color:#6b7280;font-size:13px;">
@@ -2503,6 +2551,7 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
     nudgesActed,
     funnelAccounts,
     funnel: funnelCounts,
+    nudgeFeedback: feedbackCounts,
   };
 
   if (dryRun) return { dryRun: true, stats };
