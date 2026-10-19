@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Button from '../ui/Button';
 import AppleSignInButton from './AppleSignInButton';
+import { authErrorKey } from '../../utils/authErrors';
 import Input from '../ui/Input';
 
 interface LoginFormProps {
@@ -44,7 +45,8 @@ export default function LoginForm({ onSwitchToSignup }: LoginFormProps) {
     try {
       await login(email, password);
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      const key = authErrorKey(err?.code);
+      setError(key ? t(key) : err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

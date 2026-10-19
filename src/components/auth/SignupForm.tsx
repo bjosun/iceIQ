@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Button from '../ui/Button';
 import AppleSignInButton from './AppleSignInButton';
+import { authErrorKey } from '../../utils/authErrors';
 import Input from '../ui/Input';
 
 interface SignupFormProps {
@@ -30,7 +31,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(t('auth.errWeakPassword'));
       return;
     }
 
@@ -39,7 +40,8 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     try {
       await signup(email, password);
     } catch (err: any) {
-      setError(err.message || 'Signup failed. Please try again.');
+      const key = authErrorKey(err?.code);
+      setError(key ? t(key) : err.message || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
     }
