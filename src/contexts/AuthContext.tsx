@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import {
   User,
   signInWithEmailAndPassword,
@@ -39,7 +39,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const saveNewUserToDatabase = async (user: User) => {
+  // Ett nytt konto skapas från två håll samtidigt: signup()/loginWithGoogle()
+  // anropar den här funktionen direkt, och onAuthStateChanged gör det igen så
+  // fort Firebase meddelar den nya användaren. Utan det här körde båda
+  // getDoc -> "finns inte" -> setDoc: den första tömde UTM-källan och
+  // avsändaren ur minnet, den andra fick ingenting och skrev över dokumentet
+  // utan källa. Den som skrev sist vann, så nya konton förlorade sin
+  // attribution. Samtidiga anrop för samma konto delar nu samma arbete.
+  const inFlight = useRef<Map<string, Promise<void>>>(new Map())
+
+  const saveNewUserToDatabase = (user: User): Promise<void> => {
+    const running = inFlight.current.get(user.uid)
+    if (running) return running
+    const work = saveNewUserToDatabaseOnce(user).finally(() => {
+      inFlight.current.delete(user.uid)
+    })
+    inFlight.current.set(user.uid, work)
+    return work
+  }
+
+  const saveNewUserToDatabaseOnce = async (user: User) => {
     try {
       // Dynamisk import: Firestore-SDK:t (tungt, ~250 KB) ska bara laddas för
       // besökare som faktiskt är inloggade, inte för alla som landar på
@@ -108,6 +127,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return unsubscribe;
+    // Avsiktligt en gång: lyssnaren ska sättas upp en gång per app-start.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
  
