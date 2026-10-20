@@ -73,7 +73,7 @@ export default function LoginForm({ onSwitchToSignup }: LoginFormProps) {
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-white mb-2">{t('loginToContinue')}</h2>
-        <p className="text-gray-400">Enter your credentials to access your dashboard</p>
+        <p className="text-gray-400">{t('auth.loginSubtitle')}</p>
       </div>
 
       {notice && (

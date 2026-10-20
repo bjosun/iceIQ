@@ -74,7 +74,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
           <UserPlus size={24} className="text-white" />
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">{t('createAccount')}</h2>
-        <p className="text-gray-400">Create your account to get started</p>
+        <p className="text-gray-400">{t('auth.signupSubtitle')}</p>
       </div>
 
       {error && (
@@ -104,7 +104,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="At least 6 characters"
+            placeholder={t('auth.passwordHint')}
             required
             icon={Lock}
             autoComplete="new-password"
@@ -117,7 +117,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Repeat your password"
+            placeholder={t('auth.repeatPassword')}
             required
             icon={Lock}
             autoComplete="new-password"

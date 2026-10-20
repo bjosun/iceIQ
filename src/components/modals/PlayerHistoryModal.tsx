@@ -15,6 +15,7 @@ import { Line } from 'react-chartjs-2';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
+import { isNativeApp } from '../../utils/platform';
 import { usePlayerData } from '../../hooks/usePlayerData'; 
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -56,6 +57,9 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { subscription } = useSubscription();
+  // I iPhone-appen finns inget köpflöde. Fliken "Statistik & Trend" är Pro, så för
+  // gratiskonton döljs den helt i stället för att visa en uppgraderingsruta.
+  const showStatsTab = !(isNativeApp && subscription.plan === 'free');
   const { getPlayerHistory } = usePlayerData(); 
 
   const [activeTab, setActiveTab] = useState<TabType>('table');
@@ -222,6 +226,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
               </div>
             </button>
             
+            {showStatsTab && (
             <button
               onClick={() => setActiveTab('stats')}
               className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -235,6 +240,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
                 {t('statsAndTrends') || 'Stats'}
               </div>
             </button>
+            )}
           </nav>
         </div>
 
@@ -297,7 +303,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
                 </div>
               )}
 
-              {activeTab === 'stats' && (
+              {activeTab === 'stats' && showStatsTab && (
                 <div>
                   {subscription.plan === 'free' ? (
                     <Card className="text-center p-8 border-yellow-500/30 bg-yellow-500/5">
