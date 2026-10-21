@@ -34,7 +34,7 @@ type LoadState = 'loading' | 'ready' | 'not-found' | 'revoked' | 'error';
 // i functions/index.js. Renderas utan <Layout> (se hideLayout i App.tsx).
 export default function PlayerLinkPage() {
   const { token } = useParams<{ token: string }>();
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [state, setState] = useState<LoadState>('loading');
   const [data, setData] = useState<PlayerLinkData | null>(null);
   // Streaken uppdateras lokalt när rutinen just gjorts, så belöningskortet
@@ -51,6 +51,9 @@ export default function PlayerLinkPage() {
       .then((res) => {
         if (cancelled) return;
         const payload = res.data as PlayerLinkData;
+        // Sidan följer förälderns språk (det coachen svarade på, annars kontots språk),
+        // inte mottagarens webbläsare. Annars blandas svenska och engelska på samma sida.
+        if (payload.listenLang === 'sv' || payload.listenLang === 'en') setLanguage(payload.listenLang);
         setData(payload);
         setState('ready');
       })
