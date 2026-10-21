@@ -29,13 +29,13 @@ Manus:
 ```
 Hello App Review team,
 
-Thank you for the review. Here is the information you asked for. A screen recording from a physical iPhone running the latest iOS is attached (build <11>). It starts with launching the app and covers account registration, login, logging a game, the AI coach and its consent, the player link, and account deletion.
+Thank you for the review. Here is the information you asked for. A screen recording from a physical iPhone running the latest iOS is attached (build 12). It starts with launching the app and covers account registration, login, logging a game, the AI coach and its consent, the player link, and account deletion.
 
 1. Purpose and audience
 Ice IQ helps parents and coaches log a youth hockey player's games and follow the player's development over time. After each game the adult taps the actions that happened (good plays and mistakes) in a fixed button grid, saves the game, and gets a score and a short recap. A Progress tab shows trends per season and match history. An optional AI coach gives advice based on the logged games, in two modes: game analysis and mental training. The player gets a private, read-only page through a link the adult chooses to share, with short audio recaps, the coach's notes and awards. The app is for adults (parents, guardians and coaches), not for children, and is rated 13+. Children do not create accounts. The value is a simple, structured way to see a player's progress instead of relying on memory.
 
 2. Account and access
-Demo account: <TESTKONTOT> / <LÖSENORDET>. It already has a player and several saved games. Sign in with email and password on the first screen. Creating an account is a separate form that asks for the password twice; signing in never creates an account. Sign in with Apple and Google are also available. Account deletion: Account tab > Delete account. The user confirms by typing DELETE and re-enters the password (or re-authenticates with Apple or Google). A server function then deletes all player data, coach conversations, player links, the payment customer and the sign-in itself; signing in again with the same credentials fails.
+Demo account: granskning@squareversegroup.com / <LÖSENORDET>. It already has a player and several saved games. Sign in with email and password on the first screen. Creating an account is a separate form that asks for the password twice; signing in never creates an account. Sign in with Apple and Google are also available. Account deletion: Account tab > Delete account. The user confirms by typing DELETE and re-enters the password (or re-authenticates with Apple or Google). A server function then deletes all player data, coach conversations, player links, the payment customer and the sign-in itself; signing in again with the same credentials fails.
 
 3. How to reach the main features
 - Log game tab: pick the demo player, tap actions in the grid (a fixed layout of up to twelve positive and six negative buttons; "More…" holds the rest and today's focus), then Save to see the recap.
@@ -61,17 +61,20 @@ Additional points from the recording request:
 - User-generated content: users only enter data about their own players for their own use. Nothing is published or shared between users, so there is no feed, no public content, and no need for reporting or blocking. A parent can share a private read-only link with one person, and can switch it off at any time. The page behind the link does not ask the child for anything and saves nothing from the child.
 - Paid content: none in the iOS app.
 
-Timestamps in the recording:
-- 0:00 Launch from the home screen
-- <0:15> Account registration (password entered twice)
-- <0:45> Logout and login
-- <1:10> Add player, log three games
-- <2:00> Progress tab
-- <2:20> Coach: consent screen, question, mental training mode
-- <3:10> Player link: open and switch off
-- <3:40> Account: download data, withdraw consent
-- <4:00> Delete account (DELETE + password), then a failed login attempt
-- <4:30> Login with the demo account
+Timestamps in the recording (m:ss):
+- 0:00 The app is open on the sign-up screen (switched to English at 0:08)
+- 0:28 Account registration with the password entered twice
+- 0:44 My Account with "Delete account and all data"
+- 0:52 Log out and log in with email and password
+- 1:36 Add a player
+- 2:12 Log a game: fixed button grid, "More..." and today's focus
+- 2:32, 3:04 and 3:36 Three games saved (recap and share card)
+- 3:48 Player history, then the Progress tab at 3:56
+- 4:08 AI coach: consent screen, then the answer
+- 5:36 Player link: create, share, open the player's page at 6:00, switch it off at 6:56
+- 7:04 Delete account (type DELETE and the password)
+- 7:28 Back at the sign-in screen
+- 8:00 Failed sign-in with the deleted credentials
 
 Best regards,
 <NAMN>
@@ -82,7 +85,7 @@ SquareVerse Group AB
 
 ```
 Demo account
-Email: <TESTKONTOT>
+Email: granskning@squareversegroup.com
 Password: <LÖSENORDET>
 
 Purpose: Ice IQ helps parents and coaches log a youth hockey player's games and follow the player's development. The app is for adults (parents, guardians, coaches), rated 13+.
@@ -101,7 +104,7 @@ Regions: the app works the same everywhere, in Swedish and English. The Swish sh
 
 User-generated content: none is shared between users, so no reporting or blocking is needed. Regulated industry or third-party material: none.
 
-A screen recording from a physical device was sent to App Review in the Resolution Center (<datum>).
+A screen recording from a physical device was sent to App Review in the Resolution Center (21 Oct 2026).
 ```
 
 ## 4. Efter att du skickat svaret
