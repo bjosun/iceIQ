@@ -14,6 +14,7 @@ import { renderInsightCard } from '../../utils/insightCard';
 import { ReportFormat } from '../../utils/shareCanvas';
 import { creditPackPrice, CREDITS_PER_PACK } from '../../utils/pricing';
 import { isNativeApp } from '../../utils/platform';
+import { plainCoachText } from '../../utils/coachText';
 import { hasAiConsent, recordAiConsent } from '../../utils/aiConsent';
 import AiConsentModal from './AiConsentModal';
 import CoachMemoryModal from './CoachMemoryModal';
@@ -559,7 +560,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
                   : 'bg-black/30 border border-white/10 text-gray-200 rounded-bl-none'
               }`}
             >
-              {msg.text}
+              {msg.role === 'ai' ? plainCoachText(msg.text) : msg.text}
             </div>
             {/* Två små kort ur samma svar: det som gick bra och det som är värt
                 att tänka på. Båda kommer bara när datan faktiskt stödjer dem

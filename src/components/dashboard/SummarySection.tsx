@@ -202,7 +202,7 @@ export default function SummarySection({
           // Inaktivera om vi sparar eller om det inte finns data
           disabled={isSaving || !hasData}
         >
-          {isSaving ? 'Saving...' : t('saveMatch')}
+          {isSaving ? t('saving') : t('saveMatch')}
         </Button>
       </div>
 

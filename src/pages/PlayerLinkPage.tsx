@@ -7,6 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import BreathingExercise from '../components/breathing/BreathingExercise';
 import RoutineStack, { RoutineStep } from '../components/routines/RoutineStack';
 import SeasonOverview from '../components/dashboard/SeasonOverview';
+import { plainCoachText } from '../utils/coachText';
 import ListenToMatch from '../components/ListenToMatch';
 import { buildListenClips } from '../utils/listenClips';
 import { detectLang, translateFor } from '../utils/translate';
@@ -214,7 +215,7 @@ export default function PlayerLinkPage() {
             {t('playerLink.coachNoteTitle')}
           </h2>
           <p className="text-gray-300 whitespace-pre-wrap leading-relaxed">
-            {data.latestCoachNote || t('playerLink.noCoachNote')}
+            {data.latestCoachNote ? plainCoachText(data.latestCoachNote) : t('playerLink.noCoachNote')}
           </p>
         </div>
       </div>

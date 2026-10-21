@@ -184,7 +184,7 @@ export default function PlayerSelectModal({
           ) : (
             <div className="text-center py-12">
               <Users size={40} className="text-gray-700 mx-auto mb-3" />
-              <p className="text-gray-400 text-sm">No players found</p>
+              <p className="text-gray-400 text-sm">{t('noPlayersFound')}</p>
             </div>
           )}
         </div>

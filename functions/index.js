@@ -892,7 +892,7 @@ exports.askCoach = functions
       ? `
       Spelarens uppföljningsfråga: "${question}"
 
-      Svara direkt och konkret på just den frågan, med två till fyra konkreta förslag eller övningar spelaren kan göra. Kör INTE om Trend, Styrkor och Fokusområde och upprepa inte ditt förra svar. Datan nedan är bara bakgrund: använd den när den hjälper dig svara.
+      Svara direkt och konkret på just den frågan, med två till fyra konkreta förslag eller övningar spelaren kan göra. Kör INTE om Trend, Styrkor och Fokusområde och upprepa inte ditt förra svar. Skriv i vanlig text utan markdown: inga stjärnor, inga # och ingen fetstil. Använd radbrytningar och siffror eller streck för punkter. Datan nedan är bara bakgrund: använd den när den hjälper dig svara.
 
       Bakgrundsdata:${dataBlock}
     `
@@ -1013,6 +1013,16 @@ exports.askCoach = functions
           console.warn(`askCoach: nytt försök misslyckades för ${userId}: ${e.message}`);
         }
       }
+    }
+
+    // Modellen skriver ibland markdown trots instruktionen; appen visar vanlig text.
+    if (typeof analysis === 'string') {
+      analysis = analysis
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/__(.+?)__/g, '$1')
+        .replace(/^\s*[*-]\s+/gm, '• ')
+        .replace(/^#{1,6}\s+/gm, '')
+        .replace(/\*\*/g, '');
     }
 
     if (playerRef && coachTimeline && !memoryOff) {

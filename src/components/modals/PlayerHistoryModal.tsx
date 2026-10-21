@@ -16,6 +16,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { isNativeApp } from '../../utils/platform';
+import { moneyModeUnit } from '../../utils/pricing';
 import { usePlayerData } from '../../hooks/usePlayerData'; 
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -249,7 +250,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500 mx-auto"></div>
-              <p className="mt-4 text-gray-400">Loading history...</p>
+              <p className="mt-4 text-gray-400">{t('loadingHistory')}</p>
             </div>
           ) : (
             <>
@@ -278,7 +279,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
                             <td className={`px-4 py-3 font-bold ${
                               game.bonus > 0 ? 'text-yellow-400' : 'text-red-400'
                             }`}>
-                              {game.bonus.toLocaleString()} {language === 'en' ? 'USD' : 'SEK'}
+                              {game.bonus.toLocaleString()} {moneyModeUnit(language)}
                             </td>
                           </tr>
                         ))}
