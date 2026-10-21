@@ -24,87 +24,64 @@ Manus:
 10. **Radera konto:** skriv DELETE och **ditt lösenord**, bekräfta, och visa att du hamnar på inloggningen. Försök sedan logga in med samma uppgifter och visa att det **misslyckas**.
 11. **Testkontot:** logga in med demokontot och visa att spelaren och matcherna finns.
 
-## 2. Svar att klistra in i Resolution Center (engelska)
+## 2. Svar att klistra in i Resolution Center (engelska, under 4000 tecken)
 
 ```
 Hello App Review team,
 
-Thank you for the review. Here is the information you asked for. A screen recording from a physical iPhone running the latest iOS is attached (build 12). It starts with launching the app and covers account registration, login, logging a game, the AI coach and its consent, the player link, and account deletion.
+Thank you for the review. A screen recording from a physical iPhone (build 12) is attached. The same information is also in the Notes field.
 
 1. Purpose and audience
-Ice IQ helps parents and coaches log a youth hockey player's games and follow the player's development over time. After each game the adult taps the actions that happened (good plays and mistakes) in a fixed button grid, saves the game, and gets a score and a short recap. A Progress tab shows trends per season and match history. An optional AI coach gives advice based on the logged games, in two modes: game analysis and mental training. The player gets a private, read-only page through a link the adult chooses to share, with short audio recaps, the coach's notes and awards. The app is for adults (parents, guardians and coaches), not for children, and is rated 13+. Children do not create accounts. The value is a simple, structured way to see a player's progress instead of relying on memory.
+Ice IQ helps parents and coaches log a youth hockey player's games and follow the player's development. After each game the adult taps the actions that happened in a button grid, saves the game and gets a score and recap. A Progress tab shows trends and history. An optional AI coach (game analysis or mental training) gives advice from the logged games. The player gets a private, read-only page through a link the adult chooses to share. The app is for adults, rated 13+; children do not create accounts.
 
-2. Account and access
-Demo account: granskning@squareversegroup.com / <LÖSENORDET>. It already has a player and several saved games. Sign in with email and password on the first screen. Creating an account is a separate form that asks for the password twice; signing in never creates an account. Sign in with Apple and Google are also available. Account deletion: Account tab > Delete account. The user confirms by typing DELETE and re-enters the password (or re-authenticates with Apple or Google). A server function then deletes all player data, coach conversations, player links, the payment customer and the sign-in itself; signing in again with the same credentials fails.
+2. Access
+Demo account: granskning@squareversegroup.com / <LÖSENORDET> (a player and several games already exist). Account creation is a separate form that asks for the password twice. Sign in with Apple and Google are also available. Delete account: Account tab, type DELETE and re-enter the password; a server function then deletes all data and the sign-in.
 
-3. How to reach the main features
-- Log game tab: pick the demo player, tap actions in the grid (a fixed layout of up to twelve positive and six negative buttons; "More…" holds the rest and today's focus), then Save to see the recap.
-- Progress tab: key figures, season chips, the development graph, season comparison and match history.
-- Coach tab: the first time, a consent screen explains what is sent and to whom. After accepting, ask a question to get the AI answer. The Game analysis / Mental training switch is above the quick questions.
-- Player link: create a read-only link for the player, open it, and switch it off again from the same dialog.
-- Account tab: download my information, withdraw AI consent, optional Face ID lock, delete account.
+3. Main features
+Log game tab (button grid, Save, recap), Progress tab, Coach tab (consent screen on first use), player link (create, open, switch off), Account tab (download my information, withdraw AI consent, delete account).
 
-4. External services used
-- Firebase (Google): Authentication (email, Google, Sign in with Apple), Cloud Firestore (database, EU region), Cloud Functions, Hosting.
-- Google Cloud Vertex AI (Gemini, EU): the AI coach. Data is sent only after the user's explicit consent in the app, and consent can be withdrawn at any time.
-- Google Cloud Text-to-Speech (EU): turns short recap texts into audio for the "listen" feature on the player's page. No audio is stored.
-- Resend: service emails and an optional weekly summary (with an unsubscribe link).
-- Stripe: payments for an optional subscription sold on our website only. There is no purchase flow in the iOS app; all purchase screens, prices and purchase links are hidden in the app. A subscription bought on the website unlocks the same features after signing in. In-app purchase is planned for a later version.
+4. External services
+Firebase (Auth, Firestore EU, Functions, Hosting); Google Cloud Vertex AI (Gemini, EU) for the coach, only after explicit in-app consent; Google Cloud Text-to-Speech (EU) for the listen feature, no audio stored; Resend (email, with unsubscribe link); Stripe (optional subscription on our website only; no purchase flow or prices in the iOS app, in-app purchase planned later).
 
 5. Regional differences
-The app works the same in all regions, in Swedish and English. The only regional difference is in Money Mode, a parent's own tally of a small reward: a Swish payment shortcut is shown only when the device region is Sweden and the Swish app is installed. It just opens Swish prefilled; the payment happens outside our app. Everywhere else the same "Paid" button is shown. Money Mode is not gambling and involves no wagering.
+None, apart from the Swish shortcut in Money Mode (a parent's own tally of a small reward, not gambling), shown only when the device region is Sweden and Swish is installed. English and Swedish are supported.
 
 6. Regulated industry or third-party material
-The app does not operate in a regulated industry and does not include protected third-party material. It is not a medical, health, financial or gambling service.
+None.
 
-Additional points from the recording request:
-- User-generated content: users only enter data about their own players for their own use. Nothing is published or shared between users, so there is no feed, no public content, and no need for reporting or blocking. A parent can share a private read-only link with one person, and can switch it off at any time. The page behind the link does not ask the child for anything and saves nothing from the child.
-- Paid content: none in the iOS app.
+User-generated content: nothing is shared between users, so no reporting or blocking is needed. Paid content: none in the iOS app.
 
-Timestamps in the recording (m:ss):
-- 0:00 The app is open on the sign-up screen (switched to English at 0:08)
-- 0:28 Account registration with the password entered twice
-- 0:44 My Account with "Delete account and all data"
-- 0:52 Log out and log in with email and password
-- 1:36 Add a player
-- 2:12 Log a game: fixed button grid, "More..." and today's focus
-- 2:32, 3:04 and 3:36 Three games saved (recap and share card)
-- 3:48 Player history, then the Progress tab at 3:56
-- 4:08 AI coach: consent screen, then the answer
-- 5:36 Player link: create, share, open the player's page at 6:00, switch it off at 6:56
-- 7:04 Delete account (type DELETE and the password)
-- 7:28 Back at the sign-in screen
-- 8:00 Failed sign-in with the deleted credentials
+Timestamps (m:ss): 0:00 sign-up screen, 0:28 registration (password twice), 0:44 My Account, 0:52 log out and in, 1:36 add player, 2:12 button grid and today's focus, 2:32 / 3:04 / 3:36 three games saved, 3:48 history and Progress tab, 4:08 AI coach consent and answer, 5:36 player link (opened 6:00, switched off 6:56), 7:04 delete account, 7:28 sign-in screen, 8:00 failed sign-in with the deleted account.
 
 Best regards,
-<NAMN>
+<DITT NAMN>
 SquareVerse Group AB
 ```
 
-## 3. Notes-fältet (App Review Information): ersätt hela texten med detta
+## 3. Notes-fältet (App Review Information, gräns 4000 tecken, ersätt hela texten)
 
 ```
 Demo account
 Email: granskning@squareversegroup.com
 Password: <LÖSENORDET>
 
-Purpose: Ice IQ helps parents and coaches log a youth hockey player's games and follow the player's development. The app is for adults (parents, guardians, coaches), rated 13+.
+Purpose: Ice IQ helps parents and coaches log a youth hockey player's games and follow the player's development. It is for adults (parents, guardians, coaches), rated 13+. Children do not create accounts.
 
-Purchases: this iOS version has no in-app purchases and no purchase flow; all upgrade screens, prices and links to purchase are hidden in the app. Ice IQ also offers an optional paid subscription on our website, billed by Stripe. A subscription bought there unlocks the same features in the app after signing in. The demo account is on the free plan (limit of three players). In-app purchase for iOS users is planned for a later version.
+Purchases: this iOS version has no in-app purchases and no purchase flow; all upgrade screens, prices and purchase links are hidden. An optional paid subscription is sold on our website only (Stripe) and unlocks the same features after sign-in. The demo account is on the free plan. In-app purchase is planned for a later version.
 
 How to test:
-1. Sign in with the demo account (email and password). Account creation is a separate form that asks for the password twice. Sign in with Apple and Google are also available.
-2. Log game tab: pick the demo player, tap a few actions in the grid and Save to see the recap. The Progress tab shows trends, season comparison and history.
-3. Coach tab: the first time you ask the AI coach, a consent screen explains what is sent and to whom. Accepting is required before any data leaves the app. A switch selects Game analysis or Mental training.
-4. Account tab: optional Face ID lock, download my information, withdraw AI consent, and Delete account (type DELETE and your password to confirm). Deleting removes all player data, coach conversations, player links and the sign-in.
+1. Sign in with the demo account (email and password). Creating an account is a separate form that asks for the password twice. Sign in with Apple and Google are also available.
+2. Log game tab: pick the demo player, tap actions in the button grid and Save to see the recap. The Progress tab shows trends, season comparison and history.
+3. Coach tab: on first use a consent screen explains what is sent and to whom. Accepting is required before any data leaves the app. A switch selects Game analysis or Mental training.
+4. Account tab: optional Face ID lock, download my information, withdraw AI consent, and Delete account (type DELETE and your password). This removes all player data, coach conversations, player links and the sign-in.
 
-External services: Firebase (Auth, Firestore EU, Functions), Google Cloud Vertex AI (Gemini, EU) for the AI coach after consent, Google Cloud Text-to-Speech (EU) for the listen feature, Resend for email, Stripe (website only).
+External services: Firebase (Auth, Firestore EU, Functions), Google Cloud Vertex AI (Gemini, EU) for the AI coach after consent, Google Cloud Text-to-Speech (EU) for the listen feature, Resend (email), Stripe (website only).
 
-Regions: the app works the same everywhere, in Swedish and English. The Swish shortcut in Money Mode appears only when the device region is Sweden and the Swish app is installed; it opens Swish prefilled and the payment happens outside the app. Money Mode is a parent's own tally of a small reward, not gambling.
+Regions: the app works the same everywhere, in Swedish and English. Only the Swish payment shortcut in Money Mode (a parent's own tally of a small reward, not gambling) appears when the device region is Sweden and Swish is installed.
 
 User-generated content: none is shared between users, so no reporting or blocking is needed. Regulated industry or third-party material: none.
 
-A screen recording from a physical device was sent to App Review in the Resolution Center (21 Oct 2026).
+A screen recording from a physical device was sent in the Resolution Center (21 Oct 2026).
 ```
 
 ## 4. Efter att du skickat svaret
