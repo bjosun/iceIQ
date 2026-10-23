@@ -126,7 +126,9 @@ export const translations = {
       title: "Development",
       last5: "Last 5 avg",
       trendUp: "Above season average",
-      trendDown: "Below season average"
+      trendDown: "Below season average",
+      corsiLabel: "Shot attempts per game",
+      corsiHint: "On goal, missed and blocked. Your own attempts only."
     },
 
     // Weekly email digest
@@ -864,7 +866,9 @@ export const translations = {
       title: "Utveckling",
       last5: "Snitt senaste 5",
       trendUp: "Över säsongssnittet",
-      trendDown: "Under säsongssnittet"
+      trendDown: "Under säsongssnittet",
+      corsiLabel: "Skottförsök per match",
+      corsiHint: "På mål, missade och blockerade. Bara dina egna försök."
     },
 
     // Weekly email digest

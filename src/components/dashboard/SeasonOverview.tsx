@@ -14,6 +14,7 @@ import Card from '../ui/Card';
 import BadgeShelf from './BadgeShelf';
 import AwardShelf from './AwardShelf';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { corsiSummary } from '../../utils/corsi';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
@@ -90,6 +91,8 @@ export default function SeasonOverview({ playerName, games, allGames, summary, t
     },
   };
 
+  const corsi = corsiSummary(games);
+
   const trendingUp = summary !== null && summary.last5Avg >= summary.avgPoints;
 
   return (
@@ -146,6 +149,21 @@ export default function SeasonOverview({ playerName, games, allGames, summary, t
               <p className="text-xs text-gray-400 mt-1">{t('seasonView.last5')}</p>
             </div>
           </div>
+
+          {corsi.gamesWithData >= 1 && (
+            <div className="bg-gray-900/60 rounded-xl p-3 mt-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-gray-200">{t('seasonView.corsiLabel')}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t('seasonView.corsiHint')}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-2xl font-bold text-white">{corsi.perGame}</p>
+                {corsi.onTargetPct !== null && (
+                  <p className="text-xs text-gray-400">{corsi.onTargetPct}%</p>
+                )}
+              </div>
+            </div>
+          )}
         </>
       )}
 

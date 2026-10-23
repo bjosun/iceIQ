@@ -124,6 +124,7 @@ export const SHORT_NAMES: Record<string, { sv: string; en: string }> = {
   'Covers the Point': { sv: 'Täcker backen', en: 'Covers point' },
   'Supports Defenseman Down Low': { sv: 'Hjälper backen', en: 'Helps D low' },
   'Missed Shot': { sv: 'Missat skott', en: 'Missed shot' },
+  'Shot Blocked (Own)': { sv: 'Mitt skott blockat', en: 'My shot blocked' },
   'Offensive Zone Turnover': { sv: 'Pucktapp off. zon', en: 'O-zone turnover' },
   'Loses Defensive Coverage': { sv: 'Tappar täckning', en: 'Lost coverage' },
   'Faceoff Win (Defensive Zone)': { sv: 'Tekning egen zon', en: 'D-zone faceoff' },
