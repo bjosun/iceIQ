@@ -28,6 +28,7 @@ const YouthHockeyStats = lazy(() => import('./pages/landing/YouthHockeyStats'))
 const HockeyScoutingTemplate = lazy(() => import('./pages/landing/HockeyScoutingTemplate'))
 const CorsiYouthHockey = lazy(() => import('./pages/landing/CorsiYouthHockey'))
 const GameTrackingTemplate = lazy(() => import('./pages/landing/GameTrackingTemplate'))
+const HockeyIqApp = lazy(() => import('./pages/landing/HockeyIqApp'))
 
 import Layout from './components/layout/Layout'
 import './index.css'
@@ -96,6 +97,7 @@ function AppContent() {
               <Route path="/youth-hockey-stats" element={<YouthHockeyStats />} />
               <Route path="/hockey-scouting-template" element={<HockeyScoutingTemplate />} />
               <Route path="/measure-corsi-youth-hockey" element={<CorsiYouthHockey />} />
+              <Route path="/hockey-iq-app" element={<HockeyIqApp />} />
               {/* Bilingual lead-magnet page (not English-only like the ones above) —
                  för FB-grupp-distribution i både engelska och svenska communities. */}
               <Route path="/game-tracking-template" element={<GameTrackingTemplate />} />

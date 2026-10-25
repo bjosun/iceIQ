@@ -20,6 +20,11 @@
     "sv": "Mäta skottförsök (Corsi) i ungdomshockey"
   },
   {
+    "path": "/hockey-iq-app",
+    "en": "Hockey IQ app vs scenario trainers",
+    "sv": "Hockey IQ-app jämfört med situationsträning"
+  },
+  {
     "path": "/game-tracking-template",
     "en": "Free printable game tracking template",
     "sv": "Gratis utskrivbar matchmall"

@@ -74,6 +74,13 @@
     <priority>0.7</priority>
   </url>
 
+  <url>
+    <loc>https://www.iceiq.app/hockey-iq-app</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <!-- Bilingual lead-magnet page (src/pages/landing/GameTrackingTemplate.tsx).
        The language toggle is still client-side, but generate-landing-pages.mjs
        prerenders an English static version: served client-rendered only, its

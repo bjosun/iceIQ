@@ -113,5 +113,30 @@
       ],
       "link": { "text": "Why season trends matter more than single games", "path": "/youth-hockey-stats" }
     }
+  ],
+  "hockey-iq-app": [
+    {
+      "heading": "Two kinds of hockey IQ tools",
+      "paragraphs": [
+        "Most hockey IQ apps, such as Project Hockey, RinkIQ, Project Intuition, or Hockey IntelliGym, train decisions in situations built for the app. A clip or a drawn-up play stops, and the player picks what to do next. That is good practice for reading the game.",
+        "Ice IQ answers a different question: what did this player actually do in their last game, and which choices keep coming back? You log the game in under two minutes, and the AI coach compares it with the player's own history. Ice IQ is not a quiz or a video library, and it does not replace coaching on the ice."
+      ]
+    },
+    {
+      "heading": "What the coach says after a game",
+      "paragraphs": [
+        "Every analysis has the same short format: a trend against the player's own season average, strengths backed by the numbers, one focus area, and one question about a decision to think about. Here is an illustrative example of the format, not a real player:",
+        "Trend: 14 points this game, above your season average of 9. Strengths: You won 5 board battles, the most this season. Focus area: Turnovers under pressure in your own zone. Look up before the puck arrives so you know your outlet. Something to think about: Four turnovers in your own zone. What did you see just before?",
+        "The coach remembers what it has noticed about the player across conversations, so the advice builds over time. It only uses numbers from logged games and never compares a child with other players."
+      ]
+    },
+    {
+      "heading": "How to use both together",
+      "paragraphs": [
+        "Scenario training and game tracking fit together. Practice a situation in a scenario app during the week, then log the weekend's games and see whether it shows up: fewer turnovers under pressure, more controlled zone entries, more won board battles.",
+        "If a pattern keeps repeating over a few games, that is the thing to bring to practice. The season view shows whether it is moving in the right direction."
+      ],
+      "link": { "text": "Why season trends matter more than single games", "path": "/youth-hockey-stats" }
+    }
   ]
 }

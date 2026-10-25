@@ -91,6 +91,7 @@ Development (iceiqdevelopment.com) or other services with similar names.
 ## Links
 
 - [Ice IQ — Homepage](https://www.iceiq.app/)
+- [Hockey IQ app vs scenario trainers](https://www.iceiq.app/hockey-iq-app)
 - [Hockey tracking app](https://www.iceiq.app/hockey-tracking-app)
 - [Youth hockey stats](https://www.iceiq.app/youth-hockey-stats)
 - [How to measure Corsi in youth hockey](https://www.iceiq.app/measure-corsi-youth-hockey)
