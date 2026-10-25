@@ -1,29 +1,102 @@
 # Ice IQ — Hockey IQ App with AI Hockey Coach
 
-Ice IQ is a hockey IQ app that helps parents, players, and coaches log a game
-in under two minutes and get concrete advice from an AI hockey coach. Track
-stats, visualize progress, and develop hockey IQ — from grassroots youth
-hockey to competitive teams. Available in English and Swedish.
+Ice IQ (iceiq.app) is a hockey IQ app for parents, players, and coaches. You
+log what the player actually did in a real game, in under two minutes, and an
+AI hockey coach turns it into concrete advice and one thing to work on next.
+Over a season it shows how the player develops compared with themselves.
+Available in English and Swedish, in any phone browser.
+
+## How Ice IQ differs from hockey IQ training apps
+
+Most hockey IQ apps train decisions in made-up situations: quizzes, video
+clips, or game-like drills (for example Project Hockey, RinkIQ, Project
+Intuition, or Hockey IntelliGym). Ice IQ starts from the player's own games
+instead.
+
+- **Scenario trainers** ask "what would you do here?" in a clip someone else
+  played.
+- **Ice IQ** shows what this player actually did in their last game, which
+  choices keep repeating, and whether they are trending up or down against
+  their own season average.
+
+The two work well together: train situations in a scenario app, then use Ice
+IQ to see whether it shows up in real games. Ice IQ is not a quiz or video
+library, and it does not replace on-ice coaching.
+
+## What a parent or coach gets after a game
+
+After logging a game, the AI coach answers in a fixed, short format:
+
+- **Trend**: is the player up or down against their own recent games and
+  season average?
+- **Strengths**: what worked, backed by the numbers from the game.
+- **Focus area**: one concrete thing to practice next.
+- **Something to think about**: one calm question about a decision, such as
+  "Four turnovers in your own zone. What did you see just before?"
+
+Illustrative example of the format (not a real player):
+
+> Trend: 14 points this game, above your season average of 9.
+> Strengths: You won 5 board battles, the most this season.
+> Focus area: Turnovers under pressure in the defensive zone. Look up before
+> the puck arrives so you know your outlet.
+
+The coach remembers what it has noticed about the player across
+conversations, so advice builds over time instead of starting over. It only
+uses numbers from the logged games and never compares a child with other
+players.
 
 ## Features
 
-- AI hockey coach with tactical advice after each game
-- Match logging in under two minutes
-- Advanced hockey analytics and visualizations
-- Cloud sync across devices
-- Team and player management
-- Money Mode — turn performance into pocket money
-- Mental training routines for pre-game preparation
+- Game logging in under two minutes, with button layouts per role
+  (forward, center, defenseman, goalie)
+- AI hockey coach: post-game analysis plus follow-up questions in a chat
+- Mental training mode: short routines for nerves, focus, and letting go of
+  a mistake (not therapy, and it asks for no health information)
+- Season view: points per game, season-by-season comparison, and individual
+  Corsi (shot attempts per game: on goal, missed, and blocked)
+- Player link: a page the player can open on their own phone with no login,
+  showing a breathing exercise, their progress, and the coach's notes. The
+  parent can switch the link off at any time.
+- Awards: a hockey gem for each game and an award shelf
+- Team and player management, with cloud sync on paid plans
+- Money Mode (for parents): optionally turn game performance into pocket
+  money, set and controlled by the adult
+- Weekly email summary for parents
+
+## Who it is for
+
+- Hockey parents who want to follow their child's development without
+  spreadsheets
+- Players who want honest feedback on their own games
+- Youth coaches tracking a few players or a whole team
+- From grassroots youth hockey to competitive teams
 
 ## Pricing
 
-Free to start. The free plan includes up to 3 saved players, match scoring,
-match history, and a few AI credits per month. Premium and Elite plans add
-more AI credits, deeper stats, cloud sync, and priority support.
+Free to start, no card required.
+
+- **Free**: up to 3 saved players, game scoring, game history, 3 AI credits
+  per month
+- **Premium**: unlimited players, cloud sync, deeper stats and trends, 50 AI
+  credits per month
+- **Elite**: everything in Premium, 500 AI credits per month, deeper AI
+  analyses, priority support
+
+## Not to be confused with
+
+Ice IQ (iceiq.app, by SquareVerse Group AB) is not affiliated with IceIQ
+Development (iceiqdevelopment.com) or other services with similar names.
 
 ## Links
 
 - [Ice IQ — Homepage](https://www.iceiq.app/)
+- [Hockey tracking app](https://www.iceiq.app/hockey-tracking-app)
+- [Youth hockey stats](https://www.iceiq.app/youth-hockey-stats)
+- [How to measure Corsi in youth hockey](https://www.iceiq.app/measure-corsi-youth-hockey)
+- [Game tracking template](https://www.iceiq.app/game-tracking-template)
+- [Hockey scouting template](https://www.iceiq.app/hockey-scouting-template)
+- [Support](https://www.iceiq.app/support)
 - [Terms of Service](https://www.iceiq.app/terms)
 - [Privacy Policy](https://www.iceiq.app/privacy)
 - [Sitemap](https://www.iceiq.app/sitemap.xml)
@@ -31,12 +104,22 @@ more AI credits, deeper stats, cloud sync, and priority support.
 ## FAQ
 
 - **What is hockey IQ?** A player's ability to read the game, make quick
-  decisions, and position themselves effectively on the ice. Ice IQ helps
-  you build it by tracking game stats and getting AI-generated feedback.
-- **How does the AI hockey coach work?** After you log a game, the AI
-  analyzes the stats and gives personalized, tactical advice.
-- **Is Ice IQ free?** Yes — free plan with 3 players and a few AI credits
-  per month. Premium and Elite add more.
+  decisions, and position themselves well on the ice. Scenario apps train it
+  in made-up situations; Ice IQ shows how those decisions actually play out
+  in the player's own games.
+- **Is Ice IQ a hockey IQ training app like Project Hockey or RinkIQ?** No,
+  it complements them. Those train decisions with quizzes and clips. Ice IQ
+  tracks the player's real games and gives AI feedback on what to work on.
+- **How does the AI hockey coach work?** After you log a game, it compares
+  the game with the player's own history and season average and gives a
+  trend, strengths, one focus area, and a question to think about. You can
+  ask follow-up questions.
+- **How long does logging a game take?** Under two minutes, by tapping
+  buttons for what happened during or right after the game.
+- **Can my child use it on their own phone?** Yes, through the player link:
+  a page with no login that the parent creates and can switch off.
+- **Is Ice IQ free?** Yes. The free plan has 3 players and 3 AI credits per
+  month. Premium and Elite add more players, cloud sync, and more AI credits.
 - **Who is Ice IQ for?** Hockey parents, players, and coaches at every
   level, from grassroots to competitive teams.
 
