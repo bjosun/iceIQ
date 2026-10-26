@@ -21,6 +21,13 @@ export default function Footer() {
           <Link to="/terms" className="text-gray-400 hover:text-cyan-400 transition-colors">{t('termsLink')}</Link>
           <Link to="/privacy" className="text-gray-400 hover:text-cyan-400 transition-colors">{t('privacyLink')}</Link>
           <Link to="/support" className="text-gray-400 hover:text-cyan-400 transition-colors">{t('supportContact')}</Link>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('sv:reopen-consent'))}
+            className="text-gray-400 hover:text-cyan-400 transition-colors"
+          >
+            {t('cookieSettings')}
+          </button>
         </div>
         <p className="text-gray-500 text-xs mt-3">© {currentYear} Ice IQ — {COMPANY_NAME}</p>
       </footer>
@@ -111,6 +118,16 @@ export default function Footer() {
                   <Shield size={16} className="mr-2" />
                   {t('privacyLink')}
                 </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new Event('sv:reopen-consent'))}
+                  className="flex items-center text-gray-400 hover:text-cyan-400 transition-colors"
+                >
+                  <Shield size={16} className="mr-2" />
+                  {t('cookieSettings')}
+                </button>
               </li>
             </ul>
           </div>

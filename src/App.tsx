@@ -31,6 +31,7 @@ const GameTrackingTemplate = lazy(() => import('./pages/landing/GameTrackingTemp
 const HockeyIqApp = lazy(() => import('./pages/landing/HockeyIqApp'))
 
 import Layout from './components/layout/Layout'
+import CookieConsent from './components/CookieConsent'
 import './index.css'
 
 function AppContent() {
@@ -105,6 +106,9 @@ function AppContent() {
           </Suspense>
         </Layout>
       )}
+
+      {/* Annonsdatasamtycke — renderas på alla sidor, även landningssidorna. */}
+      <CookieConsent />
     </>
   );
 }

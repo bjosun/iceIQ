@@ -70,12 +70,16 @@ jobs:
       # i index.html/sitemap/robots ska gå live även om firestore-IAM ändras.
       # hosting:v2 (iceiq-v2.web.app) är ett testmål — deploya separat vid behov.
       - name: Deploy Hosting to Firebase
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: |
           echo "🚀 Deploying target: hosting:prod"
           npx firebase-tools deploy \
             --only hosting:prod \
             --project ${{ env.FIREBASE_PROJECT_ID }} \
-            --non-interactive
+            --non-interactive \
+          || { echo "⚠️ CLI deploy misslyckades (t.ex. serviceusage 403) — REST-fallback"; \
+               node scripts/hosting_deploy.cjs --target prod; }
 
       # Firestore rules + functions deployas separat. Om IAM-behörigheter
       # saknas (t.ex. serviceusage.services.get) misslyckas detta steg utan

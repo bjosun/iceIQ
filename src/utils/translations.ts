@@ -8,6 +8,10 @@ export const translations = {
     footerGuides: "Guides",
     supportContact: "Contact support",
     footerDeveloper: "Developed and operated by",
+    cookieConsentText: "May we save Google's ad click-id (gclid) if you arrived from an ad, so we can see which ads work? Answer No and it is never stored.",
+    cookieConsentYes: "Yes",
+    cookieConsentNo: "No",
+    cookieSettings: "Privacy settings",
 
     // App & Nav
     appTitle: "Ice IQ",
@@ -748,6 +752,10 @@ export const translations = {
     footerGuides: "Guider",
     supportContact: "Kontakta supporten",
     footerDeveloper: "Utvecklas och drivs av",
+    cookieConsentText: "Får vi spara Googles annons-id (gclid) om du kom från en annons, så att vi kan se vilka annonser som fungerar? Svarar du Nej sparas det inte.",
+    cookieConsentYes: "Ja",
+    cookieConsentNo: "Nej",
+    cookieSettings: "Integritetsinställningar",
 
     // App & Nav
     appTitle: "Ice IQ",
