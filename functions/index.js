@@ -2349,6 +2349,14 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
   const nudges = [];
   // Svar på "vad kom i vägen?" i nudge-mejlet (functions/nudgeFeedback.js).
   const nudgeFeedbacks = [];
+  // "Aktiva som tystnat": konton som kommit igång men slutat logga — de som är
+  // värda ett personligt mejl. Räknas på när matcherna SPARADES (createdAt), inte
+  // på matchdatum: den som efterregistrerar sin säsong från video har gamla
+  // matchdatum men är aktiv (james.a.olaes, okt 2026).
+  const QUIET_MIN_GAMES = 3;
+  const QUIET_DAYS = 14;
+  const quietCutoffISO = new Date(Date.now() - QUIET_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const quietActives = [];
   // Mätpunkter i första användningen (src/utils/funnel.ts): hur många konton
   // som nått varje steg, och varifrån nya konton kommer.
   const FUNNEL_STEPS = ['dashboardViewed', 'addPlayerOpened', 'demoActionTapped', 'demoSaveBlocked', 'actionTapped', 'saveTapped', 'gameSaved'];
@@ -2447,6 +2455,21 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
       });
     }
 
+    if (!playersSnap.empty && latestGameDate) {
+      let totalGames = 0;
+      let lastSaved = null;
+      for (const playerDoc of playersSnap.docs) {
+        const gamesRef = playerDoc.ref.collection('games');
+        totalGames += (await gamesRef.count().get()).data().count;
+        const last = await gamesRef.orderBy('createdAt', 'desc').limit(1).get();
+        const t = last.empty ? null : last.docs[0].data().createdAt;
+        if (typeof t === 'string' && (!lastSaved || t > lastSaved)) lastSaved = t;
+      }
+      if (totalGames >= QUIET_MIN_GAMES && lastSaved && lastSaved < quietCutoffISO) {
+        quietActives.push({ uid, games: totalGames, lastSaved });
+      }
+    }
+
     if (playersSnap.empty) noPlayers++;
     else if (!latestGameDate) playersNoGames++;
     else {
@@ -2468,9 +2491,17 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
   // Ett uppslag för alla uid som faktiskt hamnade i rapporten. Konton som
   // hunnit raderas i Auth visas som uid:t — bättre än en tom rad.
   const emailByUid = await getUserEmails([
-    ...new Set([...newSignups, ...purchases, ...cancellations, ...nudges, ...nudgeFeedbacks].map((r) => r.uid)),
+    ...new Set([...newSignups, ...purchases, ...cancellations, ...nudges, ...nudgeFeedbacks, ...quietActives].map((r) => r.uid)),
   ]);
   const label = (uid) => emailByUid.get(uid) || `(${uid})`;
+  // Längst tystnad först. Egna konton och test-/granskningskonton är inte kunder:
+  // INTERNAL_EMAILS (kommaseparerad, i functions/.env — adresserna ska inte i git).
+  const internalEmails = new Set([OPS_EMAIL, ...String(process.env.INTERNAL_EMAILS || '').split(',')]
+    .map((e) => e.trim().toLowerCase()).filter(Boolean));
+  const quietList = quietActives
+    .filter((q) => !internalEmails.has(String(emailByUid.get(q.uid) || '').toLowerCase()))
+    .sort((a, b) => a.lastSaved.localeCompare(b.lastSaved));
+  const daysSince = (iso) => Math.floor((Date.now() - Date.parse(iso)) / (24 * 60 * 60 * 1000));
 
   const cap = (arr, n) => arr.length > n ? [...arr.slice(0, n), null] : arr; // null = "+X fler"
   const listRows = (arr, n, render) => {
@@ -2528,6 +2559,15 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
           <td style="padding:8px 12px;text-align:right;font-weight:bold;">${newActivated} av ${newSignups.length}</td>
         </tr>
       </table>
+
+      ${quietList.length ? `
+        <h3 style="font-size:14px;margin:0 0 8px;">Aktiva som tystnat</h3>
+        <p style="margin:0 0 10px;color:#6b7280;font-size:13px;">
+          Har loggat minst ${QUIET_MIN_GAMES} matcher men inte sparat någon på ${QUIET_DAYS} dagar. V&auml;rda ett personligt mejl &mdash; fr&aring;ga vad som fick dem att sluta.
+        </p>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:13px;">${listRows(quietList, 20, (q) =>
+          `<tr><td style="padding:4px 12px;">${label(q.uid)}</td><td style="padding:4px 12px;color:#6b7280;">${q.games} matcher &middot; senast sparad ${q.lastSaved.slice(0, 10)} (${daysSince(q.lastSaved)} dagar sedan)</td></tr>`)}</table>
+      ` : ''}
 
       ${funnelAccounts > 0 || Object.keys(referrers).length ? `
         <h3 style="font-size:14px;margin:0 0 8px;">Första användningen</h3>
@@ -2617,6 +2657,7 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
     funnelAccounts,
     funnel: funnelCounts,
     nudgeFeedback: feedbackCounts,
+    quietActives: quietList.length,
   };
 
   if (dryRun) return { dryRun: true, stats };
