@@ -14,6 +14,9 @@ const db = admin.firestore();
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 const resendApiKey = defineSecret('RESEND_API_KEY');
+// Nyckel för Gemini Developer API (inte Vertex) — behövs bara för röstcoachen,
+// eftersom kortlivade Live-tokens inte finns i Vertex. Se docs/voice-coach-plan.md.
+const geminiApiKey = defineSecret('GEMINI_API_KEY');
 // Skyddar den tillfälliga testtriggern för veckomejlet (runWeeklyDigestNow).
 // Tas bort tillsammans med den funktionen när digesten är verifierad.
 const digestTestToken = defineSecret('DIGEST_TEST_TOKEN');
@@ -1749,6 +1752,69 @@ exports.stripeWebhook = functions
       res.status(500).send("Server Error");
     }
   });
+
+// ==========================================
+//  STRIPE-AVSTÄMNING (DAGLIG)
+// ==========================================
+// Webhooken är at-most-once i praktiken: en missad customer.subscription.deleted
+// lämnar subscriptionPlan:"premium" kvar för alltid (observerat 2026-10-27:
+// avslut i juni, flaggan levde i fyra månader). Det här svepet gör flaggorna
+// konvergenta mot Stripes sanning. Beslutslogiken är ren (reconcileUserFlag)
+// och testad; här görs bara I/O. Apple-prenumerationer ägs av RevenueCat och
+// rörs aldrig. N+1-läsningar mot Stripe är OK vid den här volymen.
+const reconcileStripe = require("./reconcile_stripe_flags");
+
+exports.reconcileStripeSubscriptions = functions
+  .runWith({ secrets: [stripeSecretKey], timeoutSeconds: 300, memory: "256MB" })
+  .pubsub.schedule("15 4 * * *") // kl 04:15 varje dag
+  .timeZone("Europe/Stockholm")
+  .onRun(async () => {
+    const stripeInstance = getStripe();
+    const snap = await getUsersCollection()
+      .where("subscriptionPlan", "in", ["premium", "elite"])
+      .get();
+
+    let checked = 0, downgraded = 0, restored = 0, flagged = 0;
+    for (const docSnap of snap.docs) {
+      const user = docSnap.data();
+      if (user.subscriptionSource === "apple") continue;
+      if (user.subscriptionStatus !== "active" && user.subscriptionStatus !== "past_due") continue;
+      checked++;
+
+      const subs = user.stripeCustomerId
+        ? (await stripeInstance.subscriptions.list({
+            customer: user.stripeCustomerId, status: "all", limit: 10,
+          })).data
+        : [];
+
+      const change = reconcileStripe.reconcileUserFlag(user, subs);
+      if (!change) continue;
+
+      if (change.outcome === "flagged") {
+        flagged++;
+        console.warn(`⚠️ ${docSnap.id}: betald flagga utan stripeCustomerId — manuell kontroll krävs`);
+        continue;
+      }
+
+      const write = {
+        ...change.set,
+        planFlagReconciledAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      // Verklig avslutstid från Stripe när den finns — aldrig dagens datum,
+      // annars hamnar en gammal uppsägning i veckans digest.
+      if (change.canceledAt) {
+        write.subscriptionCancelledAt = admin.firestore.Timestamp.fromMillis(change.canceledAt * 1000);
+      }
+      await docSnap.ref.update(write);
+
+      if (change.outcome === "downgrade") { downgraded++; console.log(`🔻 ${docSnap.id}: ${user.subscriptionPlan} → free (Stripe saknar levande prenumeration)`); }
+      else { restored++; console.log(`🔺 ${docSnap.id}: status återställd till active`); }
+    }
+
+    console.log(`reconcileStripeSubscriptions: ${checked} kontrollerade, ${downgraded} nedgraderade, ${restored} återställda, ${flagged} flaggade`);
+    return null;
+  });
+
 // ==========================================
 //  AUTOMATISK PÅFYLLNING (CRON JOB)
 // ==========================================
@@ -2697,6 +2763,56 @@ exports.runOpsDigestNow = functions
     } catch (err) {
       console.error('runOpsDigestNow misslyckades:', err);
       res.status(500).json({ error: 'Failed', message: err.message });
+    }
+  });
+
+// --- RÖSTCOACH (fas 0: röstlabbet) ---
+// Delar ut en kortlivad token som webbläsaren använder för att prata direkt
+// med Gemini Live. API-nyckeln lämnar aldrig servern.
+//
+// OBS — behandlingsplats: det här går mot Gemini Developer API, inte Vertex
+// europe-west1 som askCoach. Live-ljud behandlas alltså INTE med EU-garanti.
+// Därför är funktionen i fas 0 spärrad till en liten allowlist (egna tester)
+// och får inte öppnas för vanliga användare innan det beslutet är taget
+// (se "Öppna beslut" i docs/voice-coach-plan.md).
+//
+// Kvot/plan-koll hör till fas 2. Systeminstruktion och verktyg låses inte i
+// tokenen än — klienten skickar dem själv — vilket är okej för ett spärrat
+// labb men ska flyttas till servern (liveConnectConstraints) före lansering.
+const VOICE_LIVE_MODEL = process.env.VOICE_LIVE_MODEL || 'gemini-3.8-live';
+const VOICE_LAB_EMAILS = (process.env.VOICE_LAB_EMAILS || 'bjorn.sundberg@squareverse.se')
+  .split(',')
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
+exports.mintVoiceSession = functions
+  .region('europe-west1')
+  .runWith({ secrets: [geminiApiKey], memory: '256MB', timeoutSeconds: 30 })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Du måste vara inloggad.');
+    }
+    const email = String(context.auth.token.email || '').toLowerCase();
+    if (!VOICE_LAB_EMAILS.includes(email)) {
+      throw new functions.https.HttpsError('permission-denied', 'Röstlabbet är inte öppet för det här kontot.');
+    }
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+      const now = Date.now();
+      const token = await ai.authTokens.create({
+        config: {
+          // 1 användning: att återuppta en session räknas inte som ny.
+          uses: 1,
+          // Sessionen får leva 30 min; ny session måste starta inom 2 min.
+          expireTime: new Date(now + 30 * 60 * 1000).toISOString(),
+          newSessionExpireTime: new Date(now + 2 * 60 * 1000).toISOString(),
+        },
+      });
+      return { token: token.name, model: VOICE_LIVE_MODEL };
+    } catch (error) {
+      console.error('mintVoiceSession error:', error);
+      throw new functions.https.HttpsError('internal', `Kunde inte starta röstsession: ${error.message}`);
     }
   });
 
