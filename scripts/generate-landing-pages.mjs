@@ -84,7 +84,7 @@ const pages = [
       ['Always Backed Up', 'Everything syncs to the cloud automatically — no lost spreadsheet, no version confusion between devices.'],
     ],
     faqs: [
-      ['Is there a downloadable scouting template?', 'Yes — the free printable game tracking template has a shot chart, a faceoff tally, and a shift chart on one page, no account needed. If you would rather skip paper, Ice IQ logs the same actions in the app and builds the stats for you.'],
+      ['Is there a downloadable scouting template?', 'Yes. The free player evaluation template has a tryout sheet for a whole group and a one-player evaluation form, and the free game tracking template has a shot chart, faceoff tally, and shift chart. Neither needs an account. If you would rather skip paper, Ice IQ logs game actions in the app and builds the stats for you.'],
       ['What can I log for evaluation purposes?', 'Actions like shots on goal, missed shots, blocked shots, goals, and assists, tracked per player and rolled into season history.'],
       ['Can I evaluate more than one player?', 'Yes. Team management supports tracking multiple players or a full roster from a single account.'],
       ['Is this meant for coaches or for parents?', "Both. It's built for hockey parents, players, and coaches who want structured game data without doing paperwork after every game."],
@@ -159,6 +159,37 @@ const pages = [
     features: [],
     faqs: [],
   },
+  {
+    // Gratis utvärderingsmall för sökningarna "hockey player evaluation
+    // template/sheet/form" och "tryout evaluation sheet", som ingen sida
+    // tidigare matchade (Search Console, okt 2026). Bara engelska: sökningarna
+    // kommer nästan helt från Nordamerika.
+    // Copy speglar src/pages/landing/PlayerEvaluationTemplate.tsx.
+    slug: 'hockey-player-evaluation-template',
+    title: 'Free Hockey Player Evaluation Template & Tryout Sheet (PDF) | Ice IQ',
+    description: 'Download a free, printable hockey player evaluation template: a tryout evaluation sheet for a whole group and a one-player evaluation form, with a clear 1–5 scale. No account needed.',
+    ogTitle: 'Free Hockey Player Evaluation Template & Tryout Sheet (PDF)',
+    h1: 'Free Hockey Player Evaluation Template and Tryout Sheet',
+    intro: 'Two printable pages, no account needed. A tryout evaluation sheet for rating a whole group by skill, and a player evaluation form for one player at tryouts, mid-season, or the end of the season.',
+    download: {
+      href: '/downloads/ice-iq-player-evaluation-template-en.pdf',
+      text: 'Download the free PDF',
+      note: 'Two pages · PDF · US Letter, prints fine on A4',
+    },
+    features: [
+      ['Tryout Evaluation Sheet', 'Rate up to 18 skaters on skating, puck skills, passing, shooting, hockey sense, and compete, with a total out of 30 and room for notes.'],
+      ['One-Player Evaluation Form', 'Eight skills with a short description each, a rating, and space for what you actually saw, plus one strength and one thing to work on.'],
+      ['A Clear 1–5 Scale', 'From "well below the group" to "stands out", so several evaluators rate the same way and players are compared with their own age group.'],
+      ['Built for Feedback, Not Just Cuts', 'The form ends with one strength and one thing to work on, the two things a young player can actually take with them.'],
+    ],
+    faqs: [
+      ['What should a hockey player evaluation include?', 'For skaters: skating, puck handling, passing and receiving, shooting, hockey sense, defensive play, compete, and coachability. Rate each on a fixed scale and write down what you saw, so the rating can be explained to the player and parents.'],
+      ['How do you run evaluations at hockey tryouts?', 'Split players into groups, give each evaluator one sheet per group or station, and rate against the age group rather than older players. Use more than one evaluator and more than one session, and compare totals only after every session is done.'],
+      ['Is the template free?', 'Yes. It is a free PDF with no account or email required. Print as many copies as you need.'],
+      ['Does it work for goalies?', 'The sheets are built for skaters. Goalies need different criteria, such as positioning, rebound control, and tracking the puck, so evaluate them separately.'],
+      ['How can I follow a player after the evaluation?', 'An evaluation shows where a player is on one day. Ice IQ logs each game in under two minutes and compares the player with their own season average, so you can see whether the thing they are working on actually improves.'],
+    ],
+  },
 ];
 
 function escapeHtml(str) {
@@ -195,7 +226,9 @@ function buildStaticBody(page) {
   if (page.download) {
     const d = page.download;
     parts.push(`        <p><a href="${d.href}" download>${escapeHtml(d.text)}</a> (${escapeHtml(d.note)})</p>`);
-    parts.push(`        <p><a href="${d.hrefSv}" download lang="sv">${escapeHtml(d.textSv)}</a></p>`);
+    if (d.hrefSv) {
+      parts.push(`        <p><a href="${d.hrefSv}" download lang="sv">${escapeHtml(d.textSv)}</a></p>`);
+    }
   }
 
   for (const [title, desc] of page.features) {

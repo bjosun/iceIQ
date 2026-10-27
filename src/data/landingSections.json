@@ -114,6 +114,29 @@
       "link": { "text": "Why season trends matter more than single games", "path": "/youth-hockey-stats" }
     }
   ],
+  "hockey-player-evaluation-template": [
+    {
+      "heading": "How to use the tryout sheet",
+      "paragraphs": [
+        "Give each evaluator one sheet per group or station. Write the jersey number before the name, since numbers are what you see from the stands. Rate every skill from 1 to 5 against this age group, add up the total, and use the notes column for anything a number can't hold, like a player who was sick or played out of position.",
+        "Totals from one session are noisy. A player can have a bad skate. Compare totals only after every session, and when two evaluators disagree by more than a point on the same skill, talk about what each of you saw before you average it."
+      ]
+    },
+    {
+      "heading": "When to use the one-player form",
+      "paragraphs": [
+        "The second page is for one player at a time: a borderline decision at tryouts, a mid-season check-in, or an end-of-season talk with a player and their parents. Each skill has a short description so everyone means the same thing by \"hockey sense\" or \"compete\", and the \"what I saw\" column keeps the rating tied to something that happened on the ice.",
+        "The form ends with one strength and one thing to work on. Young players remember one thing; a list of five gets ignored."
+      ]
+    },
+    {
+      "heading": "After the evaluation",
+      "paragraphs": [
+        "An evaluation is a snapshot. Whether a player develops shows up over a season of games, which is where Ice IQ comes in: log each game in under two minutes, and the AI coach compares the player with their own season average and suggests one thing to work on next."
+      ],
+      "link": { "text": "Why season trends matter more than single games", "path": "/youth-hockey-stats" }
+    }
+  ],
   "hockey-iq-app": [
     {
       "heading": "Two kinds of hockey IQ tools",

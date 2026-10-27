@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, LucideIcon } from 'lucide-react';
+import { ArrowRight, Download, LucideIcon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSEO } from '../../hooks/useSEO';
 import guides from '../../data/guides.json';
@@ -35,6 +35,9 @@ export interface LandingPageProps {
   faqs: LandingFAQ[];
   ctaHeading: string;
   ctaDesc: string;
+  /** Free printable template: replaces the hero's signup button with a download. */
+  download?: { href: string; text: string; note: string };
+  preview?: { src: string; alt: string };
 }
 
 // Shared shell for English keyword-targeted landing pages. Each route file
@@ -52,6 +55,8 @@ export default function LandingPage({
   faqs,
   ctaHeading,
   ctaDesc,
+  download,
+  preview,
 }: LandingPageProps) {
   const { user } = useAuth();
   useSEO({ title: seoTitle, description: seoDescription, path });
@@ -80,24 +85,48 @@ export default function LandingPage({
             {intro}
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/dashboard"
-              state={startState}
-              className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-primary-600 to-cyan-600 hover:from-primary-500 hover:to-cyan-500 text-white rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25"
-            >
-              {user ? 'Go to Dashboard' : 'Try It Free'}
-              <ArrowRight className="ml-2" size={20} />
-            </Link>
-            <Link
-              to="/#pricing"
-              className="inline-flex items-center justify-center px-8 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-sm text-white rounded-xl font-semibold text-lg transition-all border border-white/10"
-            >
-              View Plans
-            </Link>
-          </div>
+          {download ? (
+            <>
+              <a
+                href={download.href}
+                download
+                className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-primary-600 to-cyan-600 hover:from-primary-500 hover:to-cyan-500 text-white rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25"
+              >
+                <Download className="mr-2" size={20} />
+                {download.text}
+              </a>
+              <p className="text-gray-500 text-sm mt-3">{download.note}</p>
+            </>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/dashboard"
+                state={startState}
+                className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-primary-600 to-cyan-600 hover:from-primary-500 hover:to-cyan-500 text-white rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25"
+              >
+                {user ? 'Go to Dashboard' : 'Try It Free'}
+                <ArrowRight className="ml-2" size={20} />
+              </Link>
+              <Link
+                to="/#pricing"
+                className="inline-flex items-center justify-center px-8 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-sm text-white rounded-xl font-semibold text-lg transition-all border border-white/10"
+              >
+                View Plans
+              </Link>
+            </div>
+          )}
         </div>
       </section>
+
+      {preview && (
+        <section className="pb-20">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="rounded-2xl border border-white/10 bg-white p-2 shadow-2xl">
+              <img src={preview.src} alt={preview.alt} className="w-full h-auto rounded-lg" />
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="py-20 bg-gray-800/20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

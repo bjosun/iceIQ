@@ -28,6 +28,11 @@
           "source": "iceiq.app",
           "destination": "https://www.iceiq.app",
           "type": 301
+        },
+        {
+          "source": "/en{,/**}",
+          "destination": "/",
+          "type": 301
         }
       ],
       "rewrites": [
@@ -54,6 +59,10 @@
         {
           "source": "/game-tracking-template",
           "destination": "/game-tracking-template.html"
+        },
+        {
+          "source": "/hockey-player-evaluation-template",
+          "destination": "/hockey-player-evaluation-template.html"
         },
         {
           "source": "/unsubscribe",
@@ -77,6 +86,13 @@
         "**/.*",
         "**/node_modules/**"
       ],
+      "redirects": [
+        {
+          "source": "/en{,/**}",
+          "destination": "/",
+          "type": 301
+        }
+      ],
       "rewrites": [
         {
           "source": "/hockey-tracking-app",
@@ -101,6 +117,10 @@
         {
           "source": "/game-tracking-template",
           "destination": "/game-tracking-template.html"
+        },
+        {
+          "source": "/hockey-player-evaluation-template",
+          "destination": "/hockey-player-evaluation-template.html"
         },
         {
           "source": "/unsubscribe",

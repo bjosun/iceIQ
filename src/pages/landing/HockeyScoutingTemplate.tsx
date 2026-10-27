@@ -40,7 +40,7 @@ export default function HockeyScoutingTemplate() {
       faqs={[
         {
           question: 'Is there a downloadable scouting template?',
-          answer: 'Yes — the free printable game tracking template has a shot chart, a faceoff tally, and a shift chart on one page, no account needed. If you would rather skip paper, Ice IQ logs the same actions in the app and builds the stats for you.',
+          answer: 'Yes. The free player evaluation template has a tryout sheet for a whole group and a one-player evaluation form, and the free game tracking template has a shot chart, faceoff tally, and shift chart. Neither needs an account. If you would rather skip paper, Ice IQ logs game actions in the app and builds the stats for you.',
         },
         {
           question: 'What can I log for evaluation purposes?',
