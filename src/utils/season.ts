@@ -28,3 +28,17 @@ export function avgOf(games: { points?: number }[]): number {
   const sum = games.reduce((a, g) => a + (g.points || 0), 0);
   return Number((sum / games.length).toFixed(1));
 }
+
+/**
+ * Sista dagen ett säsongspass gäller: 31 juli. Köps det med mindre än 60 dagar
+ * kvar (juni–juli) löper det ut nästa år i stället. Samma regel som
+ * seasonPassEnd i functions/season_pass.js.
+ */
+export function seasonPassEnd(now: Date = new Date()): Date {
+  const start = now.getUTCMonth() >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
+  let end = new Date(Date.UTC(start + 1, 6, 31, 23, 59, 59));
+  if (end.getTime() - now.getTime() < 60 * 24 * 60 * 60 * 1000) {
+    end = new Date(Date.UTC(start + 2, 6, 31, 23, 59, 59));
+  }
+  return end;
+}

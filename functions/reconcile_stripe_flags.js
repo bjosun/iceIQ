@@ -20,11 +20,34 @@ const STRIPE_LIVE = new Set(["active", "trialing", "past_due"]);
  * @returns {null|{outcome: string, set?: object, canceledAt?: number}}
  *   null        = inget att göra (gratis, apple-ägd, eller Stripe håller med)
  *   "downgrade" = skriv `set`; `canceledAt` (epoch s) om Stripe vet när
+ *   "expired"   = säsongspass som löpt ut (inget Stripe-anrop behövs)
  *   "flagged"   = betald flagga utan Stripe-kund — aldrig tyst nedgradering
  *                 (kan vara manuellt tilldelat comp-konto), bara rapport
  */
-function reconcileUserFlag(user, stripeSubs) {
+function reconcileUserFlag(user, stripeSubs, now = new Date()) {
   if (user.subscriptionSource === "apple") return null;
+
+  // Säsongspass är ett engångsköp utan Stripe-prenumeration: avsaknaden av en
+  // levande prenumeration betyder här INTE att kunden slutat betala. Det enda
+  // som avgör är utgångsdatumet. Passet ska också aldrig flaggas som "betald
+  // flagga utan Stripe-kund" — det har en kund, bara ingen prenumeration.
+  if (user.subscriptionInterval === "season") {
+    if (user.subscriptionStatus !== "active") return null;
+    const until = user.seasonPassUntil ? new Date(user.seasonPassUntil).getTime() : NaN;
+    if (!Number.isNaN(until) && until > now.getTime()) return null;
+    return {
+      outcome: "expired",
+      set: {
+        subscriptionStatus: "expired",
+        subscriptionPlan: "free",
+        subscriptionInterval: null,
+        aiCredits: 0,
+        cancelledPlan: user.subscriptionPlan,
+      },
+      canceledAt: null,
+    };
+  }
+
   if (!user.subscriptionPlan || user.subscriptionPlan === "free") return null;
   if (user.subscriptionStatus !== "active" && user.subscriptionStatus !== "past_due") return null;
 

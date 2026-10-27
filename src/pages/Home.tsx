@@ -489,7 +489,7 @@ function HomePage() {
                     { label: t('compare.players'), free: '3', premium: t('compare.unlimited'), elite: t('compare.unlimited') },
                     { label: t('compare.aiCredits'), free: '3', premium: '50', elite: '500' },
                     { label: t('compare.scoring'), free: true, premium: true, elite: true },
-                    { label: t('compare.history'), free: true, premium: true, elite: true },
+                    { label: t('compare.history'), free: t('compare.historyFree'), premium: t('compare.historyFull'), elite: t('compare.historyFull') },
                     { label: t('compare.moneyMode'), free: true, premium: true, elite: true },
                     { label: t('compare.cloud'), free: false, premium: true, elite: true },
                     { label: t('compare.charts'), free: false, premium: true, elite: true },

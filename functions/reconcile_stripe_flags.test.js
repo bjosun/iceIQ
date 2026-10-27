@@ -52,3 +52,24 @@ test("betald flagga UTAN stripeCustomerId → flagga, nedgradera aldrig tyst", (
   assert.strictEqual(r.outcome, "flagged");
   assert.ok(!("set" in r));
 });
+
+const pass = (extra = {}) => premium({
+  subscriptionInterval: "season", seasonPassUntil: "2027-07-31T23:59:59.000Z", ...extra,
+});
+
+test("säsongspass inom giltighetstiden → rör aldrig flaggan, trots att Stripe saknar prenumeration", () => {
+  assert.strictEqual(reconcileUserFlag(pass(), [], new Date("2026-12-01T00:00:00Z")), null);
+});
+
+test("säsongspass som löpt ut → nedgradera till free", () => {
+  const r = reconcileUserFlag(pass(), [], new Date("2027-08-01T00:00:00Z"));
+  assert.strictEqual(r.outcome, "expired");
+  assert.strictEqual(r.set.subscriptionPlan, "free");
+  assert.strictEqual(r.set.subscriptionStatus, "expired");
+  assert.strictEqual(r.set.cancelledPlan, "premium");
+});
+
+test("säsongspass utan utgångsdatum → nedgradera hellre än att ge Premium för alltid", () => {
+  const r = reconcileUserFlag(pass({ seasonPassUntil: undefined }), [], new Date("2026-12-01T00:00:00Z"));
+  assert.strictEqual(r.outcome, "expired");
+});

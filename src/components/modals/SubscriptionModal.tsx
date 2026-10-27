@@ -7,7 +7,8 @@ import { isNativeApp } from '../../utils/platform';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
-import { currencyForLanguage, formatPrice, priceFor } from '../../utils/pricing';
+import { currencyForLanguage, formatPrice, priceFor, seasonPassPrice } from '../../utils/pricing';
+import { seasonPassEnd } from '../../utils/season';
 
 interface SubscriptionModalProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
   const { user } = useAuth();
   
   // State för val
-  const [selectedPlan, setSelectedPlan] = useState<'premium' | 'elite'>('premium');
+  const [selectedPlan, setSelectedPlan] = useState<'premium' | 'elite' | 'season'>('premium');
   const [selectedInterval, setSelectedInterval] = useState<'monthly' | 'yearly'>('monthly');
   const [processing, setProcessing] = useState(false);
 
@@ -36,7 +37,9 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
     setProcessing(true);
     try {
       // Om man redan har den valda planen -> Hantera (öppna portal)
-      if (subscription.plan === selectedPlan) {
+      if (selectedPlan === 'season') {
+        await upgradeSubscription('season', 'monthly');
+      } else if (subscription.plan === selectedPlan) {
         if (manageSubscription) {
             await manageSubscription();
         }
@@ -86,9 +89,29 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
     }
   };
 
-  const currentPlanData = plansData[selectedPlan];
-  const price = selectedInterval === 'monthly' ? currentPlanData.priceMonthly : currentPlanData.priceYearly;
-  const period = selectedInterval === 'monthly' ? (language === 'en' ? '/mo' : '/mån') : (language === 'en' ? '/yr' : '/år');
+  const isSeason = selectedPlan === 'season';
+  const seasonEndText = seasonPassEnd().toLocaleDateString(language === 'sv' ? 'sv-SE' : 'en-GB', {
+    day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+  });
+  // Den som redan har en plan ska inte köpa ett pass ovanpå den.
+  const seasonBlocked = isSeason && subscription.plan !== 'free';
+
+  const seasonData = {
+    name: t('seasonPass.name'),
+    features: [
+      { icon: Crown, text: t('seasonPass.until', { date: seasonEndText }), included: true },
+      { icon: BarChart3, text: t('seasonPass.f2'), included: true },
+      { icon: Sparkles, text: t('seasonPass.f3'), included: true },
+      { icon: Check, text: t('seasonPass.f4'), included: true },
+    ],
+  };
+  const currentPlanData = isSeason ? seasonData : plansData[selectedPlan];
+  const price = isSeason
+    ? seasonPassPrice(language)
+    : selectedInterval === 'monthly' ? plansData[selectedPlan].priceMonthly : plansData[selectedPlan].priceYearly;
+  const period = isSeason
+    ? ''
+    : selectedInterval === 'monthly' ? (language === 'en' ? '/mo' : '/mån') : (language === 'en' ? '/yr' : '/år');
 
   return (
     <Modal
@@ -141,6 +164,16 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             <Sparkles size={16} className={selectedPlan === 'elite' ? "text-cyan-200" : ""} />
             Elite (AI)
           </button>
+          <button
+            onClick={() => setSelectedPlan('season')}
+            className={`flex-1 py-3 rounded-lg font-bold transition-all text-sm flex items-center justify-center gap-2 ${
+              selectedPlan === 'season'
+                ? 'bg-gray-700 text-white shadow-md border border-gray-600'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            {t('seasonPass.tab')}
+          </button>
         </div>
 
         {/* MAIN CARD */}
@@ -167,7 +200,12 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
               <span className="text-gray-400 ml-1 font-medium">{period}</span>
             </div>
             
+            {isSeason && (
+              <p className="text-gray-400 text-sm mt-3">{t('seasonPass.desc')}</p>
+            )}
+
             {/* Interval Toggle inside card */}
+            {!isSeason && (
             <div className="flex justify-center gap-4 text-sm mt-4">
                <button 
                  onClick={() => setSelectedInterval('monthly')}
@@ -182,6 +220,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                  {language === 'sv' ? 'Årsvis' : 'Yearly'} <span className="text-[10px] bg-green-500 text-black px-1 rounded font-bold">-15%</span>
                </button>
             </div>
+            )}
           </div>
 
           <ul className="space-y-4 mb-8 max-w-sm mx-auto">
@@ -205,16 +244,22 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                 : 'bg-yellow-500 hover:bg-yellow-400 border-yellow-500 text-black shadow-lg shadow-yellow-500/20'
             }
             loading={processing}
+            disabled={seasonBlocked}
             onClick={handleAction}
             icon={selectedPlan === 'elite' ? Sparkles : Crown}
             fullWidth
             size="lg"
           >
-            {subscription.plan === selectedPlan 
+            {isSeason
+              ? t('seasonPass.buy')
+              : subscription.plan === selectedPlan 
               ? (language === 'sv' ? 'Hantera Prenumeration' : 'Manage Subscription') 
               : (language === 'sv' ? `Uppgradera till ${currentPlanData.name}` : `Upgrade to ${currentPlanData.name}`)
             }
           </Button>
+          {seasonBlocked && (
+            <p className="text-gray-500 text-xs text-center mt-3">{t('seasonPass.alreadyPaid')}</p>
+          )}
         </Card>
 
         {/* Guarantee */}

@@ -16,6 +16,8 @@ Milstolpar, en gång per konto, som tidsstämp på användarens eget dokument:
 | `actionTapped` | tryckte en aktion med en riktig spelare |
 | `saveTapped` | tryckte spara |
 | `gameSaved` | matchen sparades |
+| `historyLockSeen` | såg att äldre matcher är låsta (gratisfönstret, 5 matcher) |
+| `historyUnlockClicked` | tryckte "lås upp" i den rutan |
 
 Vid kontoskapande sparas dessutom `acquisition.referrer` (avsändarens värdnamn, t.ex. `google.com`) och `acquisition.landing` (sidans sökväg utan frågesträng).
 

@@ -106,3 +106,16 @@ export function creditPackPrice(language: string): string {
   const currency = currencyForLanguage(language);
   return formatPrice(CREDIT_PACK_AMOUNT[currency], currency, language);
 }
+
+// Säsongspasset: Premium till säsongens slut (31 juli), betalt en gång. Måste
+// matcha SEASON_PASS_AMOUNT i functions/index.js — backend skickar beloppet till
+// Stripe som price_data, så det här är priset kunden både ser och debiteras.
+const SEASON_PASS_AMOUNT: Record<Currency, number> = {
+  sek: 19900,
+  usd: 1900,
+};
+
+export function seasonPassPrice(language: string): string {
+  const currency = currencyForLanguage(language);
+  return formatPrice(SEASON_PASS_AMOUNT[currency], currency, language);
+}

@@ -17,6 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { isNativeApp } from '../../utils/platform';
 import { moneyModeUnit } from '../../utils/pricing';
+import { limitHistory } from '../../utils/historyLimit';
 import { usePlayerData } from '../../hooks/usePlayerData'; 
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -42,6 +43,7 @@ interface PlayerHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   players: Player[]; 
+  onUpgrade?: () => void;
 }
 
 type TabType = 'table' | 'chart' | 'stats';
@@ -54,7 +56,7 @@ interface GameRecord {
   bonus: number;
 }
 
-export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerHistoryModalProps) {
+export default function PlayerHistoryModal({ isOpen, onClose, players, onUpgrade }: PlayerHistoryModalProps) {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { subscription } = useSubscription();
@@ -65,7 +67,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
 
   const [activeTab, setActiveTab] = useState<TabType>('table');
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>('');
-  const [games, setGames] = useState<GameRecord[]>([]);
+  const [allGames, setAllGames] = useState<GameRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Välj första spelaren automatiskt
@@ -93,7 +95,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
           bonus: game.bonus || 0
         }));
 
-        setGames(formattedGames);
+        setAllGames(formattedGames);
       } catch (error) {
         console.error("Failed to load player history", error);
       } finally {
@@ -105,6 +107,12 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
       fetchGames();
     }
   }, [selectedPlayerName, isOpen, user, getPlayerHistory]);
+
+  // Gratiskonton ser de senaste matcherna; äldre är sparade men låsta.
+  const { visible: games, lockedCount } = limitHistory(
+    allGames,
+    subscription.plan === 'free' && !isNativeApp,
+  );
 
   const chartData = {
     labels: games.map(game => game.date).reverse(),
@@ -288,6 +296,17 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
                   ) : (
                     <div className="text-center py-8 text-gray-500">{t('noMatchesRegistered') || 'No matches recorded yet.'}</div>
                   )}
+                  {lockedCount > 0 && (
+                    <div className="mt-4 rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4 text-center">
+                      <p className="text-yellow-400 font-bold mb-1">🔒 {t('historyLimit.tableMore', { count: lockedCount })}</p>
+                      <p className="text-gray-400 text-sm mb-3">{t('historyLimit.lockedHint')}</p>
+                      {onUpgrade && (
+                        <Button variant="primary" onClick={onUpgrade}>
+                          {t('historyLimit.cta')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -315,7 +334,7 @@ export default function PlayerHistoryModal({ isOpen, onClose, players }: PlayerH
                       <p className="text-gray-300 mb-6">
                         {t('upgradeForStats') || 'Upgrade to unlock advanced statistics and trends.'}
                       </p>
-                      <Button variant="primary" fullWidth>
+                      <Button variant="primary" fullWidth onClick={onUpgrade}>
                         {t('upgradeToPremium') || 'Upgrade to Premium'}
                       </Button>
                     </Card>

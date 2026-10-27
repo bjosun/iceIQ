@@ -14,7 +14,7 @@ export function useStripe() {
   // via SubscriptionContext), men en trasig signatur i betalvägen är inget att
   // lämna kvar när valutan nu också hänger på argumenten.
   const createCheckoutSession = useCallback(async (
-    plan: 'premium' | 'elite' | 'credits',
+    plan: 'premium' | 'elite' | 'credits' | 'season',
     interval: 'monthly' | 'yearly'
   ) => {
     if (!user) {

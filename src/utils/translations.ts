@@ -183,6 +183,29 @@ export const translations = {
       saveBlocked: "This is example data — add your own player first."
     },
 
+    // Free plan history window and season pass
+    historyLimit: {
+      locked: "{count} older matches are saved but locked",
+      lockedHint: "Your history is safe. Unlock it to see the whole season and how it has developed.",
+      cta: "Unlock the whole season",
+      compareTitle: "Season by season",
+      compareHint: "See how the player develops compared to earlier seasons. Part of Premium.",
+      tableMore: "+ {count} older matches"
+    },
+    seasonPass: {
+      tab: "Season pass",
+      name: "Season pass",
+      until: "Premium until {date}",
+      desc: "One payment for the whole season. No subscription, nothing to cancel.",
+      f1: "Everything in Premium, all season",
+      f2: "Full history and season trends",
+      f3: "50 AI Coach credits / month",
+      f4: "No auto-renewal",
+      buy: "Get the season pass",
+      alreadyPaid: "You already have an active plan.",
+      ends: "Season pass active until {date}"
+    },
+
     // Free plan limits
     playerLimit: {
       reached: "Free plan is limited to {limit} players. Upgrade to add more.",
@@ -198,6 +221,8 @@ export const translations = {
       aiCredits: "AI credits per month",
       scoring: "Match scoring",
       history: "Match history",
+      historyFree: "Last 5 matches",
+      historyFull: "Full history",
       cloud: "Cloud sync",
       charts: "Deeper stats & trends",
       moneyMode: "Money Mode",
@@ -411,14 +436,14 @@ export const translations = {
         tagline: "For getting started",
         f1: "Basic scoring",
         f2: "Save up to 3 players",
-        f3: "Simple history",
+        f3: "Last 5 matches",
         f4: "3 free AI credits/month"
       },
       premium: {
         tagline: "For dedicated players",
         f1: "Unlimited players",
         f2: "Cloud sync",
-        f3: "Deeper stats & trends",
+        f3: "Season trends & full history",
         f4: "50 AI credits/month",
         f5: "Fast AI analyses",
         cta: "Get Premium"
@@ -641,7 +666,7 @@ export const translations = {
     perMonth: "per month",
     freeFeature1: "Basic scoring system",
     freeFeature2Player: "Save up to 3 players",
-    freeFeature3: "Simple match history",
+    freeFeature3: "Last 5 matches",
     premiumFeature1: "Cloud sync",
     premiumFeature2: "Advanced statistics",
     premiumFeaturePlus: "Everything in Free, plus:",
@@ -658,6 +683,7 @@ export const translations = {
       title: "Payment successful",
       subscriptionBody: "Your subscription is now active.",
       creditsBody: "Your credits have been added. They stay on your account until you use them.",
+      seasonBody: "Your season pass is active. Premium runs until the end of the season, with nothing to cancel.",
       emailNote: "A receipt is on its way to your email.",
       backToApp: "Back to app",
       toDashboard: "Go to dashboard",
@@ -926,6 +952,29 @@ export const translations = {
       saveBlocked: "Detta är exempeldata — lägg till en egen spelare först."
     },
 
+    // Gratisplanens historikfönster och säsongspass
+    historyLimit: {
+      locked: "{count} äldre matcher är sparade men låsta",
+      lockedHint: "Din historik är trygg. Lås upp den för att se hela säsongen och hur utvecklingen sett ut.",
+      cta: "Lås upp hela säsongen",
+      compareTitle: "Säsong för säsong",
+      compareHint: "Se hur spelaren utvecklas mot tidigare säsonger. Ingår i Premium.",
+      tableMore: "+ {count} äldre matcher"
+    },
+    seasonPass: {
+      tab: "Säsongspass",
+      name: "Säsongspass",
+      until: "Premium till {date}",
+      desc: "En betalning för hela säsongen. Ingen prenumeration, inget att säga upp.",
+      f1: "Allt i Premium, hela säsongen",
+      f2: "Hela historiken och säsongstrender",
+      f3: "50 AI Coach-krediter / mån",
+      f4: "Förnyas inte automatiskt",
+      buy: "Köp säsongspass",
+      alreadyPaid: "Du har redan en aktiv plan.",
+      ends: "Säsongspass aktivt till {date}"
+    },
+
     // Free plan limits
     playerLimit: {
       reached: "Gratisplanen är begränsad till {limit} spelare. Uppgradera för att lägga till fler.",
@@ -941,6 +990,8 @@ export const translations = {
       aiCredits: "AI-krediter per månad",
       scoring: "Matchregistrering",
       history: "Matchhistorik",
+      historyFree: "Senaste 5 matcherna",
+      historyFull: "Hela historiken",
       cloud: "Molnsynk",
       charts: "Djupare statistik & trender",
       moneyMode: "Money Mode",
@@ -1152,14 +1203,14 @@ export const translations = {
         tagline: "För att komma igång",
         f1: "Grundläggande poängsystem",
         f2: "Spara upp till 3 spelare",
-        f3: "Enkel historik",
+        f3: "Senaste 5 matcherna",
         f4: "3 gratis AI-krediter/mån"
       },
       premium: {
         tagline: "För seriösa spelare",
         f1: "Obegränsat antal spelare",
         f2: "Molnsynk",
-        f3: "Djupare statistik & trender",
+        f3: "Säsongstrender & hela historiken",
         f4: "50 AI-krediter/mån",
         f5: "Snabba AI-analyser",
         cta: "Välj Premium"
@@ -1373,7 +1424,7 @@ export const translations = {
     perMonth: "per månad",
     freeFeature1: "Grundläggande poängsystem",
     freeFeature2Player: "Spara upp till 3 spelare",
-    freeFeature3: "Enkel matchhistorik",
+    freeFeature3: "Senaste 5 matcherna",
     premiumFeature1: "Molnsynkronisering",
     premiumFeature2: "Avancerad statistik",
     premiumFeaturePlus: "Allt i Gratis, plus:",
@@ -1390,6 +1441,7 @@ export const translations = {
       title: "Betalningen gick igenom",
       subscriptionBody: "Din prenumeration är nu aktiv.",
       creditsBody: "Dina krediter är tillagda. De ligger kvar på kontot tills du använder dem.",
+      seasonBody: "Ditt säsongspass är aktivt. Premium gäller till säsongens slut, och det finns inget att säga upp.",
       emailNote: "Ett kvitto är på väg till din mejl.",
       backToApp: "Tillbaka till appen",
       toDashboard: "Till dashboarden",

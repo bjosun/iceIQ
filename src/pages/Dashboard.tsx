@@ -24,6 +24,8 @@ import SummarySection from '../components/dashboard/SummarySection';
 import SeasonOverview from '../components/dashboard/SeasonOverview';
 import SeasonCompare from '../components/dashboard/SeasonCompare';
 import { seasonsIn, inSeason, seasonLabel, avgOf, SeasonKey } from '../utils/season';
+import { limitHistory } from '../utils/historyLimit';
+import { isNativeApp } from '../utils/platform';
 import AiCoach from '../components/ai/AiCoach'; 
 import PlayerHistoryModal from '../components/modals/PlayerHistoryModal';
 import TemplateEditorModal from '../components/modals/TemplateEditorModal';
@@ -429,6 +431,13 @@ export default function Dashboard() {
     if (user) void trackFunnel(user.uid, 'dashboardViewed');
   }, [user]);
 
+  // Gratiskonton ser de senaste matcherna; resten är sparad men låst.
+  const { visible: shownGames, lockedCount } = limitHistory(seasonGames, !isPremium && !isNativeApp && !isDemoMode);
+  const historyLockSeen = lockedCount > 0 && view === 'dev';
+  useEffect(() => {
+    if (user && historyLockSeen) void trackFunnel(user.uid, 'historyLockSeen');
+  }, [user, historyLockSeen]);
+
   // Spåras vid själva tryckningen, inte på ändrade antal: ett utkast som
   // återställs från förra sessionen ska inte räknas som en ny tryckning.
   const handleActionCountChange = (counts: Record<string, number>) => {
@@ -638,12 +647,12 @@ export default function Dashboard() {
   const hasUnsavedActions = Object.keys(actionCounts).length > 0;
   // Säsonger som finns för vald spelare. Korten, grafen och jämförelsen
   // följer spelaren och vald säsong; "Totalt" visar allt.
-  const seasonKeys = seasonsIn(seasonGames);
+  const seasonKeys = seasonsIn(shownGames);
   const effSeason: SeasonKey =
     selectedSeason === 'all' || (selectedSeason !== null && seasonKeys.includes(selectedSeason))
       ? selectedSeason
       : (seasonKeys[0] ?? 'all');
-  const playerPeriodGames = inSeason(seasonGames, effSeason);
+  const playerPeriodGames = inSeason(shownGames, effSeason);
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
   const periodStats = {
@@ -849,15 +858,31 @@ export default function Dashboard() {
             <SeasonOverview
               playerName={selectedPlayerName}
               games={playerPeriodGames}
-              allGames={seasonGames}
+              allGames={shownGames}
               summary={playerPeriodSummary}
               templateId={currentTemplateId}
             />
           )}
 
           {/* JÄMFÖR SÄSONGER */}
-          {selectedPlayerName && !isDemoMode && (
+          {selectedPlayerName && !isDemoMode && lockedCount === 0 && (
             <SeasonCompare games={seasonGames} selected={effSeason} onSelect={setSelectedSeason} />
+          )}
+
+          {/* Låst historik: äldre matcher och säsongsjämförelsen ingår i Premium */}
+          {selectedPlayerName && !isDemoMode && lockedCount > 0 && (
+            <Card className="border-yellow-500/30 bg-yellow-500/5">
+              <h2 className="text-xl font-semibold text-white mb-1">
+                🔒 {t('historyLimit.locked', { count: lockedCount })}
+              </h2>
+              <p className="text-gray-400 text-sm mb-4">{t('historyLimit.lockedHint')}</p>
+              <button
+                onClick={() => { if (user) void trackFunnel(user.uid, 'historyUnlockClicked'); setShowSubscriptionModal(true); }}
+                className="w-full py-3 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black text-sm font-bold touch-manipulation transition-colors"
+              >
+                {t('historyLimit.cta')}
+              </button>
+            </Card>
           )}
 
               {selectedPlayerName && (
@@ -941,7 +966,12 @@ export default function Dashboard() {
       )}
 
       {/* Modals */}
-      <PlayerHistoryModal isOpen={showHistoryModal} onClose={() => setShowHistoryModal(false)} players={players} />
+      <PlayerHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        players={players}
+        onUpgrade={() => { setShowHistoryModal(false); setShowSubscriptionModal(true); }}
+      />
       <TemplateEditorModal isOpen={showTemplateEditor} onClose={() => setShowTemplateEditor(false)} />
       <PlayerSelectModal 
         isOpen={showPlayerSelect} 

@@ -155,6 +155,15 @@ function planForPriceId(priceId) {
 const CREDITS_PER_PACK = 15;
 const MAX_CREDIT_PACKS = 10;
 
+// --- SÄSONGSPASS ---
+// Premium fram till säsongens slut (31 juli), betalt en gång: mode "payment",
+// ingen prenumeration att säga upp. Priset skickas med som price_data i stället
+// för ett förskapat Stripe-pris, så inget behöver skapas i Stripe-kontot och
+// belopp och produktnamn bestäms på ett enda ställe. Måste matcha
+// SEASON_PASS_PRICE i src/utils/pricing.ts (minsta enhet: öre/cent).
+const SEASON_PASS_AMOUNT = { sek: 19900, usd: 1900 };
+const { seasonPassEnd } = require("./season_pass");
+
 // Ice IQ-scopad portalkonfiguration (varumärke, länkar). Stripe-kontot delas
 // med squareverse-ai, som har sin egen konfiguration — utan detta ID skulle
 // alla kunder se samma (fel) varumärke i "Hantera prenumeration".
@@ -339,9 +348,14 @@ const sendPurchaseEmailSafely = async (userId, payload) => {
 // mejlet svarar på "vad har jag nu, och vad gör jag härnäst", eftersom den
 // stora risken efter ett köp är att kunden aldrig kommer igång och säger upp
 // nästa månad. Därför också ingen merförsäljning: de har just köpt.
-const buildPurchaseEmail = (lang, { kind, planType, credits }) => {
+const buildPurchaseEmail = (lang, { kind, planType, credits, until }) => {
   const en = lang === 'en';
-  const isSubscription = kind === 'subscription';
+  const isSeason = kind === 'season';
+  // Säsongspasset är Premium utan förnyelse; i övrigt läses det som en prenumeration.
+  const isSubscription = kind === 'subscription' || isSeason;
+  const untilText = until
+    ? new Date(until).toLocaleDateString(en ? 'en-GB' : 'sv-SE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+    : '';
   const planName = planType === 'elite' ? 'Elite' : 'Premium';
 
   const subject = isSubscription
@@ -352,7 +366,11 @@ const buildPurchaseEmail = (lang, { kind, planType, credits }) => {
     ? (en ? `${planName} is active.` : `${planName} är igång.`)
     : (en ? "Credits added." : "Krediterna är påfyllda.");
 
-  const creditLine = isSubscription
+  const creditLine = isSeason
+    ? (en
+        ? `Premium is active until ${untilText}. You have ${credits} AI credits this month, refilled on the 1st of every month.`
+        : `Premium gäller till ${untilText}. Du har ${credits} AI-krediter den här månaden, och de fylls på den 1:a varje månad.`)
+    : isSubscription
     ? (en
         ? `You have ${credits} AI credits this month, and they refill automatically every renewal.`
         : `Du har ${credits} AI-krediter den här månaden, och de fylls på automatiskt vid varje förnyelse.`)
@@ -376,7 +394,11 @@ const buildPurchaseEmail = (lang, { kind, planType, credits }) => {
         </a>
       </p>
       <p style="color:#6b7280;font-size:14px;line-height:1.6;">
-        ${isSubscription
+        ${isSeason
+          ? (en
+              ? "Your receipt comes separately from Stripe, who handle the payment. The season pass doesn't renew — nothing to cancel."
+              : "Ditt kvitto kommer separat från Stripe, som sköter betalningen. Säsongspasset förnyas inte automatiskt — det finns inget att säga upp.")
+          : isSubscription
           ? (en
               ? "Your receipt comes separately from Stripe, who handle the payment. You can change or cancel the subscription at any time under My Account."
               : "Ditt kvitto kommer separat från Stripe, som sköter betalningen. Du kan ändra eller säga upp prenumerationen när som helst under Mitt konto.")
@@ -1424,6 +1446,45 @@ exports.createStripeCheckoutSession = functions
         return { id: creditSession.id };
       }
 
+      if (plan === 'season') {
+        // Den som redan betalar ska inte köpa ett pass ovanpå: hen skulle få
+        // betala dubbelt för samma Premium.
+        const existing = (await getUsersCollection().doc(userId).get()).data() || {};
+        if (
+          (existing.subscriptionPlan === 'premium' || existing.subscriptionPlan === 'elite') &&
+          (existing.subscriptionStatus === 'active' || existing.subscriptionStatus === 'past_due')
+        ) {
+          throw new functions.https.HttpsError("failed-precondition", "You already have an active plan.");
+        }
+
+        const en = lang !== 'sv';
+        const seasonSession = await stripeInstance.checkout.sessions.create({
+          payment_method_types: ["card"],
+          mode: "payment",
+          success_url: `${APP_URL}/success?success=true&type=season&session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${APP_URL}/dashboard`,
+          client_reference_id: userId,
+          customer: customerId,
+          line_items: [{
+            price_data: {
+              currency,
+              unit_amount: SEASON_PASS_AMOUNT[currency] || SEASON_PASS_AMOUNT.sek,
+              product_data: {
+                name: en ? "Ice IQ Season Pass" : "Ice IQ Säsongspass",
+                description: en
+                  ? "Premium until the end of the season. One payment, no subscription."
+                  : "Premium till säsongens slut. En betalning, ingen prenumeration.",
+              },
+            },
+            quantity: 1,
+          }],
+          metadata: { type: 'season_pass', currency },
+          payment_intent_data: { statement_descriptor_suffix: "ICEIQ" },
+        });
+
+        return { id: seasonSession.id };
+      }
+
       const planKey = plan === 'elite' ? 'elite' : 'premium';
       const intervalKey = interval === "yearly" ? "yearly" : "monthly";
       const expected = priceTable[planKey][intervalKey];
@@ -1645,6 +1706,40 @@ exports.stripeWebhook = functions
             await sendPurchaseEmailSafely(userId, { kind: 'credits', credits: bought });
           }
 
+        } else if (userId && data.mode === "payment" && data.metadata?.type === "season_pass") {
+          // Engångsköp utan prenumeration: Premium med fast slutdatum. Absoluta
+          // värden, så en omleverans från Stripe är ofarlig; bara mejlet spärras.
+          const until = seasonPassEnd(new Date());
+          const creditAmount = creditsForPlan('premium');
+          const userRef = usersRef.doc(userId);
+          await userRef.set({
+            stripeCustomerId: customerId,
+            subscriptionStatus: "active",
+            subscriptionPlan: "premium",
+            subscriptionInterval: "season",
+            subscriptionSource: "stripe",
+            subscriptionId: null,
+            seasonPassUntil: until.toISOString(),
+            subscriptionEnd: until.toISOString(),
+            aiCredits: creditAmount,
+          }, { merge: true });
+          console.log(`✅ Säsongspass för ${userId} till ${until.toISOString()}`);
+
+          const passRef = userRef.collection('seasonPasses').doc(data.id);
+          const firstPass = await db.runTransaction(async (tx) => {
+            if ((await tx.get(passRef)).exists) return false;
+            tx.set(passRef, {
+              until: until.toISOString(),
+              amountTotal: data.amount_total,
+              currency: data.currency,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            return true;
+          });
+          if (firstPass) {
+            await sendPurchaseEmailSafely(userId, { kind: 'season', planType: 'premium', credits: creditAmount, until: until.toISOString() });
+          }
+
         } else if (userId) {
           const subscription = await stripeInstance.subscriptions.retrieve(subscriptionId);
           const interval = subscription.items.data[0].plan.interval;
@@ -1727,7 +1822,10 @@ exports.stripeWebhook = functions
         const snapshot = await usersRef.where("stripeCustomerId", "==", customerId).get();
         // En prenumeration som numera betalas via Apple (subscriptionSource) får
         // inte nollas av att en gammal Stripe-prenumeration avslutas.
-        if (!snapshot.empty && snapshot.docs[0].data().subscriptionSource !== "apple") {
+        // Ett säsongspass bärs inte av prenumerationen: en gammal prenumeration
+        // som avslutas ska inte ta ifrån kunden ett betalt pass.
+        if (!snapshot.empty && snapshot.docs[0].data().subscriptionSource !== "apple" &&
+            snapshot.docs[0].data().subscriptionInterval !== "season") {
           // Planen skrivs över till "free" i samma anrop — utan att spara
           // den gamla planen här kan ops-digesten aldrig säga VAD som sades
           // upp, bara ATT något gjorde det.
@@ -1774,14 +1872,14 @@ exports.reconcileStripeSubscriptions = functions
       .where("subscriptionPlan", "in", ["premium", "elite"])
       .get();
 
-    let checked = 0, downgraded = 0, restored = 0, flagged = 0;
+    let checked = 0, downgraded = 0, restored = 0, flagged = 0, expired = 0;
     for (const docSnap of snap.docs) {
       const user = docSnap.data();
       if (user.subscriptionSource === "apple") continue;
       if (user.subscriptionStatus !== "active" && user.subscriptionStatus !== "past_due") continue;
       checked++;
 
-      const subs = user.stripeCustomerId
+      const subs = user.stripeCustomerId && user.subscriptionInterval !== "season"
         ? (await stripeInstance.subscriptions.list({
             customer: user.stripeCustomerId, status: "all", limit: 10,
           })).data
@@ -1807,11 +1905,12 @@ exports.reconcileStripeSubscriptions = functions
       }
       await docSnap.ref.update(write);
 
-      if (change.outcome === "downgrade") { downgraded++; console.log(`🔻 ${docSnap.id}: ${user.subscriptionPlan} → free (Stripe saknar levande prenumeration)`); }
+      if (change.outcome === "expired") { expired++; console.log(`⌛ ${docSnap.id}: säsongspasset har löpt ut → free`); }
+      else if (change.outcome === "downgrade") { downgraded++; console.log(`🔻 ${docSnap.id}: ${user.subscriptionPlan} → free (Stripe saknar levande prenumeration)`); }
       else { restored++; console.log(`🔺 ${docSnap.id}: status återställd till active`); }
     }
 
-    console.log(`reconcileStripeSubscriptions: ${checked} kontrollerade, ${downgraded} nedgraderade, ${restored} återställda, ${flagged} flaggade`);
+    console.log(`reconcileStripeSubscriptions: ${checked} kontrollerade, ${downgraded} nedgraderade, ${restored} återställda, ${flagged} flaggade, ${expired} utgångna pass`);
     return null;
   });
 
@@ -1828,11 +1927,6 @@ exports.refillFreeCreditsMonthly = functions
     // Hämta alla användare som har 'free' plan
     const snapshot = await usersRef.where('subscriptionPlan', '==', 'free').get();
     
-    if (snapshot.empty) {
-      console.log('Inga gratisanvändare att återställa denna månad.');
-      return null;
-    }
-
     // Använd en Firebase "Batch" för att uppdatera hundratals konton blixtsnabbt
     const batch = db.batch();
     let count = 0;
@@ -1843,8 +1937,18 @@ exports.refillFreeCreditsMonthly = functions
       count++;
     });
 
+    // Säsongspass saknar fakturor som fyller på krediterna varje månad, så den
+    // här körningen gör det. Pass som löpt ut hanteras av den dagliga avstämningen.
+    const passSnap = await usersRef.where('subscriptionInterval', '==', 'season').get();
+    let passCount = 0;
+    passSnap.forEach((doc) => {
+      if (doc.data().subscriptionStatus !== 'active') return;
+      batch.update(doc.ref, { aiCredits: creditsForPlan('premium') });
+      passCount++;
+    });
+
     await batch.commit();
-    console.log(`✅ Månadsuppdatering klar: Gav ${FREE_MONTHLY_CREDITS} AI-krediter till ${count} gratisanvändare.`);
+    console.log(`✅ Månadsuppdatering klar: Gav ${FREE_MONTHLY_CREDITS} AI-krediter till ${count} gratisanvändare och påfyllning till ${passCount} säsongspass.`);
     return null;
   });
 // ==========================================
@@ -2425,7 +2529,7 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
   const quietActives = [];
   // Mätpunkter i första användningen (src/utils/funnel.ts): hur många konton
   // som nått varje steg, och varifrån nya konton kommer.
-  const FUNNEL_STEPS = ['dashboardViewed', 'addPlayerOpened', 'demoActionTapped', 'demoSaveBlocked', 'actionTapped', 'saveTapped', 'gameSaved'];
+  const FUNNEL_STEPS = ['dashboardViewed', 'addPlayerOpened', 'demoActionTapped', 'demoSaveBlocked', 'actionTapped', 'saveTapped', 'gameSaved', 'historyLockSeen', 'historyUnlockClicked'];
   const funnelCounts = Object.fromEntries(FUNNEL_STEPS.map((s) => [s, 0]));
   let funnelAccounts = 0;
   const referrers = {};
@@ -2649,6 +2753,8 @@ const runOpsDigest = async ({ dryRun = false, redirectTo = null } = {}) => {
           ['actionTapped', 'Tryckte en aktion med egen spelare'],
           ['saveTapped', 'Tryckte spara'],
           ['gameSaved', 'Sparade en match'],
+          ['historyLockSeen', 'Såg låst historik (gratisfönstret)'],
+          ['historyUnlockClicked', "Tryckte 'lås upp' på låst historik"],
         ].map(([step, label], i) => `<tr${i % 2 === 0 ? ' style="background:#f3f4f6;"' : ''}><td style="padding:6px 12px;">${label}</td><td style="padding:6px 12px;text-align:right;font-weight:bold;">${funnelCounts[step]}</td></tr>`).join('')}</table>
         ${Object.keys(referrers).length ? `
           <p style="margin:0 0 6px;color:#6b7280;font-size:13px;">Nya konton senaste 30 dagarna kommer ifrån</p>

@@ -18,7 +18,9 @@ export type FunnelStep =
   | 'demoSaveBlocked'    // försökte spara i exempelläget
   | 'actionTapped'       // tryckte in en aktion med en riktig spelare
   | 'saveTapped'         // tryckte på spara med en riktig spelare
-  | 'gameSaved';         // matchen sparades
+  | 'gameSaved'         // matchen sparades
+  | 'historyLockSeen'    // såg att äldre matcher är låsta (gratisfönstret)
+  | 'historyUnlockClicked'; // tryckte på "lås upp" i den rutan
 
 export const FUNNEL_STEPS: FunnelStep[] = [
   'dashboardViewed',
@@ -28,6 +30,8 @@ export const FUNNEL_STEPS: FunnelStep[] = [
   'actionTapped',
   'saveTapped',
   'gameSaved',
+  'historyLockSeen',
+  'historyUnlockClicked',
 ];
 
 // Per session räcker det att försöka en gång per steg.

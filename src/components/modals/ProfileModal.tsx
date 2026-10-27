@@ -8,6 +8,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 import { isNativeApp } from '../../utils/platform';
 import { appLockAvailable, appLockEnabled, setAppLockEnabled, unlockWithBiometry } from '../../utils/appLock';
 import { createStripePortalSession } from '../../services/firestore'; // Från din städade firebase.ts
@@ -25,6 +26,12 @@ interface ProfileModalProps {
 export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModalProps) {
   const { user, logout, deleteAccount } = useAuth();
   const { t, language } = useLanguage();
+  const { subscription } = useSubscription();
+  // Säsongspasset är ett engångsköp: ingen prenumeration att hantera, bara ett slutdatum.
+  const onSeasonPass = isPremium && subscription.interval === 'season';
+  const seasonPassEndText = subscription.subscriptionEnd
+    ? new Date(subscription.subscriptionEnd).toLocaleDateString(language === 'sv' ? 'sv-SE' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+    : '';
 
   // Hämta en kopia av sina uppgifter (rätten till tillgång/dataportabilitet).
   const [exporting, setExporting] = useState(false);
@@ -221,7 +228,9 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
             {language === 'en' ? "Subscription" : "Prenumeration"}
           </h3>
           <p className="text-sm text-gray-400 mb-4">
-            {isPremium 
+            {onSeasonPass
+              ? t('seasonPass.ends', { date: seasonPassEndText })
+              : isPremium 
               ? (isNativeApp
                   ? (language === 'en' ? "You are a Premium member." : "Du är Premium-medlem.")
                   : language === 'en' 
@@ -232,7 +241,7 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
                   : "Du använder gratisversionen.")}
           </p>
           
-          {isPremium && !isNativeApp && (
+          {isPremium && !isNativeApp && !onSeasonPass && (
             <Button variant="secondary" onClick={handleManageSubscription} loading={loading} fullWidth>
               {language === 'en' ? "Manage / Cancel Subscription" : "Hantera / Avsluta Prenumeration"}
             </Button>

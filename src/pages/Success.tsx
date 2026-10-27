@@ -12,6 +12,7 @@ export default function Success() {
   // Kreditköp och prenumeration landar på samma sida — utan detta skulle
   // den som köpt krediter få veta att hens "prenumeration är aktiv".
   const boughtCredits = searchParams.get('type') === 'credits';
+  const boughtSeason = searchParams.get('type') === 'season';
 
   // Checkout körs som en helsidesomdirigering, så window.opener är normalt
   // null. Knappen som stänger fönstret visas bara när den faktiskt gör något.
@@ -39,7 +40,7 @@ export default function Success() {
             {t('success.title')}
           </h1>
           <p className="text-gray-300 mb-2">
-            {boughtCredits ? t('success.creditsBody') : t('success.subscriptionBody')}
+            {boughtCredits ? t('success.creditsBody') : boughtSeason ? t('success.seasonBody') : t('success.subscriptionBody')}
           </p>
           <p className="text-gray-400 text-sm mb-8">
             {t('success.emailNote')}

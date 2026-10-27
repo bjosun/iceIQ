@@ -2,6 +2,10 @@ export const APP_NAME = 'Ice IQ';
 
 // Free-plan limits
 export const FREE_PLAYER_LIMIT = 3;
+// Gratiskonton ser de senaste matcherna; äldre ligger kvar sparade men låsta.
+// Värdet av statistiken växer med historiken, så gränsen sitter på historiken
+// och inte på antalet spelare.
+export const FREE_HISTORY_GAMES = 5;
 export const APP_VERSION = '1.0.0';
 export const APP_ID = 'iceiq';
 

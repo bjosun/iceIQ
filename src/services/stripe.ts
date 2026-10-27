@@ -13,7 +13,7 @@ export const getStripe = () => {
 
 export const stripeService = {
   // UPPDATERAD: Tar nu emot 'plan' som första argument
-  async createCheckoutSession(plan: 'premium' | 'elite' | 'credits', interval: 'monthly' | 'yearly', language: string) {
+  async createCheckoutSession(plan: 'premium' | 'elite' | 'credits' | 'season', interval: 'monthly' | 'yearly', language: string) {
     try {
       // Dynamisk import: se motsvarande kommentar i AuthContext — stripe.ts
       // importeras eagerly via SubscriptionContext, så firebase/functions
