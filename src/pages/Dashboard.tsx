@@ -438,6 +438,17 @@ export default function Dashboard() {
     if (user && historyLockSeen) void trackFunnel(user.uid, 'historyLockSeen');
   }, [user, historyLockSeen]);
 
+  // Länkarna från startsidan (?upgrade=true&plan=…) öppnar uppgraderingen direkt.
+  // Ingen hantering fanns tidigare, så de landade bara på dashboarden.
+  const upgradeQuery = new URLSearchParams(location.search);
+  const wantsUpgrade = upgradeQuery.get('upgrade') === 'true' && !isNativeApp;
+  useEffect(() => {
+    if (user && wantsUpgrade) setShowSubscriptionModal(true);
+  }, [user, wantsUpgrade]);
+  const qPlan = upgradeQuery.get('plan');
+  const initialPlan = qPlan === 'elite' || qPlan === 'season' ? qPlan : 'premium';
+  const initialInterval = upgradeQuery.get('interval') === 'yearly' ? 'yearly' : 'monthly';
+
   // Spåras vid själva tryckningen, inte på ändrade antal: ett utkast som
   // återställs från förra sessionen ska inte räknas som en ny tryckning.
   const handleActionCountChange = (counts: Record<string, number>) => {
@@ -997,6 +1008,8 @@ export default function Dashboard() {
       <SubscriptionModal 
         isOpen={showSubscriptionModal} 
         onClose={() => setShowSubscriptionModal(false)} 
+        initialPlan={initialPlan}
+        initialInterval={initialInterval}
       />
       <ShareReportModal
         isOpen={reportData !== null}

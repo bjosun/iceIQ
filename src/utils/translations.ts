@@ -203,7 +203,11 @@ export const translations = {
       f4: "No auto-renewal",
       buy: "Get the season pass",
       alreadyPaid: "You already have an active plan.",
-      ends: "Season pass active until {date}"
+      ends: "Season pass active until {date}",
+      oneTime: "one-time",
+      landingTitle: "Just here for the season?",
+      landingText: "The season pass gives you Premium until the end of the season for one payment. No subscription, nothing to cancel.",
+      landingCta: "Get the season pass"
     },
 
     // Free plan limits
@@ -972,7 +976,11 @@ export const translations = {
       f4: "Förnyas inte automatiskt",
       buy: "Köp säsongspass",
       alreadyPaid: "Du har redan en aktiv plan.",
-      ends: "Säsongspass aktivt till {date}"
+      ends: "Säsongspass aktivt till {date}",
+      oneTime: "engångs",
+      landingTitle: "Bara här för säsongen?",
+      landingText: "Säsongspasset ger dig Premium till säsongens slut för en enda betalning. Ingen prenumeration, inget att säga upp.",
+      landingCta: "Köp säsongspass"
     },
 
     // Free plan limits

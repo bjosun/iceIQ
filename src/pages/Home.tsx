@@ -10,6 +10,7 @@ import {
   currencyLabel,
   formatAmount,
   formatPrice,
+  seasonPassPrice,
   priceFor,
   type Interval,
 } from '../utils/pricing';
@@ -471,6 +472,25 @@ function HomePage() {
 
           </div>
 
+          {/* --- SÄSONGSPASS --- */}
+          <div className="max-w-4xl mx-auto mt-12 rounded-3xl border border-yellow-500/40 bg-yellow-500/5 p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6">
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-white mb-1">{t('seasonPass.landingTitle')}</h3>
+              <p className="text-gray-300 text-sm">{t('seasonPass.landingText')}</p>
+            </div>
+            <div className="text-center md:text-right">
+              <p className="text-3xl font-black text-yellow-400 mb-3">
+                {seasonPassPrice(language)} <span className="text-sm font-medium text-gray-400">{t('seasonPass.oneTime')}</span>
+              </p>
+              <Link
+                to="/dashboard?upgrade=true&plan=season"
+                className="inline-block px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl transition-all"
+              >
+                {t('seasonPass.landingCta')}
+              </Link>
+            </div>
+          </div>
+
           {/* --- JÄMFÖRELSETABELL --- */}
           <div className="max-w-4xl mx-auto mt-20">
             <h3 className="text-2xl font-bold text-white text-center mb-8">{t('compare.title')}</h3>
@@ -482,23 +502,24 @@ function HomePage() {
                     <th className="py-4 px-4 text-white font-bold text-center">{t('plans.free.name')}</th>
                     <th className="py-4 px-4 text-yellow-400 font-bold text-center">Premium</th>
                     <th className="py-4 px-4 text-primary-400 font-bold text-center">Elite</th>
+                    <th className="py-4 px-4 text-white font-bold text-center">{t('seasonPass.tab')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {([
-                    { label: t('compare.players'), free: '3', premium: t('compare.unlimited'), elite: t('compare.unlimited') },
-                    { label: t('compare.aiCredits'), free: '3', premium: '50', elite: '500' },
-                    { label: t('compare.scoring'), free: true, premium: true, elite: true },
-                    { label: t('compare.history'), free: t('compare.historyFree'), premium: t('compare.historyFull'), elite: t('compare.historyFull') },
-                    { label: t('compare.moneyMode'), free: true, premium: true, elite: true },
-                    { label: t('compare.cloud'), free: false, premium: true, elite: true },
-                    { label: t('compare.charts'), free: false, premium: true, elite: true },
-                    { label: t('compare.support'), free: false, premium: false, elite: true },
-                    { label: t('compare.price'), free: formatPrice(0, currency, language), premium: priceLine(plans.premium.price), elite: priceLine(plans.elite.price) },
-                  ] as { label: string; free: string | boolean; premium: string | boolean; elite: string | boolean }[]).map((row) => (
+                    { label: t('compare.players'), free: '3', premium: t('compare.unlimited'), elite: t('compare.unlimited'), season: t('compare.unlimited') },
+                    { label: t('compare.aiCredits'), free: '3', premium: '50', elite: '500', season: '50' },
+                    { label: t('compare.scoring'), free: true, premium: true, elite: true, season: true },
+                    { label: t('compare.history'), free: t('compare.historyFree'), premium: t('compare.historyFull'), elite: t('compare.historyFull'), season: t('compare.historyFull') },
+                    { label: t('compare.moneyMode'), free: true, premium: true, elite: true, season: true },
+                    { label: t('compare.cloud'), free: false, premium: true, elite: true, season: true },
+                    { label: t('compare.charts'), free: false, premium: true, elite: true, season: true },
+                    { label: t('compare.support'), free: false, premium: false, elite: true, season: false },
+                    { label: t('compare.price'), free: formatPrice(0, currency, language), premium: priceLine(plans.premium.price), elite: priceLine(plans.elite.price), season: `${seasonPassPrice(language)} ${t('seasonPass.oneTime')}` },
+                  ] as { label: string; free: string | boolean; premium: string | boolean; elite: string | boolean; season: string | boolean }[]).map((row) => (
                     <tr key={row.label} className="border-b border-gray-800 last:border-0">
                       <td className="py-3.5 px-4 text-gray-300">{row.label}</td>
-                      {[row.free, row.premium, row.elite].map((value, i) => (
+                      {[row.free, row.premium, row.elite, row.season].map((value, i) => (
                         <td key={i} className="py-3.5 px-4 text-center">
                           {typeof value === 'boolean'
                             ? (value

@@ -13,9 +13,11 @@ import { seasonPassEnd } from '../../utils/season';
 interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialPlan?: 'premium' | 'elite' | 'season';
+  initialInterval?: 'monthly' | 'yearly';
 }
 
-export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModalProps) {
+export default function SubscriptionModal({ isOpen, onClose, initialPlan = 'premium', initialInterval = 'monthly' }: SubscriptionModalProps) {
   const { t, language } = useLanguage();
   
   // Hämta de nya funktionerna från context
@@ -24,8 +26,8 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
   const { user } = useAuth();
   
   // State för val
-  const [selectedPlan, setSelectedPlan] = useState<'premium' | 'elite' | 'season'>('premium');
-  const [selectedInterval, setSelectedInterval] = useState<'monthly' | 'yearly'>('monthly');
+  const [selectedPlan, setSelectedPlan] = useState<'premium' | 'elite' | 'season'>(initialPlan);
+  const [selectedInterval, setSelectedInterval] = useState<'monthly' | 'yearly'>(initialInterval);
   const [processing, setProcessing] = useState(false);
 
   const handleAction = async () => {
