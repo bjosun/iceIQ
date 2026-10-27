@@ -268,7 +268,7 @@ export default function SubscriptionModal({ isOpen, onClose, initialPlan = 'prem
         <div className="mt-6 text-center">
           <div className="inline-flex items-center text-gray-500 text-xs">
             <Shield size={12} className="mr-1.5" />
-            {language === 'sv' ? 'Säker betalning via Stripe • Avbryt när du vill' : 'Secure payment via Stripe • Cancel anytime'}
+            {isSeason ? t('seasonPass.secure') : language === 'sv' ? 'Säker betalning via Stripe • Avbryt när du vill' : 'Secure payment via Stripe • Cancel anytime'}
           </div>
         </div>
       </div>

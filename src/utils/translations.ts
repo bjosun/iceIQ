@@ -185,12 +185,12 @@ export const translations = {
 
     // Free plan history window and season pass
     historyLimit: {
-      locked: "{count} older matches are saved but locked",
+      locked: "Older matches are saved but locked ({count})",
       lockedHint: "Your history is safe. Unlock it to see the whole season and how it has developed.",
       cta: "Unlock the whole season",
       compareTitle: "Season by season",
       compareHint: "See how the player develops compared to earlier seasons. Part of Premium.",
-      tableMore: "+ {count} older matches"
+      tableMore: "Older matches: +{count}"
     },
     seasonPass: {
       tab: "Season pass",
@@ -205,6 +205,7 @@ export const translations = {
       alreadyPaid: "You already have an active plan.",
       ends: "Season pass active until {date}",
       oneTime: "one-time",
+      secure: "Secure payment via Stripe • One-time payment",
       landingTitle: "Just here for the season?",
       landingText: "The season pass gives you Premium until the end of the season for one payment. No subscription, nothing to cancel.",
       landingCta: "Get the season pass"
@@ -958,12 +959,12 @@ export const translations = {
 
     // Gratisplanens historikfönster och säsongspass
     historyLimit: {
-      locked: "{count} äldre matcher är sparade men låsta",
+      locked: "Äldre matcher är sparade men låsta ({count})",
       lockedHint: "Din historik är trygg. Lås upp den för att se hela säsongen och hur utvecklingen sett ut.",
       cta: "Lås upp hela säsongen",
       compareTitle: "Säsong för säsong",
       compareHint: "Se hur spelaren utvecklas mot tidigare säsonger. Ingår i Premium.",
-      tableMore: "+ {count} äldre matcher"
+      tableMore: "Äldre matcher: +{count}"
     },
     seasonPass: {
       tab: "Säsongspass",
@@ -978,6 +979,7 @@ export const translations = {
       alreadyPaid: "Du har redan en aktiv plan.",
       ends: "Säsongspass aktivt till {date}",
       oneTime: "engångs",
+      secure: "Säker betalning via Stripe • Engångsbetalning",
       landingTitle: "Bara här för säsongen?",
       landingText: "Säsongspasset ger dig Premium till säsongens slut för en enda betalning. Ingen prenumeration, inget att säga upp.",
       landingCta: "Köp säsongspass"

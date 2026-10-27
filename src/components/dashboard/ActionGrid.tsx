@@ -8,10 +8,15 @@ import Card from '../ui/Card';
 import Modal from '../ui/Modal';
 import { loadFocus, resolveGrid, saveFocus, shortName } from '../../utils/gridLayout';
 import { BIG_POINTS, effectsEnabled, setEffectsEnabled, tapFeedback } from '../../utils/feedback';
+import { moneyModeUnit } from '../../utils/pricing';
 
 interface ActionGridProps {
   actionCounts: Record<string, number>;
   onCountChange: (counts: Record<string, number>) => void;
+  // I pengaläget är varje tryck värt poäng × faktor, så knapparna visar kronor
+  // i stället för poäng (summan i matchen räknas på samma sätt i Dashboard).
+  isMoneyMode?: boolean;
+  bonusFactor?: number;
 }
 
 // Fasta konfettibitar (inget slumpande vid render, så effekten är densamma
@@ -27,9 +32,14 @@ const CONFETTI = [
 // Byggd för användning vid rinken: hela kortet är tryckytan (+1),
 // minus-knappen i hörnet ångrar. Stora ytor, direkt feedback, ingen
 // scroll mitt i registreringen.
-export default function ActionGrid({ actionCounts, onCountChange }: ActionGridProps) {
+export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = false, bonusFactor = 1 }: ActionGridProps) {
   const { currentTemplate } = useTemplates();
   const { t, language } = useLanguage();
+  const worth = (points: number) => (isMoneyMode ? points * bonusFactor : points);
+  const worthLabel = (points: number) => {
+    const v = worth(points);
+    return `${v > 0 ? '+' : ''}${v}${isMoneyMode ? ` ${moneyModeUnit(language)}` : ' p'}`;
+  };
 
   // "Håll skärmen tänd" — avstängd som standard (samma mönster som
   // receptsajter). Webbläsare utan Wake Lock-API (äldre iOS, hemskärms-appar,
@@ -155,7 +165,7 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
     const { visual } = tapFeedback(big ? 'big' : positive ? 'plus' : 'negative');
     if (!visual) return;
     const id = ++fxCounter.current;
-    setFx(prev => ({ ...prev, [key]: { id, big, text: `${points > 0 ? '+' : ''}${points}` } }));
+    setFx(prev => ({ ...prev, [key]: { id, big, text: `${worth(points) > 0 ? '+' : ''}${worth(points)}` } }));
     window.setTimeout(() => {
       setFx(prev => (prev[key]?.id === id ? (({ [key]: _gone, ...rest }) => rest)(prev) : prev));
     }, 950);
@@ -223,7 +233,7 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
               </p>
               <div className="flex items-end justify-between">
                 <span className="text-xs text-gray-400">
-                  {action.points > 0 ? '+' : ''}{action.points} p
+                  {worthLabel(action.points)}
                 </span>
                 <span className={`${opts.compact ? 'text-2xl' : 'text-3xl'} font-black leading-none ${count > 0 ? countColor : 'text-gray-600'}`}>
                   <span key={count} className="inline-block animate-count-pop motion-reduce:animate-none">{count}</span>
@@ -412,7 +422,7 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
                       <option value="">{t('actionGrid.noFocus')}</option>
                       {grid.focusCandidates.map((a) => (
                         <option key={a.name.en} value={a.name.en}>
-                          {a.name[language] || a.name.en} ({a.points > 0 ? '+' : ''}{a.points})
+                          {a.name[language] || a.name.en} ({worthLabel(a.points)})
                         </option>
                       ))}
                     </select>
