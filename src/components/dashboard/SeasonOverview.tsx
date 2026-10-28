@@ -13,6 +13,7 @@ import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import Card from '../ui/Card';
 import BadgeShelf from './BadgeShelf';
 import AwardShelf from './AwardShelf';
+import SeasonTotals from './SeasonTotals';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { corsiSummary } from '../../utils/corsi';
 
@@ -164,6 +165,8 @@ export default function SeasonOverview({ playerName, games, allGames, summary, t
               </div>
             </div>
           )}
+
+          <SeasonTotals games={games} />
         </>
       )}
 

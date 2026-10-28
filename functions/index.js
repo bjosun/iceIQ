@@ -613,6 +613,32 @@ const deductAiCredit = async (userRef) => {
 // Övriga funktioner ligger kvar i us-central1; stripeWebhook har dessutom en
 // URL registrerad hos Stripe som inte får ändras.
 // Ordningen spelar roll: .region() måste komma före .runWith().
+// Gratis coachfrågor på exempelspelaren innan riktiga krediter används.
+const DEMO_COACH_FREE = 3;
+
+function normalizeActionKey(key) {
+  if (key.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(key);
+      return parsed.en || parsed.sv || key;
+    } catch { /* behåll nyckeln som den är */ }
+  }
+  return key;
+}
+
+async function computeSeasonTotals(playerRef) {
+  const snap = await playerRef.collection('games').select('counts').get();
+  const totals = {};
+  for (const doc of snap.docs) {
+    for (const [key, value] of Object.entries(doc.get('counts') || {})) {
+      const name = normalizeActionKey(key);
+      totals[name] = (totals[name] || 0) + (Number(value) || 0);
+    }
+  }
+  for (const name of Object.keys(totals)) if (!totals[name]) delete totals[name];
+  return { games: snap.size, totals };
+}
+
 exports.askCoach = functions
   .region('europe-west1')
   .runWith({ memory: "1GB", timeoutSeconds: 120 }) // Ökat minne för AI:n för att förhindra krasch
@@ -662,8 +688,25 @@ exports.askCoach = functions
   }
   const purchasedCredits = userData.purchasedCredits || 0;
 
+  // Spelarens namn är dokument-ID:t under users/{uid}/players — samma
+  // sökväg klienten skriver till (se src/services/firebase.ts).
+  const playerName = playerStats?.player;
+  const playerRef = playerName ? userRef.collection('players').doc(playerName) : null;
+  const playerSnap = playerRef ? await playerRef.get() : null;
+  const playerDocData = playerSnap?.data() || {};
+
+  // Exempelläget: kontot har inga spelare och dashboarden visar "Erik
+  // (exempel)". Att prova coachen där ska inte äta riktiga krediter — då
+  // är de slut när användaren väl lägger in sitt eget barn. Ett litet tak
+  // (räknare i ett dokument klienten inte kan skriva, utanför users/) så
+  // exemplet inte blir en gratis obegränsad coach.
+  const isDemo = !playerSnap?.exists && (await userRef.collection('players').limit(1).get()).empty;
+  const demoUsageRef = db.doc(`artifacts/${APP_ID}/coachDemoUsage/${userId}`);
+  const demoUsed = isDemo ? ((await demoUsageRef.get()).data()?.count || 0) : 0;
+  const demoFree = isDemo && demoUsed < DEMO_COACH_FREE;
+
   // 3. Spärr: summan av båda hinkarna är gränsen, oavsett plan
-  if (monthlyCredits + purchasedCredits <= 0) {
+  if (!demoFree && monthlyCredits + purchasedCredits <= 0) {
     throw new functions.https.HttpsError('resource-exhausted', 'Slut på krediter.');
   }
 
@@ -677,11 +720,16 @@ exports.askCoach = functions
 
   console.log(`Använder modell: ${modelName} (Lang: ${userLanguage})`);
 
-  // Spelarens namn är dokument-ID:t under users/{uid}/players — samma
-  // sökväg klienten skriver till (se src/services/firebase.ts).
-  const playerName = playerStats?.player;
-  const playerRef = playerName ? userRef.collection('players').doc(playerName) : null;
-  const playerDocData = playerRef ? (await playerRef.get()).data() || {} : {};
+  // Säsongstotaler per aktion över ALLA sparade matcher. Klienten skickar
+  // bara de senaste matcherna, så frågor som "hur många blockerade skott
+  // har jag totalt?" kunde coachen inte svara på. Nycklarna normaliseras
+  // som i src/utils/awards.ts (äldre matcher har JSON-nycklar {sv,en}).
+  const seasonTotals = playerSnap?.exists
+    ? await computeSeasonTotals(playerRef).catch((e) => {
+        console.warn(`askCoach: säsongstotaler misslyckades för ${userId}/${playerName}: ${e.message}`);
+        return null;
+      })
+    : null;
   // coachTimeline ersätter det gamla enkelfältet coachNotes: en daterad
   // logg istället för en blob som skrevs över helt varje gång, så coachen
   // kan referera till en utveckling ("i mars jobbade du på X, nu i augusti
@@ -717,6 +765,7 @@ exports.askCoach = functions
       HUR DU SKA ANALYSERA (MYCKET VIKTIGT):
       1. Om "Pågående session" är tom: Klaga INTE på att data saknas. Då är spelaren här för att utvärdera sin historik. Dyk direkt ner i "Historik"-datan.
       2. Identifiera trender: Jämför alltid prestationerna över tid. Går totalpoängen upp eller ner? Vilka specifika handlingar har blivit bättre eller sämre mellan matcherna?
+      2a. Frågar spelaren efter sin statistik totalt (t.ex. "hur många assist har jag totalt", "all my stats over all games"), svara med siffrorna i "Säsongstotaler per aktion" — de är exakta summor över alla sparade matcher, inte bara de senaste. Nämn antalet matcher och gärna snitt per match. Hitta aldrig på siffror som inte finns där.
       2b. Använd "Säsongsöversikt" för det långa perspektivet: jämför snittet för de senaste 5 matcherna (last5Avg) med säsongssnittet (avgPoints) och säg tydligt om spelaren är på väg uppåt eller nedåt jämfört med sin egen nivå.
       3. Var proaktiv: Tvinga inte spelaren att dra ur dig informationen. Ditt första svar (utan konversationshistorik, utan specifik fråga) ska alltid innehålla en konkret analys.
       4. "Tidigare tidslinje om spelaren" (om sådan finns) är vad du själv antecknat i tidigare samtal — väv in den naturligt ("du har ju jobbat på X ett tag nu, och det syns...") i stället för att bara räkna upp den. Lita fortfarande bara på siffrorna i den aktuella datan, inte på minnet, för själva talen.
@@ -882,6 +931,7 @@ exports.askCoach = functions
       - Pågående session (dagens match): ${JSON.stringify(playerStats.stats || {})}
       - Historik (senaste 3 matcherna): ${JSON.stringify(playerStats.history || [])}
       - Säsongsöversikt (alla registrerade matcher): ${JSON.stringify(playerStats.season || {})}
+      - Säsongstotaler per aktion (summa över alla ${seasonTotals?.games ?? 0} sparade matcher, utan dagens osparade): ${JSON.stringify(seasonTotals?.totals || {})}
       - Poäng denna match: ${playerStats.totals?.actionsPoints ?? 0}
       - Totalt saldo (kan inkludera överfört värde från tidigare matcher): ${playerStats.totals?.total ?? 0}
       - Tidigare tidslinje om spelaren: ${existingTimeline.length > 0 ? JSON.stringify(existingTimeline) : '(ingen ännu — första samtalet med den här spelaren)'}
@@ -1028,7 +1078,9 @@ exports.askCoach = functions
         .replace(/\*\*/g, '');
     }
 
-    if (playerRef && coachTimeline && !memoryOff) {
+    // Bara spelare som redan finns: annars skulle exempelspelaren
+    // (eller ett felstavat namn) skapas som ett riktigt spelardokument.
+    if (playerRef && playerSnap?.exists && coachTimeline && !memoryOff) {
       // Bäst-ansträngning: minnet får inte blockera själva svaret till
       // spelaren om det här skulle strula. coachNotes (gamla strängfältet)
       // raderas medvetet inte — coachTimeline-läsningen ovan migrerar in
@@ -1039,8 +1091,15 @@ exports.askCoach = functions
       );
     }
 
-    // 6. Dra av kredit — månadsransonen först, köpta krediter sist
-    const balance = await deductAiCredit(userRef);
+    // 6. Dra av kredit — månadsransonen först, köpta krediter sist.
+    // Gratis exempelfrågor räknas i stället upp på demoräknaren.
+    let balance;
+    if (demoFree) {
+      await demoUsageRef.set({ count: admin.firestore.FieldValue.increment(1), lastAt: new Date().toISOString() }, { merge: true });
+      balance = { monthly: monthlyCredits, purchased: purchasedCredits };
+    } else {
+      balance = await deductAiCredit(userRef);
+    }
 
     return {
       success: true,
@@ -1051,7 +1110,8 @@ exports.askCoach = functions
       focusTags,
       creditsLeft: balance.monthly + balance.purchased,
       monthlyCredits: balance.monthly,
-      purchasedCredits: balance.purchased
+      purchasedCredits: balance.purchased,
+      demoFreeLeft: isDemo ? Math.max(0, DEMO_COACH_FREE - demoUsed - (demoFree ? 1 : 0)) : null
     };
 
   } catch (error) {

@@ -894,6 +894,7 @@ export default function Dashboard() {
                  }}
                  playerEmail={playerEmail}
                  onUpgrade={() => setShowSubscriptionModal(true)}
+                 isDemo={isDemoMode}
                />
             </div>
           )}

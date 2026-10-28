@@ -124,6 +124,10 @@ export const translations = {
 
     // Season development view
     seasonView: {
+      totalsTitle: "Totals",
+      totalsPerGame: "total · per game",
+      totalsShowAll: "Show all {count}",
+      totalsShowLess: "Show fewer",
       compareTitle: "Season by season",
       compareHint: "Average points per season. Compares the player with themselves over time.",
       allSeasons: "Total",
@@ -454,6 +458,7 @@ export const translations = {
       analyzing: "Coach is thinking...",
       engineName: "Ice IQ Coach Engine",
       outOfCredits: "You're out of AI credits for this month.",
+      demoFree: "Questions about the example player are free ({count} left) and don't use your credits.",
       error: "Coach is offline. Please try again later.",
       newAnalysis: "New Analysis",
       followUpPlaceholder: "Ask a follow-up question...",
@@ -868,6 +873,10 @@ export const translations = {
 
     // Season development view
     seasonView: {
+      totalsTitle: "Totalt",
+      totalsPerGame: "totalt · per match",
+      totalsShowAll: "Visa alla {count}",
+      totalsShowLess: "Visa färre",
       compareTitle: "Säsong för säsong",
       compareHint: "Snittpoäng per säsong. Jämför spelaren med sig själv över tid.",
       allSeasons: "Totalt",
@@ -1195,6 +1204,7 @@ export const translations = {
       analyzing: "Coachen tänker...",
       engineName: "Ice IQ Coach Engine",
       outOfCredits: "Du har slut på AI-krediter för denna månad.",
+      demoFree: "Frågor om exempelspelaren är gratis ({count} kvar) och drar inga krediter.",
       error: "Coachen är inte tillgänglig just nu. Försök igen senare.",
       newAnalysis: "Ny Analys",
       followUpPlaceholder: "Ställ en följdfråga...",
