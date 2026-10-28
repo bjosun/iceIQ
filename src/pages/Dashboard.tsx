@@ -641,6 +641,14 @@ export default function Dashboard() {
     stats: enrichedStats, // <-- Nu skickar vi vår nya, smarta lista!
     totals: totals, 
     season: seasonSummary, // Aggregat över alla matcher (utveckling över tid)
+    // Underlag för Elite-analysen (servern använder det bara för Elite):
+    // hela spelarens matchlista och snitt per säsong. Okortad av gratisfönstret —
+    // det styr bara vad som visas, inte vad coachen får läsa.
+    seasonTimeline: seasonGames.slice(-40).map(g => ({ date: g.date, points: g.points, team: g.team })),
+    seasons: seasonsIn(seasonGames).map(start => {
+      const g = inSeason(seasonGames, start);
+      return { season: seasonLabel(start), games: g.length, avg: avgOf(g), best: Math.max(...g.map(x => x.points || 0)) };
+    }),
     templateName: currentTemplate?.name
   };
 
@@ -771,7 +779,7 @@ export default function Dashboard() {
           
           {/* The Stats Grid (Buttons) */}
           <div id="section-match" className="scroll-mt-16">
-            <ActionGrid actionCounts={actionCounts} onCountChange={handleActionCountChange} />
+            <ActionGrid actionCounts={actionCounts} onCountChange={handleActionCountChange} onUpgrade={() => setShowSubscriptionModal(true)} />
           </div>
           
           {/* Bonus Weighting - VISAS BARA I MONEY MODE */}

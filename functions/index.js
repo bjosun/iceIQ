@@ -635,6 +635,26 @@ const deductAiCredit = async (userRef) => {
 // Övriga funktioner ligger kvar i us-central1; stripeWebhook har dessutom en
 // URL registrerad hos Stripe som inte får ändras.
 // Ordningen spelar roll: .region() måste komma före .runWith().
+// Elite-analysens extra underlag: hela säsongens matcher och tidigare säsonger.
+// Klienten skickar dem för alla, men bara Elite-prompten använder dem. Datan
+// valideras och begränsas här — det är klientdata och går rakt in i en prompt.
+const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v * 10) / 10 : 0);
+function eliteContext(playerStats) {
+  const timeline = (Array.isArray(playerStats?.seasonTimeline) ? playerStats.seasonTimeline : [])
+    .slice(-40)
+    .filter((g) => g && typeof g.date === 'string')
+    .map((g) => ({
+      date: g.date.slice(0, 10),
+      points: num(g.points),
+      ...(typeof g.team === 'string' && g.team ? { team: g.team.slice(0, 40) } : {}),
+    }));
+  const seasons = (Array.isArray(playerStats?.seasons) ? playerStats.seasons : [])
+    .slice(0, 6)
+    .filter((s) => s && typeof s.season === 'string')
+    .map((s) => ({ season: s.season.slice(0, 10), games: num(s.games), avg: num(s.avg), best: num(s.best) }));
+  return { timeline, seasons };
+}
+
 exports.askCoach = functions
   .region('europe-west1')
   .runWith({ memory: "1GB", timeoutSeconds: 120 }) // Ökat minne för AI:n för att förhindra krasch
@@ -804,6 +824,16 @@ exports.askCoach = functions
       - Lägg till EN NY post (med dagens datum, ${today}) bara om du lärt dig något varaktigt nytt i det här samtalet — inte vid varje litet svar. Om inget nytt tillkommit: returnera listan oförändrad.
       - Listan får ALDRIG innehålla fler än 8 poster. Är den redan full när du vill lägga till en ny: slå ihop de två minst relevanta/äldsta posterna till en, så det finns plats. Radera aldrig hela historiken.
       - Varje post: max ~150 tecken, bara varaktigt relevanta fakta — inga engångsdetaljer om just dagens fråga.
+      ${plan === 'elite' && mode === 'match' ? `
+      ELITE-ANALYS (spelaren har Elite — detta UTÖKAR punkt 3 och FORMATERA-blocket för den första analysen)
+      - Du får "Hela säsongens matcher" och "Tidigare säsonger" i datan. Använd dem på riktigt: leta efter mönster över hela säsongen, inte bara de senaste matcherna.
+      - Börja analysen med en egen rad: "⭐ ${userLanguage === 'sv' ? 'Elite-analys' : 'Elite analysis'}".
+      - Behåll Trend, Styrkor och Fokusområde, och lägg till två rubriker efter dem:
+        - 🗺️ ${userLanguage === 'sv' ? 'Säsongen hittills' : 'The season so far'}: ett mönster över hela säsongen. Är matcherna jämna eller svängiga? Var låg bästa respektive sämsta perioden? Finns tidigare säsonger: är nivån över eller under den förra, med de angivna snitten (säg inget om en säsong som inte finns i datan).
+        - 🛠️ ${userLanguage === 'sv' ? 'Utvecklingsplan (3 veckor)' : 'Development plan (3 weeks)'}: en konkret sak att öva per vecka, kopplad till Fokusområdet och till något spelaren själv kan se i appen när hen loggar nästa matcher. Inga påhittade sifferval eller löften om resultat.
+      - Räkna inte ut egna totalsummor; citera de angivna talen. Är underlaget tunt (få matcher): säg det kort och lova inte mer än datan bär.
+      - Håll dig till ca 280 ord totalt. Elite ska kännas djupare för att innehållet är mer personligt och längre i tiden, inte för att det är längre.
+      ` : ''}
       ${mode === 'mental' ? `
       SPECIALISTLÄGE: MENTAL TRÄNING (har valts av spelaren eller föräldern — detta ersätter punkt 3 och FORMATERA-blocket ovan)
       - Du är nu en mental coach för ungdomshockey, inte en statistikrapport. Svara inte med rubrikerna Trend, Styrkor och Fokusområde.
@@ -833,7 +863,7 @@ exports.askCoach = functions
     // Höjt igen när shareHighlight tillkom. Taket är en gräns, inte en
     // reservation — outnyttjade tokens kostar ingenting — så marginalen
     // är gratis försäkring mot just den avklippning som beskrivs ovan.
-    maxOutputTokens: plan === 'elite' ? 4352 : 3328,
+    maxOutputTokens: plan === 'elite' ? 5632 : 3328,
     temperature: 0.4,
     thinkingConfig: plan === 'elite' ? { thinkingBudget: 1024 } : { thinkingBudget: 0 },
     responseMimeType: 'application/json',
@@ -900,12 +930,20 @@ exports.askCoach = functions
     const isFollowUp = !!(question && String(question).trim())
       && safeHistory.some((m) => m.role === 'model');
 
+    // Bara Elite får det utökade underlaget (se ELITE-ANALYS i prompten).
+    const elite = plan === 'elite' ? eliteContext(playerStats) : null;
+    const eliteData = elite
+      ? `
+      - Hela säsongens matcher (kronologiskt, max 40): ${JSON.stringify(elite.timeline)}
+      - Tidigare säsonger (snitt per säsong): ${elite.seasons.length > 0 ? JSON.stringify(elite.seasons) : '(inga tidigare säsonger registrerade)'}`
+      : '';
+
     const dataBlock = `
       - Pågående session (dagens match): ${JSON.stringify(playerStats.stats || {})}
       - Historik (senaste 3 matcherna): ${JSON.stringify(playerStats.history || [])}
       - Säsongsöversikt (alla registrerade matcher): ${JSON.stringify(playerStats.season || {})}
       - Poäng denna match: ${playerStats.totals?.actionsPoints ?? 0}
-      - Totalt saldo (kan inkludera överfört värde från tidigare matcher): ${playerStats.totals?.total ?? 0}
+      - Totalt saldo (kan inkludera överfört värde från tidigare matcher): ${playerStats.totals?.total ?? 0}${eliteData}
       - Tidigare tidslinje om spelaren: ${existingTimeline.length > 0 ? JSON.stringify(existingTimeline) : '(ingen ännu — första samtalet med den här spelaren)'}
     `;
 

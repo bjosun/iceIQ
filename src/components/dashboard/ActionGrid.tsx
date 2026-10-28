@@ -1,17 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Minus, Sun, Sparkles, Star, Plus } from 'lucide-react';
+import { Minus, Sun, Sparkles, Star, Plus, Trash2, Lock } from 'lucide-react';
 import NoSleep from 'nosleep.js';
 import toast from 'react-hot-toast';
 import { useTemplates, defaultTemplates } from '../../contexts/TemplateContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
+import { isNativeApp } from '../../utils/platform';
 import Card from '../ui/Card';
 import Modal from '../ui/Modal';
-import { loadExtras, loadFocus, resolveGrid, saveExtras, saveFocus, shortName } from '../../utils/gridLayout';
+import { loadExtras, loadFocus, loadHidden, resolveGrid, saveExtras, saveFocus, saveHidden, shortName } from '../../utils/gridLayout';
 import { BIG_POINTS, effectsEnabled, setEffectsEnabled, tapFeedback } from '../../utils/feedback';
 
 interface ActionGridProps {
   actionCounts: Record<string, number>;
   onCountChange: (counts: Record<string, number>) => void;
+  onUpgrade?: () => void;
 }
 
 // Fasta konfettibitar (inget slumpande vid render, så effekten är densamma
@@ -27,8 +30,9 @@ const CONFETTI = [
 // Byggd för användning vid rinken: hela kortet är tryckytan (+1),
 // minus-knappen i hörnet ångrar. Stora ytor, direkt feedback, ingen
 // scroll mitt i registreringen.
-export default function ActionGrid({ actionCounts, onCountChange }: ActionGridProps) {
-  const { currentTemplate } = useTemplates();
+export default function ActionGrid({ actionCounts, onCountChange, onUpgrade }: ActionGridProps) {
+  const { currentTemplate, ownActions, addOwnAction, removeOwnAction } = useTemplates();
+  const { isPremium } = useSubscription();
   const { t, language } = useLanguage();
 
   // "Håll skärmen tänd" — avstängd som standard (samma mönster som
@@ -49,9 +53,15 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
   const [showMore, setShowMore] = useState(false);
   const templateId = currentTemplate?.id;
   const [extraNames, setExtraNames] = useState<string[]>([]);
+  const [hiddenNames, setHiddenNames] = useState<string[]>([]);
+  const [ownName, setOwnName] = useState('');
+  const [ownType, setOwnType] = useState<'positive' | 'negative'>('positive');
+  const [ownPoints, setOwnPoints] = useState(1);
+  const [savingOwn, setSavingOwn] = useState(false);
   useEffect(() => {
     setFocusNames(templateId ? loadFocus(templateId) : null);
     setExtraNames(templateId ? loadExtras(templateId) : []);
+    setHiddenNames(templateId ? loadHidden(templateId) : []);
   }, [templateId]);
 
   const [effects, setEffects] = useState<boolean>(() => effectsEnabled());
@@ -136,12 +146,75 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
   // Fast rutnät (tolv pluss, sex minus) när mallen har en layout, annars hela
   // listan som förut (egna mallar).
   const layout = currentTemplate.layout ?? defaultTemplates[currentTemplate.id]?.layout;
-  const grid = resolveGrid(currentTemplate, layout, focusNames, extraNames);
+  const grid = resolveGrid(currentTemplate, layout, focusNames, extraNames, hiddenNames);
 
-  const toggleExtra = (en: string) => {
-    const next = extraNames.includes(en) ? extraNames.filter((n) => n !== en) : [...extraNames, en];
+  const writeExtras = (next: string[]) => {
     setExtraNames(next);
-    if (templateId) saveExtras(templateId, next);
+    saveExtras(currentTemplate.id, next);
+  };
+  const writeHidden = (next: string[]) => {
+    setHiddenNames(next);
+    saveHidden(currentTemplate.id, next);
+  };
+
+  // Visa eller dölj en knapp. Standardknappar döljs (och visas igen) via
+  // hiddenNames, övriga läggs till eller tas bort via extraNames. Det här är
+  // bara en vy: aktionerna finns kvar i mallen och sparad statistik rörs inte.
+  const toggleButton = (en: string, shown: boolean) => {
+    if (!grid) return;
+    const inBase = grid.baseNames.has(en);
+    if (shown) {
+      if (inBase) writeHidden([...hiddenNames, en]);
+      else writeExtras(extraNames.filter((n) => n !== en));
+    } else if (inBase) {
+      writeHidden(hiddenNames.filter((n) => n !== en));
+    } else {
+      writeExtras([...extraNames, en]);
+    }
+  };
+
+  const resetButtons = () => {
+    writeHidden([]);
+    writeExtras([]);
+  };
+
+  const ownList = ownActions[currentTemplate.id] || [];
+  const MAX_OWN = 12;
+
+  const createOwn = async () => {
+    const name = ownName.trim().slice(0, 40);
+    if (!name) return;
+    const taken = currentTemplate.actions.some((a) => a.name.en.toLowerCase() === name.toLowerCase());
+    if (taken) {
+      toast.error(t('actionGrid.ownDuplicate'));
+      return;
+    }
+    if (ownList.length >= MAX_OWN) {
+      toast.error(t('actionGrid.ownLimit', { max: MAX_OWN }));
+      return;
+    }
+    const size = Math.min(99, Math.max(1, Math.round(Math.abs(ownPoints)) || 1));
+    setSavingOwn(true);
+    try {
+      await addOwnAction({ name: { sv: name, en: name }, points: ownType === 'positive' ? size : -size, type: ownType });
+      writeExtras([...extraNames, name]);
+      setOwnName('');
+      setOwnPoints(1);
+    } catch {
+      toast.error(t('actionGrid.ownFailed'));
+    } finally {
+      setSavingOwn(false);
+    }
+  };
+
+  const deleteOwn = async (en: string) => {
+    try {
+      await removeOwnAction(en);
+      writeExtras(extraNames.filter((n) => n !== en));
+      writeHidden(hiddenNames.filter((n) => n !== en));
+    } catch {
+      toast.error(t('actionGrid.ownFailed'));
+    }
   };
 
   const chooseFocus = (slot: number, en: string) => {
@@ -297,7 +370,7 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
     : null;
 
   // "Lägg till knapp": öppnar valet där spelaren själv väljer fler aktioner.
-  const addTile = grid && (grid.more.length > 0 || grid.extras.length > 0) ? (
+  const addTile = grid ? (
     <button
       key="add-button"
       onClick={() => setShowMore(true)}
@@ -428,37 +501,128 @@ export default function ActionGrid({ actionCounts, onCountChange }: ActionGridPr
               </div>
             )}
 
+            <p className="text-xs text-gray-400">{t('actionGrid.customizeHint')}</p>
+
             {(['positive', 'negative'] as const).map((type) => {
-              const pickable = [...grid.extras, ...grid.more].filter((a) => a.type === type);
-              if (pickable.length === 0) return null;
+              const shownNames = new Set([...grid.positive, ...grid.negative].map((a) => a.name.en));
+              const rows = currentTemplate.actions.filter((a) => a.type === type);
+              if (rows.length === 0) return null;
               return (
                 <div key={type}>
                   <h3 className={`text-sm font-bold mb-2 ${type === 'positive' ? 'text-green-400' : 'text-red-400'}`}>
                     {type === 'positive' ? t('positiveActions') : t('negativeActions')}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {pickable.map((a) => {
-                      const on = extraNames.includes(a.name.en);
+                    {rows.map((a) => {
+                      const on = shownNames.has(a.name.en);
+                      const own = ownList.some((o) => o.name.en === a.name.en);
                       return (
-                        <button
-                          key={a.name.en}
-                          onClick={() => toggleExtra(a.name.en)}
-                          aria-pressed={on}
-                          className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border text-left text-sm touch-manipulation ${
-                            on ? 'border-cyan-500/60 bg-cyan-500/10 text-white' : 'border-gray-700 bg-gray-800/60 text-gray-300'
-                          }`}
-                        >
-                          <span>{a.name[language] || a.name.en} ({a.points > 0 ? '+' : ''}{a.points})</span>
-                          <span className={`shrink-0 text-xs font-bold ${on ? 'text-cyan-300' : 'text-gray-500'}`}>
-                            {on ? t('actionGrid.added') : t('actionGrid.add')}
-                          </span>
-                        </button>
+                        <div key={a.name.en} className="flex gap-1">
+                          <button
+                            onClick={() => toggleButton(a.name.en, on)}
+                            aria-pressed={on}
+                            className={`flex-1 flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border text-left text-sm touch-manipulation ${
+                              on ? 'border-cyan-500/60 bg-cyan-500/10 text-white' : 'border-gray-700 bg-gray-800/60 text-gray-400'
+                            }`}
+                          >
+                            <span>
+                              {a.name[language] || a.name.en} ({a.points > 0 ? '+' : ''}{a.points})
+                              {own && <span className="ml-1.5 text-[10px] uppercase text-yellow-400">{t('actionGrid.ownBadge')}</span>}
+                            </span>
+                            <span className={`shrink-0 text-xs font-bold ${on ? 'text-cyan-300' : 'text-gray-500'}`}>
+                              {on ? t('actionGrid.added') : t('actionGrid.add')}
+                            </span>
+                          </button>
+                          {own && (
+                            <button
+                              onClick={() => deleteOwn(a.name.en)}
+                              aria-label={`${t('actionGrid.ownDelete')}: ${a.name[language] || a.name.en}`}
+                              className="px-3 rounded-lg border border-gray-700 bg-gray-800/60 text-gray-400 hover:text-red-400 touch-manipulation"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
                 </div>
               );
             })}
+
+            {(hiddenNames.length > 0 || extraNames.length > 0) && (
+              <button
+                onClick={resetButtons}
+                className="w-full py-2.5 rounded-lg border border-gray-600 text-gray-300 text-sm font-semibold touch-manipulation hover:border-gray-500"
+              >
+                {t('actionGrid.reset')}
+              </button>
+            )}
+
+            {/* Egna knappar: Premium (Elite och säsongspass ingår). I iPhone-appen finns inget köpflöde, så gratiskonton ser ingen låst ruta där. */}
+            {(isPremium || !isNativeApp) && (
+              <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4 space-y-3">
+                <h3 className="text-sm font-bold text-yellow-400 flex items-center gap-1.5">
+                  {isPremium ? <Plus size={14} /> : <Lock size={14} />} {t('actionGrid.ownTitle')}
+                </h3>
+                {isPremium ? (
+                  <>
+                    <input
+                      value={ownName}
+                      onChange={(e) => setOwnName(e.target.value)}
+                      maxLength={40}
+                      placeholder={t('actionGrid.ownName')}
+                      aria-label={t('actionGrid.ownName')}
+                      className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2.5 text-white"
+                    />
+                    <div className="flex gap-2">
+                      {(['positive', 'negative'] as const).map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => setOwnType(type)}
+                          aria-pressed={ownType === type}
+                          className={`flex-1 py-2 rounded-lg border text-sm font-semibold touch-manipulation ${
+                            ownType === type
+                              ? type === 'positive' ? 'border-green-500/60 bg-green-500/10 text-green-300' : 'border-red-500/60 bg-red-500/10 text-red-300'
+                              : 'border-gray-700 text-gray-400'
+                          }`}
+                        >
+                          {type === 'positive' ? t('actionGrid.ownPositive') : t('actionGrid.ownNegative')}
+                        </button>
+                      ))}
+                      <input
+                        type="number"
+                        min={1}
+                        max={99}
+                        value={ownPoints}
+                        onChange={(e) => setOwnPoints(Number(e.target.value))}
+                        aria-label={t('actionGrid.ownPoints')}
+                        className="w-20 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-center"
+                      />
+                    </div>
+                    <button
+                      onClick={createOwn}
+                      disabled={savingOwn || !ownName.trim()}
+                      className="w-full py-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black text-sm font-bold touch-manipulation"
+                    >
+                      {t('actionGrid.ownCreate')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-gray-400">{t('actionGrid.ownLocked')}</p>
+                    {onUpgrade && (
+                      <button
+                        onClick={() => { setShowMore(false); onUpgrade(); }}
+                        className="w-full py-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black text-sm font-bold touch-manipulation"
+                      >
+                        {t('upgradeToPremium')}
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
 
             <button
               onClick={() => setShowMore(false)}

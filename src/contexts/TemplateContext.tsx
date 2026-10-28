@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 
 export interface TemplateAction {
@@ -38,6 +38,10 @@ interface TemplateContextType {
   addAction: (action: TemplateAction) => void;
   updateAction: (actionIndex: number, updates: Partial<TemplateAction>) => void;
   deleteAction: (actionIndex: number) => void;
+  /** Spelarens egna knappar per mall; ligger redan inräknade i currentTemplate.actions. */
+  ownActions: Record<string, TemplateAction[]>;
+  addOwnAction: (action: TemplateAction) => Promise<void>;
+  removeOwnAction: (englishName: string) => Promise<void>;
 }
 
 const pos = (sv: string, en: string, points: number, isBonus?: boolean): TemplateAction =>
@@ -184,7 +188,18 @@ export function TemplateProvider({ children }: TemplateProviderProps) {
   const [customTemplates, setCustomTemplates] = useState<Record<string, Template>>({});
   const [loading, setLoading] = useState(false);
 
-  const currentTemplate = templates[currentTemplateId] || null;
+  const [ownActions, setOwnActions] = useState<Record<string, TemplateAction[]>>({});
+
+  // Egna knappar läggs ovanpå mallen här, så att räkning, matchsumma och
+  // sparande ser dem som vilka aktioner som helst. Mallen själv rörs inte.
+  const baseTemplate = templates[currentTemplateId] || null;
+  const currentTemplate = useMemo(() => {
+    if (!baseTemplate) return null;
+    const own = (ownActions[currentTemplateId] || []).filter(
+      (o) => !baseTemplate.actions.some((a) => a.name.en === o.name.en),
+    );
+    return own.length ? { ...baseTemplate, actions: [...baseTemplate.actions, ...own] } : baseTemplate;
+  }, [baseTemplate, ownActions, currentTemplateId]);
 
   // Load user's custom templates
   useEffect(() => {
@@ -192,6 +207,7 @@ export function TemplateProvider({ children }: TemplateProviderProps) {
       if (!user) {
         setTemplates(defaultTemplates);
         setCustomTemplates({});
+        setOwnActions({});
         return;
       }
 
@@ -203,6 +219,7 @@ export function TemplateProvider({ children }: TemplateProviderProps) {
         const userCustomTemplates = userData?.customTemplates || {};
         
         setCustomTemplates(userCustomTemplates);
+        setOwnActions(userData?.ownActions || {});
         setTemplates({ ...defaultTemplates, ...userCustomTemplates });
       } catch (error) {
         console.error('Error loading templates:', error);
@@ -321,7 +338,27 @@ export function TemplateProvider({ children }: TemplateProviderProps) {
     saveTemplate(currentTemplateId, updatedTemplate);
   };
 
+  const persistOwnActions = async (templateId: string, list: TemplateAction[]) => {
+    if (!user) throw new Error('User must be logged in to save buttons');
+    setOwnActions((prev) => ({ ...prev, [templateId]: list }));
+    const { firestore } = await import('../services/firestore');
+    await firestore.updateUserData(user.uid, { ownActions: { [templateId]: list } });
+  };
+
+  const addOwnAction = async (action: TemplateAction) => {
+    const existing = ownActions[currentTemplateId] || [];
+    await persistOwnActions(currentTemplateId, [...existing, action]);
+  };
+
+  const removeOwnAction = async (englishName: string) => {
+    const existing = ownActions[currentTemplateId] || [];
+    await persistOwnActions(currentTemplateId, existing.filter((a) => a.name.en !== englishName));
+  };
+
   const value = {
+    ownActions,
+    addOwnAction,
+    removeOwnAction,
     templates,
     currentTemplate,
     currentTemplateId,

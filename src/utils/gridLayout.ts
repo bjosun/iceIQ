@@ -18,6 +18,8 @@ export interface ResolvedGrid {
   more: TemplateAction[];
   /** Aktioner spelaren själv lagt till (redan inräknade i positive/negative). */
   extras: TemplateAction[];
+  /** Engelska namn på standardrutnätets knappar, före att något dolts eller lagts till. */
+  baseNames: Set<string>;
   /** Antal fokusplatser, och hur många av dem som är tomma. */
   slots: number;
   emptySlots: number;
@@ -60,6 +62,25 @@ export function saveExtras(templateId: string, names: string[]): void {
   } catch { /* privat läge: valet gäller bara den här sessionen */ }
 }
 
+const HIDDEN_KEY = (templateId: string) => `iceiq-hidden-${templateId}`;
+
+/** Standardknappar spelaren valt att dölja, per mall (engelska namn). */
+export function loadHidden(templateId: string): string[] {
+  try {
+    const raw = localStorage.getItem(HIDDEN_KEY(templateId));
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) && parsed.every((x) => typeof x === 'string') ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveHidden(templateId: string, names: string[]): void {
+  try {
+    localStorage.setItem(HIDDEN_KEY(templateId), JSON.stringify(names));
+  } catch { /* privat läge: valet gäller bara den här sessionen */ }
+}
+
 export function saveFocus(templateId: string, names: string[]): void {
   try {
     localStorage.setItem(FOCUS_KEY(templateId), JSON.stringify(names));
@@ -76,6 +97,7 @@ export function resolveGrid(
   layout: TemplateLayout | undefined,
   chosenFocus?: string[] | null,
   extraNames: string[] = [],
+  hiddenNames: string[] = [],
 ): ResolvedGrid | null {
   if (!layout) return null;
   const byEn = new Map<string, TemplateAction>();
@@ -105,18 +127,24 @@ export function resolveGrid(
   const basePositive = [...fixed, ...focusActs];
   if (basePositive.length + negative.length < 6) return null;
 
+  const baseNames = new Set([...basePositive, ...negative].map((a) => a.name.en));
+  const hidden = new Set(hiddenNames);
+  const visiblePositive = basePositive.filter((a) => !hidden.has(a.name.en));
+  const visibleNegative = negative.filter((a) => !hidden.has(a.name.en));
+
   const placed = new Set<TemplateAction>([...basePositive, ...negative]);
   const extras = extraNames
     .map((en) => byEn.get(en))
     .filter((a, i, all): a is TemplateAction => !!a && !placed.has(a) && all.indexOf(a) === i);
-  const positive = [...basePositive, ...extras.filter((a) => a.type === 'positive')];
-  const negativeAll = [...negative, ...extras.filter((a) => a.type === 'negative')];
+  const positive = [...visiblePositive, ...extras.filter((a) => a.type === 'positive')];
+  const negativeAll = [...visibleNegative, ...extras.filter((a) => a.type === 'negative')];
 
   const shown = new Set<TemplateAction>([...positive, ...negativeAll]);
   return {
     positive,
     negative: negativeAll,
     extras,
+    baseNames,
     more: template.actions.filter((a) => !shown.has(a)),
     slots,
     emptySlots: Math.max(0, slots - focusActs.length),
