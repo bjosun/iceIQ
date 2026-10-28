@@ -66,6 +66,14 @@ export default function PlayerLinkModal({ isOpen, onClose, url, playerName }: Pl
       description={t('playerLink.modalDesc', { name: playerName })}
     >
       <div className="p-6 space-y-4">
+        <div className="rounded-xl border border-gray-700 bg-gray-800/60 p-4">
+          <p className="text-sm font-semibold text-white mb-2">{t('playerLink.seesTitle')}</p>
+          <ul className="text-sm text-gray-300 space-y-1 list-disc pl-5">
+            <li>{t('playerLink.sees1', { name: playerName })}</li>
+            <li>{t('playerLink.sees2')}</li>
+            <li>{t('playerLink.sees3')}</li>
+          </ul>
+        </div>
         <div className="bg-gray-900 rounded-xl px-4 py-3 text-cyan-300 text-sm break-all">{url}</div>
         <div className="flex gap-3">
           <button
@@ -85,6 +93,7 @@ export default function PlayerLinkModal({ isOpen, onClose, url, playerName }: Pl
             </button>
           )}
         </div>
+        <p className="text-xs text-gray-400">{t('playerLink.privacyNote', { name: playerName })}</p>
         <button
           onClick={revoke}
           disabled={revoking}

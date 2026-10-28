@@ -8,6 +8,11 @@ export function getDemoPlayerName(language: Language): string {
   return language === 'sv' ? 'Erik (exempel)' : 'Erik (example)';
 }
 
+// Exempelspelaren får aldrig sparas som en riktig spelare (se firestore.ts).
+export function isDemoPlayerName(name: string | null | undefined): boolean {
+  return name === 'Erik (exempel)' || name === 'Erik (example)';
+}
+
 function daysAgo(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() - days);

@@ -124,6 +124,10 @@ export const translations = {
 
     // Season development view
     seasonView: {
+      totalsTitle: "Totals",
+      totalsPerGame: "total · per game",
+      totalsShowAll: "Show all {count}",
+      totalsShowLess: "Show fewer",
       compareTitle: "Season by season",
       compareHint: "Average points per season. Compares the player with themselves over time.",
       allSeasons: "Total",
@@ -501,6 +505,7 @@ export const translations = {
       analyzing: "Coach is thinking...",
       engineName: "Ice IQ Coach Engine",
       outOfCredits: "You're out of AI credits for this month.",
+      demoFree: "Questions about the example player are free ({count} left) and don't use your credits.",
       error: "Coach is offline. Please try again later.",
       newAnalysis: "New Analysis",
       followUpPlaceholder: "Ask a follow-up question...",
@@ -597,20 +602,25 @@ export const translations = {
 
     // Player link — a standalone, login-free page for the player themselves
     playerLink: {
-      generateButton: "Generate link",
+      generateButton: "Share with player",
       // Tooltip på själva knappen (title-attribut) — förklarar VARFÖR man
       // klickar, inte bara vad knappen heter. Modalens egen modalDesc
       // täcker mekaniken (ingen inloggning osv) EFTER man redan klickat;
       // det här är det steget innan.
-      generateHint: "A page {name} can open on their own phone — breathing exercise, progress, and your notes. No login needed.",
+      generateHint: "Create a private page {name} can open on their own phone, with match stats, the coach's note and a breathing exercise. No login needed.",
       generating: "Generating…",
       mintError: "Could not generate the link right now",
       revoke: "Switch this link off",
       revokeConfirm: "Switch off the link to {name}'s page? Anyone who has it will no longer get in. You can create a new link later.",
       revoked: "The link is switched off.",
       revokeError: "Could not switch off the link. Try again.",
-      modalTitle: "Link for {name}",
-      modalDesc: "A standalone page {name} can open on their own device — no login needed. The same link works every time.",
+      modalTitle: "Share {name}'s page",
+      modalDesc: "Send this link to {name}. It opens a personal page on their own phone, no login needed. The same link works every time.",
+      seesTitle: "What the person with the link sees",
+      sees1: "Match stats and how {name} is developing",
+      sees2: "The coach's latest note, and a short audio summary of the last match",
+      sees3: "A match-night routine and a breathing exercise",
+      privacyNote: "Anyone who has the link can open the page. Only send it to {name} or a parent, and switch it off below if it ends up in the wrong place.",
       copy: "Copy link",
       copied: "Link copied",
       share: "Share",
@@ -916,6 +926,10 @@ export const translations = {
 
     // Season development view
     seasonView: {
+      totalsTitle: "Totalt",
+      totalsPerGame: "totalt · per match",
+      totalsShowAll: "Visa alla {count}",
+      totalsShowLess: "Visa färre",
       compareTitle: "Säsong för säsong",
       compareHint: "Snittpoäng per säsong. Jämför spelaren med sig själv över tid.",
       allSeasons: "Totalt",
@@ -1290,6 +1304,7 @@ export const translations = {
       analyzing: "Coachen tänker...",
       engineName: "Ice IQ Coach Engine",
       outOfCredits: "Du har slut på AI-krediter för denna månad.",
+      demoFree: "Frågor om exempelspelaren är gratis ({count} kvar) och drar inga krediter.",
       error: "Coachen är inte tillgänglig just nu. Försök igen senare.",
       newAnalysis: "Ny Analys",
       followUpPlaceholder: "Ställ en följdfråga...",
@@ -1381,16 +1396,21 @@ export const translations = {
 
     // Spelarlänk — en egen, inloggningsfri sida för spelaren själv
     playerLink: {
-      generateButton: "Generera länk",
-      generateHint: "En sida {name} kan öppna på sin egen mobil — andningsövning, utveckling och dina anteckningar. Ingen inloggning behövs.",
+      generateButton: "Dela med spelaren",
+      generateHint: "Skapa en privat sida som {name} kan öppna på sin egen mobil, med matchstatistik, coachens anteckning och en andningsövning. Ingen inloggning behövs.",
       generating: "Genererar…",
       mintError: "Kunde inte generera länken just nu",
       revoke: "Stäng länken",
       revokeConfirm: "Stänga länken till {name}s sida? Den som har den kommer inte längre in. Du kan skapa en ny länk senare.",
       revoked: "Länken är stängd.",
       revokeError: "Kunde inte stänga länken. Försök igen.",
-      modalTitle: "Länk till {name}",
-      modalDesc: "En egen sida {name} kan öppna på sin egen enhet — ingen inloggning behövs. Samma länk fungerar varje gång.",
+      modalTitle: "Dela {name}s sida",
+      modalDesc: "Skicka länken till {name}. Den öppnar en personlig sida på hens egen mobil, utan inloggning. Samma länk fungerar varje gång.",
+      seesTitle: "Det här ser den som har länken",
+      sees1: "Matchstatistik och hur {name} utvecklas",
+      sees2: "Coachens senaste anteckning och en kort ljudsammanfattning av senaste matchen",
+      sees3: "En matchkvällsrutin och en andningsövning",
+      privacyNote: "Alla som har länken kan öppna sidan. Skicka den bara till {name} eller en förälder, och stäng länken nedan om den hamnat fel.",
       copy: "Kopiera länk",
       copied: "Länk kopierad",
       share: "Dela",

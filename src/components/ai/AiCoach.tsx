@@ -24,6 +24,8 @@ interface AiCoachProps {
   playerStats: any;
   playerEmail?: string;
   onUpgrade: () => void;
+  /** Exempelspelaren: frågorna är gratis upp till ett tak (se askCoach). */
+  isDemo?: boolean;
 }
 
 // Hur länge varje laddningssteg visas innan nästa tar över (ms).
@@ -63,7 +65,7 @@ export function InsightQuote({ title, text, tone, shareLabel, onShare }: {
   );
 }
 
-export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoachProps) {
+export default function AiCoach({ playerStats, playerEmail, onUpgrade, isDemo = false }: AiCoachProps) {
   const { t, language } = useLanguage();
   const { isPremium, isElite, upgradeSubscription } = useSubscription();
   const { user } = useAuth();
@@ -82,6 +84,8 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState('');
+  // Kvarvarande gratisfrågor i exempelläget; null tills servern svarat.
+  const [demoFreeLeft, setDemoFreeLeft] = useState<number | null>(null);
   const [showUpgradeCta, setShowUpgradeCta] = useState(false);
   const [buyingCredits, setBuyingCredits] = useState(false);
   const [insightToShare, setInsightToShare] = useState<{ text: string; kind: 'strength' | 'think' } | null>(null);
@@ -100,7 +104,8 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const isLocked = !isPremium && displayCredits <= 0;
+  const outOfQuestions = displayCredits <= 0 && !(isDemo && demoFreeLeft !== 0);
+  const isLocked = !isPremium && outOfQuestions;
   // "interval" styr bara prenumerationsköp — engångsköp av krediter
   // ignorerar den, se createStripeCheckoutSession.
   const handleBuyCredits = async () => {
@@ -196,7 +201,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
   };
 
   const handleAskCoach = async (specificQuestion?: string) => {
-    if (displayCredits <= 0) return;
+    if (outOfQuestions) return;
 
     // Spelardata skickas till AI först när användaren sagt ja till det.
     if (user && !hasAiConsent(user.uid)) {
@@ -234,6 +239,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
       });
 
       if (result.data.success) {
+        if (typeof result.data.demoFreeLeft === 'number') setDemoFreeLeft(result.data.demoFreeLeft);
         const highlight = typeof result.data.shareHighlight === 'string'
           ? result.data.shareHighlight.trim()
           : '';
@@ -460,6 +466,14 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
         </div>
       )}
 
+      {isDemo && demoFreeLeft !== 0 && (
+        <div className="px-4 py-1.5 bg-black/20 border-b border-white/5">
+          <p className="text-[11px] text-gray-400">
+            {t('ai.demoFree', { count: demoFreeLeft ?? 3 })}
+          </p>
+        </div>
+      )}
+
       {/* Historikpanel */}
       {showHistory && (
         <div className="border-b border-white/5 bg-black/30 max-h-64 overflow-y-auto">
@@ -526,7 +540,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
                 <button
                   key={question}
                   onClick={() => handleAskCoach(question)}
-                  disabled={loading || displayCredits <= 0}
+                  disabled={loading || outOfQuestions}
                   className="px-4 py-2 rounded-full border border-primary-500/40 bg-primary-500/10 text-primary-200 text-xs font-medium hover:bg-primary-500/25 hover:border-primary-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {question}
@@ -536,9 +550,9 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
 
             <button
               onClick={() => handleAskCoach()}
-              disabled={loading || displayCredits <= 0}
+              disabled={loading || outOfQuestions}
               className={`relative group flex items-center justify-center gap-2 mx-auto px-8 py-3 rounded-xl font-bold text-white transition-all ${
-                loading || displayCredits <= 0
+                loading || outOfQuestions
                   ? 'bg-gray-700 cursor-not-allowed opacity-70'
                   : 'bg-primary-600 hover:bg-primary-500 shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50'
               }`}
@@ -673,7 +687,7 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade }: AiCoach
              />
              <button
                onClick={() => handleAskCoach(inputQuestion)}
-               disabled={!inputQuestion.trim() || loading || displayCredits <= 0}
+               disabled={!inputQuestion.trim() || loading || outOfQuestions}
                className="bg-primary-600 hover:bg-primary-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors shadow-lg shadow-primary-500/20"
              >
                <Send size={18} />

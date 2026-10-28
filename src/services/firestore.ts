@@ -22,6 +22,7 @@ import {
   getDocs,
   deleteDoc
 } from 'firebase/firestore';
+import { isDemoPlayerName } from '../utils/demoData';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Capacitor } from '@capacitor/core';
 import { app } from './firebase';
@@ -147,6 +148,9 @@ export const firestore = {
   },
 
   async savePlayer(userId: string, playerName: string, data: any) {
+    // Exempelläget visar "Erik (exempel)" utan att något finns i databasen;
+    // t.ex. e-post- eller saldouppdateringar där skulle annars skapa spelaren.
+    if (isDemoPlayerName(playerName)) return;
     const playerRef = doc(db, "artifacts", getAppId(), "users", userId, "players", playerName);
     await setDoc(playerRef, { name: playerName, ...data, lastUpdated: new Date().toISOString() }, { merge: true });
   },
@@ -158,6 +162,7 @@ export const firestore = {
 
   // Game operations
   async saveGame(userId: string, playerName: string, gameData: any) {
+    if (isDemoPlayerName(playerName)) return;
     const gamesRef = getGamesCollectionRef(userId, playerName);
     const gameRef = doc(gamesRef);
     await setDoc(gameRef, {
