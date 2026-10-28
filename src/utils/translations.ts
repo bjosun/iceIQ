@@ -138,7 +138,10 @@ export const translations = {
     // Weekly email digest
     actionGrid: {
       more: "More…",
-      moreTitle: "More actions and today's focus",
+      moreTitle: "Add buttons and today's focus",
+      addButton: "Add button",
+      add: "Add",
+      added: "Added",
       focusTitle: "Today's focus",
       focusHint: "Pick what the player is working on today. These get their own buttons in the grid.",
       pickFocus: "Pick focus",
@@ -913,7 +916,10 @@ export const translations = {
     // Weekly email digest
     actionGrid: {
       more: "Mer…",
-      moreTitle: "Fler aktioner och dagens fokus",
+      moreTitle: "Lägg till knappar och dagens fokus",
+      addButton: "Lägg till knapp",
+      add: "Lägg till",
+      added: "Tillagd",
       focusTitle: "Dagens fokus",
       focusHint: "Välj vad spelaren jobbar på i dag. De får egna knappar i rutnätet.",
       pickFocus: "Välj fokus",

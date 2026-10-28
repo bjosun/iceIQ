@@ -6,17 +6,12 @@ import { useTemplates, defaultTemplates } from '../../contexts/TemplateContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Card from '../ui/Card';
 import Modal from '../ui/Modal';
-import { loadFocus, resolveGrid, saveFocus, shortName } from '../../utils/gridLayout';
+import { loadExtras, loadFocus, resolveGrid, saveExtras, saveFocus, shortName } from '../../utils/gridLayout';
 import { BIG_POINTS, effectsEnabled, setEffectsEnabled, tapFeedback } from '../../utils/feedback';
-import { moneyModeUnit } from '../../utils/pricing';
 
 interface ActionGridProps {
   actionCounts: Record<string, number>;
   onCountChange: (counts: Record<string, number>) => void;
-  // I pengaläget är varje tryck värt poäng × faktor, så knapparna visar kronor
-  // i stället för poäng (summan i matchen räknas på samma sätt i Dashboard).
-  isMoneyMode?: boolean;
-  bonusFactor?: number;
 }
 
 // Fasta konfettibitar (inget slumpande vid render, så effekten är densamma
@@ -32,14 +27,9 @@ const CONFETTI = [
 // Byggd för användning vid rinken: hela kortet är tryckytan (+1),
 // minus-knappen i hörnet ångrar. Stora ytor, direkt feedback, ingen
 // scroll mitt i registreringen.
-export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = false, bonusFactor = 1 }: ActionGridProps) {
+export default function ActionGrid({ actionCounts, onCountChange }: ActionGridProps) {
   const { currentTemplate } = useTemplates();
   const { t, language } = useLanguage();
-  const worth = (points: number) => (isMoneyMode ? points * bonusFactor : points);
-  const worthLabel = (points: number) => {
-    const v = worth(points);
-    return `${v > 0 ? '+' : ''}${v}${isMoneyMode ? ` ${moneyModeUnit(language)}` : ' p'}`;
-  };
 
   // "Håll skärmen tänd" — avstängd som standard (samma mönster som
   // receptsajter). Webbläsare utan Wake Lock-API (äldre iOS, hemskärms-appar,
@@ -58,8 +48,10 @@ export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = 
   const [focusNames, setFocusNames] = useState<string[] | null>(null);
   const [showMore, setShowMore] = useState(false);
   const templateId = currentTemplate?.id;
+  const [extraNames, setExtraNames] = useState<string[]>([]);
   useEffect(() => {
     setFocusNames(templateId ? loadFocus(templateId) : null);
+    setExtraNames(templateId ? loadExtras(templateId) : []);
   }, [templateId]);
 
   const [effects, setEffects] = useState<boolean>(() => effectsEnabled());
@@ -144,7 +136,13 @@ export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = 
   // Fast rutnät (tolv pluss, sex minus) när mallen har en layout, annars hela
   // listan som förut (egna mallar).
   const layout = currentTemplate.layout ?? defaultTemplates[currentTemplate.id]?.layout;
-  const grid = resolveGrid(currentTemplate, layout, focusNames);
+  const grid = resolveGrid(currentTemplate, layout, focusNames, extraNames);
+
+  const toggleExtra = (en: string) => {
+    const next = extraNames.includes(en) ? extraNames.filter((n) => n !== en) : [...extraNames, en];
+    setExtraNames(next);
+    if (templateId) saveExtras(templateId, next);
+  };
 
   const chooseFocus = (slot: number, en: string) => {
     if (!grid) return;
@@ -165,7 +163,7 @@ export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = 
     const { visual } = tapFeedback(big ? 'big' : positive ? 'plus' : 'negative');
     if (!visual) return;
     const id = ++fxCounter.current;
-    setFx(prev => ({ ...prev, [key]: { id, big, text: `${worth(points) > 0 ? '+' : ''}${worth(points)}` } }));
+    setFx(prev => ({ ...prev, [key]: { id, big, text: `${points > 0 ? '+' : ''}${points}` } }));
     window.setTimeout(() => {
       setFx(prev => (prev[key]?.id === id ? (({ [key]: _gone, ...rest }) => rest)(prev) : prev));
     }, 950);
@@ -233,7 +231,7 @@ export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = 
               </p>
               <div className="flex items-end justify-between">
                 <span className="text-xs text-gray-400">
-                  {worthLabel(action.points)}
+                  {action.points > 0 ? '+' : ''}{action.points} p
                 </span>
                 <span className={`${opts.compact ? 'text-2xl' : 'text-3xl'} font-black leading-none ${count > 0 ? countColor : 'text-gray-600'}`}>
                   <span key={count} className="inline-block animate-count-pop motion-reduce:animate-none">{count}</span>
@@ -297,6 +295,18 @@ export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = 
         </button>
       ))
     : null;
+
+  // "Lägg till knapp": öppnar valet där spelaren själv väljer fler aktioner.
+  const addTile = grid && (grid.more.length > 0 || grid.extras.length > 0) ? (
+    <button
+      key="add-button"
+      onClick={() => setShowMore(true)}
+      className="min-h-[84px] p-2 rounded-xl border border-dashed border-gray-600 text-gray-400 text-xs flex flex-col items-center justify-center gap-1 touch-manipulation"
+    >
+      <Plus size={16} />
+      {t('actionGrid.addButton')}
+    </button>
+  ) : null;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -365,7 +375,7 @@ export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = 
         {grid
           ? renderTiles(grid.positive, true, {
               compact: true,
-              extra: emptySlotTiles,
+              extra: <>{emptySlotTiles}{addTile}</>,
               focusStar: new Set(grid.focusChosen),
             })
           : renderTiles(positiveActions, true)}
@@ -381,21 +391,8 @@ export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = 
             {calculatePoints(negativeActions)} pts
           </span>
         </div>
-        {grid ? renderTiles(grid.negative, false, { compact: true }) : renderTiles(negativeActions, false)}
+        {grid ? renderTiles(grid.negative, false, { compact: true, extra: addTile }) : renderTiles(negativeActions, false)}
       </Card>
-
-      {grid && (grid.more.length > 0 || grid.slots > 0) && (
-        <div className="lg:col-span-2">
-          <button
-            onClick={() => setShowMore(true)}
-            className="w-full py-3 rounded-xl border border-gray-600 bg-gray-800/60 text-gray-200 text-sm font-semibold touch-manipulation hover:border-gray-500 transition-colors"
-          >
-            {grid.more.length > 0
-              ? `${t('actionGrid.more')} (${grid.more.length})`
-              : t('actionGrid.focusTitle')}
-          </button>
-        </div>
-      )}
 
       {grid && (
         <Modal
@@ -422,7 +419,7 @@ export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = 
                       <option value="">{t('actionGrid.noFocus')}</option>
                       {grid.focusCandidates.map((a) => (
                         <option key={a.name.en} value={a.name.en}>
-                          {a.name[language] || a.name.en} ({worthLabel(a.points)})
+                          {a.name[language] || a.name.en} ({a.points > 0 ? '+' : ''}{a.points})
                         </option>
                       ))}
                     </select>
@@ -431,18 +428,37 @@ export default function ActionGrid({ actionCounts, onCountChange, isMoneyMode = 
               </div>
             )}
 
-            {grid.more.some((a) => a.type === 'positive') && (
-              <div>
-                <h3 className="text-sm font-bold text-green-400 mb-2">{t('positiveActions')}</h3>
-                {renderTiles(grid.more.filter((a) => a.type === 'positive'), true, { gridClass: 'grid grid-cols-2 gap-2' })}
-              </div>
-            )}
-            {grid.more.some((a) => a.type === 'negative') && (
-              <div>
-                <h3 className="text-sm font-bold text-red-400 mb-2">{t('negativeActions')}</h3>
-                {renderTiles(grid.more.filter((a) => a.type === 'negative'), false, { gridClass: 'grid grid-cols-2 gap-2' })}
-              </div>
-            )}
+            {(['positive', 'negative'] as const).map((type) => {
+              const pickable = [...grid.extras, ...grid.more].filter((a) => a.type === type);
+              if (pickable.length === 0) return null;
+              return (
+                <div key={type}>
+                  <h3 className={`text-sm font-bold mb-2 ${type === 'positive' ? 'text-green-400' : 'text-red-400'}`}>
+                    {type === 'positive' ? t('positiveActions') : t('negativeActions')}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {pickable.map((a) => {
+                      const on = extraNames.includes(a.name.en);
+                      return (
+                        <button
+                          key={a.name.en}
+                          onClick={() => toggleExtra(a.name.en)}
+                          aria-pressed={on}
+                          className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border text-left text-sm touch-manipulation ${
+                            on ? 'border-cyan-500/60 bg-cyan-500/10 text-white' : 'border-gray-700 bg-gray-800/60 text-gray-300'
+                          }`}
+                        >
+                          <span>{a.name[language] || a.name.en} ({a.points > 0 ? '+' : ''}{a.points})</span>
+                          <span className={`shrink-0 text-xs font-bold ${on ? 'text-cyan-300' : 'text-gray-500'}`}>
+                            {on ? t('actionGrid.added') : t('actionGrid.add')}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
 
             <button
               onClick={() => setShowMore(false)}

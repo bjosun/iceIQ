@@ -771,7 +771,7 @@ export default function Dashboard() {
           
           {/* The Stats Grid (Buttons) */}
           <div id="section-match" className="scroll-mt-16">
-            <ActionGrid actionCounts={actionCounts} onCountChange={handleActionCountChange} isMoneyMode={isMoneyMode} bonusFactor={bonusFactor} />
+            <ActionGrid actionCounts={actionCounts} onCountChange={handleActionCountChange} />
           </div>
           
           {/* Bonus Weighting - VISAS BARA I MONEY MODE */}

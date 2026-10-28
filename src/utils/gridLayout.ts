@@ -1,6 +1,6 @@
 // Fast "knapptelefon"-layout för aktionsknapparna: tolv pluss och sex minus på
 // samma plats varje match, så att händerna lär sig läget och man slipper titta.
-// Resten ligger under "Mer…". Några pluss-platser är "dagens fokus": spelaren
+// Spelaren kan själv lägga till fler knappar i rutnätet (se loadExtras). Några pluss-platser är "dagens fokus": spelaren
 // väljer själv vilka aktioner som ska ligga där (sparas på enheten).
 //
 // Det här är bara en vy. Alla aktioner finns kvar i mallen och sparas under
@@ -14,8 +14,10 @@ export const GRID_NEGATIVE = 6;
 export interface ResolvedGrid {
   positive: TemplateAction[];
   negative: TemplateAction[];
-  /** Aktioner som inte ryms på rutnätet (visas under "Mer…"). */
+  /** Aktioner som inte ligger på rutnätet; kan läggas till som egna knappar. */
   more: TemplateAction[];
+  /** Aktioner spelaren själv lagt till (redan inräknade i positive/negative). */
+  extras: TemplateAction[];
   /** Antal fokusplatser, och hur många av dem som är tomma. */
   slots: number;
   emptySlots: number;
@@ -39,6 +41,25 @@ export function loadFocus(templateId: string): string[] | null {
   }
 }
 
+const EXTRAS_KEY = (templateId: string) => `iceiq-extras-${templateId}`;
+
+/** Aktioner spelaren själv lagt till som egna knappar, per mall (engelska namn). */
+export function loadExtras(templateId: string): string[] {
+  try {
+    const raw = localStorage.getItem(EXTRAS_KEY(templateId));
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) && parsed.every((x) => typeof x === 'string') ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveExtras(templateId: string, names: string[]): void {
+  try {
+    localStorage.setItem(EXTRAS_KEY(templateId), JSON.stringify(names));
+  } catch { /* privat läge: valet gäller bara den här sessionen */ }
+}
+
 export function saveFocus(templateId: string, names: string[]): void {
   try {
     localStorage.setItem(FOCUS_KEY(templateId), JSON.stringify(names));
@@ -54,6 +75,7 @@ export function resolveGrid(
   template: Pick<Template, 'actions'>,
   layout: TemplateLayout | undefined,
   chosenFocus?: string[] | null,
+  extraNames: string[] = [],
 ): ResolvedGrid | null {
   if (!layout) return null;
   const byEn = new Map<string, TemplateAction>();
@@ -80,13 +102,21 @@ export function resolveGrid(
     .filter((a): a is TemplateAction => !!a)
     .slice(0, GRID_NEGATIVE);
 
-  const positive = [...fixed, ...focusActs];
-  if (positive.length + negative.length < 6) return null;
+  const basePositive = [...fixed, ...focusActs];
+  if (basePositive.length + negative.length < 6) return null;
 
-  const shown = new Set<TemplateAction>([...positive, ...negative]);
+  const placed = new Set<TemplateAction>([...basePositive, ...negative]);
+  const extras = extraNames
+    .map((en) => byEn.get(en))
+    .filter((a, i, all): a is TemplateAction => !!a && !placed.has(a) && all.indexOf(a) === i);
+  const positive = [...basePositive, ...extras.filter((a) => a.type === 'positive')];
+  const negativeAll = [...negative, ...extras.filter((a) => a.type === 'negative')];
+
+  const shown = new Set<TemplateAction>([...positive, ...negativeAll]);
   return {
     positive,
-    negative,
+    negative: negativeAll,
+    extras,
     more: template.actions.filter((a) => !shown.has(a)),
     slots,
     emptySlots: Math.max(0, slots - focusActs.length),
