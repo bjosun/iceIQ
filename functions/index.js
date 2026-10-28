@@ -626,17 +626,29 @@ function normalizeActionKey(key) {
   return key;
 }
 
+// Så många matcher listas rad för rad för coachen (en säsong ungefär);
+// äldre än så täcks av totalerna och säsongsöversikten.
+const COACH_GAME_LOG_MAX = 80;
+
 async function computeSeasonTotals(playerRef) {
-  const snap = await playerRef.collection('games').select('counts').get();
+  const snap = await playerRef.collection('games').select('counts', 'date', 'team', 'points').get();
   const totals = {};
+  const log = [];
   for (const doc of snap.docs) {
+    const parts = [];
     for (const [key, value] of Object.entries(doc.get('counts') || {})) {
       const name = normalizeActionKey(key);
-      totals[name] = (totals[name] || 0) + (Number(value) || 0);
+      const n = Number(value) || 0;
+      totals[name] = (totals[name] || 0) + n;
+      if (n) parts.push(`${name} ${n}`);
     }
+    log.push({ date: String(doc.get('date') || ''), line: [doc.get('date') || '?', doc.get('team') || '', `${doc.get('points') ?? 0} p`, parts.join(', ')].filter(Boolean).join(' · ') });
   }
   for (const name of Object.keys(totals)) if (!totals[name]) delete totals[name];
-  return { games: snap.size, totals };
+  // Äldst först, så coachen läser säsongen i ordning; taket kapar de äldsta.
+  log.sort((a, b) => a.date.localeCompare(b.date));
+  const gameLog = log.slice(-COACH_GAME_LOG_MAX).map((g) => g.line);
+  return { games: snap.size, totals, gameLog, gameLogTruncated: log.length > gameLog.length };
 }
 
 exports.askCoach = functions
@@ -767,6 +779,7 @@ exports.askCoach = functions
       2. Identifiera trender: Jämför alltid prestationerna över tid. Går totalpoängen upp eller ner? Vilka specifika handlingar har blivit bättre eller sämre mellan matcherna?
       2a. Frågar spelaren efter sin statistik totalt (t.ex. "hur många assist har jag totalt", "all my stats over all games"), svara med siffrorna i "Säsongstotaler per aktion" — de är exakta summor över alla sparade matcher, inte bara de senaste. Nämn antalet matcher och gärna snitt per match. Hitta aldrig på siffror som inte finns där.
       2b. Använd "Säsongsöversikt" för det långa perspektivet: jämför snittet för de senaste 5 matcherna (last5Avg) med säsongssnittet (avgPoints) och säg tydligt om spelaren är på väg uppåt eller nedåt jämfört med sin egen nivå.
+      2c. Frågor om en enskild match eller en del av säsongen (t.ex. "vilken match hade jag flest assist", "hur gick det i oktober", "matchen den 18 oktober") besvarar du ur "Matchlogg" — en rad per sparad match med datum, lag, poäng och antal per aktion. Ange datumet när du pekar ut en match. Motståndarlag sparas inte, så säg det om spelaren frågar om ett visst motstånd.
       3. Var proaktiv: Tvinga inte spelaren att dra ur dig informationen. Ditt första svar (utan konversationshistorik, utan specifik fråga) ska alltid innehålla en konkret analys.
       4. "Tidigare tidslinje om spelaren" (om sådan finns) är vad du själv antecknat i tidigare samtal — väv in den naturligt ("du har ju jobbat på X ett tag nu, och det syns...") i stället för att bara räkna upp den. Lita fortfarande bara på siffrorna i den aktuella datan, inte på minnet, för själva talen.
       4b. STRICT REGEL: Om tidslinjen är tom/står "(ingen ännu — första samtalet...)": det HÄNDER inte att ni pratat förut. Säg ALDRIG saker som "som vi pratade om", "precis som förra gången" eller liknande då — det är påhittat och spelaren vet att det inte är sant. Hälsa varmt, men som första mötet det faktiskt är.
@@ -932,6 +945,8 @@ exports.askCoach = functions
       - Historik (senaste 3 matcherna): ${JSON.stringify(playerStats.history || [])}
       - Säsongsöversikt (alla registrerade matcher): ${JSON.stringify(playerStats.season || {})}
       - Säsongstotaler per aktion (summa över alla ${seasonTotals?.games ?? 0} sparade matcher, utan dagens osparade): ${JSON.stringify(seasonTotals?.totals || {})}
+      - Matchlogg (en rad per sparad match, äldst först${seasonTotals?.gameLogTruncated ? `, bara de senaste ${COACH_GAME_LOG_MAX}` : ''}):
+${(seasonTotals?.gameLog || []).map((l) => `        ${l}`).join('\n') || '        (inga sparade matcher)'}
       - Poäng denna match: ${playerStats.totals?.actionsPoints ?? 0}
       - Totalt saldo (kan inkludera överfört värde från tidigare matcher): ${playerStats.totals?.total ?? 0}
       - Tidigare tidslinje om spelaren: ${existingTimeline.length > 0 ? JSON.stringify(existingTimeline) : '(ingen ännu — första samtalet med den här spelaren)'}
