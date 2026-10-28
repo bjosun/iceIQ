@@ -7,6 +7,8 @@
     "dev": "vite",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "check:i18n": "node scripts/check-i18n.mjs",
+    "check:cards": "node scripts/check-cards.mjs",
+    "test:cards": "node --test src/lib/cardEngine.test.mjs src/lib/cardProgress.test.mjs src/lib/cardSteps.test.mjs src/lib/cardLibrary.test.mjs",
     "report:acquisition": "node --env-file=.env scripts/acquisition-report.mjs",
     "build": "vite build && node scripts/generate-landing-pages.mjs",
     "preview": "vite preview",

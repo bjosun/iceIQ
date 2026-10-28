@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { translations, Language } from '../utils/translations';
 
 interface LanguageContextType {
@@ -19,7 +19,12 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   // 1. Initiera språk vid start
   useEffect(() => {
-    const savedLang = localStorage.getItem('iceiq-language') as Language;
+    let savedLang: Language | null = null;
+    try {
+      savedLang = localStorage.getItem('iceiq-language') as Language;
+    } catch {
+      savedLang = null;
+    }
     const browserLang = navigator.language.toLowerCase();
     
     if (savedLang && (savedLang === 'en' || savedLang === 'sv')) {
@@ -37,7 +42,11 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   // 2. Funktion för att byta språk
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
-    localStorage.setItem('iceiq-language', lang);
+    try {
+      localStorage.setItem('iceiq-language', lang);
+      // eslint-disable-next-line no-empty
+    } catch {
+    }
     document.documentElement.lang = lang;
   };
 

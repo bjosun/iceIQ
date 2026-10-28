@@ -6,7 +6,7 @@ import { LucideIcon } from 'lucide-react';
 // "bite-sized cards" — men med en skillnad: ETT kort kan vara interaktivt
 // (input) och ETT kort (belöningskortet) kan spegla tillbaka svaret. Det
 // löser personalisering utan att någon AI skriver eller improviserar
-// rutinens innehåll — texten är fast, granskad copy (se translations.ts),
+// rutinens innehåll — texten är fast, granskad copy (se content/cards),
 // bara svaret som visas tillbaka är spelarens eget.
 //
 // Byggd generisk med avsikt: nästa rutin (t.ex. sömnrutin, uppvärmning)
@@ -25,6 +25,8 @@ export interface RoutineStep {
    * det någon gång blir valfritt) — funktionen avgör själv fallback-text.
    */
   rewardBody?: (answer: string) => string;
+  /** Källrad under texten, t.ex. "Person, verk (år)". Satt för kort med källa. */
+  attribution?: string;
   /** Litet, tonat finstilt-tillägg — t.ex. en trygghetsrad om att prata med en vuxen. */
   footnote?: string;
 }
@@ -99,6 +101,9 @@ export default function RoutineStack({
         </div>
         <h3 className="text-white font-semibold text-base leading-snug">{step.title}</h3>
         {step.body && <p className="text-gray-400 text-sm leading-relaxed max-w-xs">{step.body}</p>}
+        {step.attribution && (
+          <p className="text-gray-500 text-xs leading-relaxed max-w-xs">{step.attribution}</p>
+        )}
         {step.rewardBody && (
           <p className="text-gray-400 text-sm leading-relaxed max-w-xs">{step.rewardBody(answer)}</p>
         )}

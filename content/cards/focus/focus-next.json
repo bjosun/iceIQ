@@ -1,0 +1,200 @@
+[
+  {
+    "id": "focus-next-01",
+    "concept": "focus-next",
+    "track": "focus",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "focus-next",
+    "order": 1,
+    "icon": "backpack",
+    "title": "Alla gör misstag. Det som spelar roll är vad du gör de närmaste fem sekunderna.",
+    "sectionTitle": "Efter ett misstag",
+    "requires": [
+      "focus-first-01",
+      "focus-first-02",
+      "focus-first-03",
+      "focus-first-04"
+    ]
+  },
+  {
+    "id": "focus-next-01",
+    "concept": "focus-next",
+    "track": "focus",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "focus-next",
+    "order": 1,
+    "icon": "backpack",
+    "title": "Everyone makes mistakes. What matters is what you do in the next five seconds.",
+    "sectionTitle": "After a mistake",
+    "requires": [
+      "focus-first-01",
+      "focus-first-02",
+      "focus-first-03",
+      "focus-first-04"
+    ]
+  },
+  {
+    "id": "focus-next-02",
+    "concept": "focus-next",
+    "track": "focus",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "focus-next",
+    "order": 2,
+    "icon": "pen-line",
+    "title": "Vad vill du göra direkt efter ett misstag?",
+    "sectionTitle": "Efter ett misstag",
+    "requires": [
+      "focus-first-01",
+      "focus-first-02",
+      "focus-first-03",
+      "focus-first-04"
+    ],
+    "input": {
+      "placeholder": "t.ex. andas ut och titta på nästa puck",
+      "errorText": "Skriv en sak innan du går vidare."
+    }
+  },
+  {
+    "id": "focus-next-02",
+    "concept": "focus-next",
+    "track": "focus",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "focus-next",
+    "order": 2,
+    "icon": "pen-line",
+    "title": "What do you want to do right after a mistake?",
+    "sectionTitle": "After a mistake",
+    "requires": [
+      "focus-first-01",
+      "focus-first-02",
+      "focus-first-03",
+      "focus-first-04"
+    ],
+    "input": {
+      "placeholder": "e.g. breathe out and look for the next puck",
+      "errorText": "Write one thing before you continue."
+    }
+  },
+  {
+    "id": "focus-next-03",
+    "concept": "focus-next",
+    "track": "focus",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "focus-next",
+    "order": 3,
+    "icon": "moon",
+    "title": "Tre steg, fem sekunder",
+    "sectionTitle": "Efter ett misstag",
+    "requires": [
+      "focus-first-01",
+      "focus-first-02",
+      "focus-first-03",
+      "focus-first-04"
+    ],
+    "body": "Andas ut. Säg \"nästa\" för dig själv. Titta på nästa sak i spelet."
+  },
+  {
+    "id": "focus-next-03",
+    "concept": "focus-next",
+    "track": "focus",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "focus-next",
+    "order": 3,
+    "icon": "moon",
+    "title": "Three steps, five seconds",
+    "sectionTitle": "After a mistake",
+    "requires": [
+      "focus-first-01",
+      "focus-first-02",
+      "focus-first-03",
+      "focus-first-04"
+    ],
+    "body": "Breathe out. Say \"next\" to yourself. Look at the next thing in the game."
+  },
+  {
+    "id": "focus-next-04",
+    "concept": "focus-next",
+    "track": "focus",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "focus-next",
+    "order": 4,
+    "icon": "check",
+    "title": "Det räcker",
+    "sectionTitle": "Efter ett misstag",
+    "requires": [
+      "focus-first-01",
+      "focus-first-02",
+      "focus-first-03",
+      "focus-first-04"
+    ],
+    "reward": {
+      "withAnswer": "Du valde: {answer}. Du behöver inte vara perfekt, bara redo för nästa byte.",
+      "empty": "Du behöver inte vara perfekt, bara redo för nästa byte."
+    },
+    "footnote": "Om misstag ofta får dig att må riktigt dåligt — prata med din tränare eller en vuxen du litar på. Den här övningen är till för att komma tillbaka i spelet, inte för allt.",
+    "nerves": true
+  },
+  {
+    "id": "focus-next-04",
+    "concept": "focus-next",
+    "track": "focus",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "focus-next",
+    "order": 4,
+    "icon": "check",
+    "title": "That's enough",
+    "sectionTitle": "After a mistake",
+    "requires": [
+      "focus-first-01",
+      "focus-first-02",
+      "focus-first-03",
+      "focus-first-04"
+    ],
+    "reward": {
+      "withAnswer": "You chose: {answer}. You don't have to be perfect, just ready for the next shift.",
+      "empty": "You don't have to be perfect, just ready for the next shift."
+    },
+    "footnote": "If mistakes often make you feel really bad, talk to your coach or an adult you trust. This exercise is for getting back into the game, not for everything.",
+    "nerves": true
+  }
+]

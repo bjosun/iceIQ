@@ -1,0 +1,208 @@
+[
+  {
+    "id": "routine-next-01",
+    "concept": "routine-next",
+    "track": "routine",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "routine-next",
+    "order": 1,
+    "icon": "backpack",
+    "title": "Du gjorde kvällsrutinen. Här är en liten sak till, i omklädningsrummet på matchdagen.",
+    "sectionTitle": "Matchdagen",
+    "requires": [
+      "night-before-game-01",
+      "night-before-game-02",
+      "night-before-game-03",
+      "night-before-game-04"
+    ]
+  },
+  {
+    "id": "routine-next-01",
+    "concept": "routine-next",
+    "track": "routine",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "routine-next",
+    "order": 1,
+    "icon": "backpack",
+    "title": "You did the night-before routine. Here's one more small thing, in the locker room on game day.",
+    "sectionTitle": "Game day",
+    "requires": [
+      "night-before-game-01",
+      "night-before-game-02",
+      "night-before-game-03",
+      "night-before-game-04"
+    ]
+  },
+  {
+    "id": "routine-next-02",
+    "concept": "routine-next",
+    "track": "routine",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "routine-next",
+    "order": 2,
+    "icon": "pen-line",
+    "title": "Vilket ORD vill du ta med dig ut på isen?",
+    "sectionTitle": "Matchdagen",
+    "requires": [
+      "night-before-game-01",
+      "night-before-game-02",
+      "night-before-game-03",
+      "night-before-game-04"
+    ],
+    "input": {
+      "placeholder": "t.ex. lugn, snabb, modig",
+      "errorText": "Skriv ett ord innan du går vidare."
+    }
+  },
+  {
+    "id": "routine-next-02",
+    "concept": "routine-next",
+    "track": "routine",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "routine-next",
+    "order": 2,
+    "icon": "pen-line",
+    "title": "What ONE WORD do you want to take onto the ice?",
+    "sectionTitle": "Game day",
+    "requires": [
+      "night-before-game-01",
+      "night-before-game-02",
+      "night-before-game-03",
+      "night-before-game-04"
+    ],
+    "input": {
+      "placeholder": "e.g. calm, quick, brave",
+      "errorText": "Write one word before you continue."
+    }
+  },
+  {
+    "id": "routine-next-03",
+    "concept": "routine-next",
+    "track": "routine",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "routine-next",
+    "order": 3,
+    "icon": "moon",
+    "title": "Medan du knyter skridskorna",
+    "sectionTitle": "Matchdagen",
+    "requires": [
+      "night-before-game-01",
+      "night-before-game-02",
+      "night-before-game-03",
+      "night-before-game-04"
+    ],
+    "body": "Ta tre lugna andetag. Säg ditt ord för dig själv, en gång per andetag.",
+    "action": {
+      "kind": "breathing",
+      "label": "Gå till andningsövningen"
+    }
+  },
+  {
+    "id": "routine-next-03",
+    "concept": "routine-next",
+    "track": "routine",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "routine-next",
+    "order": 3,
+    "icon": "moon",
+    "title": "While you lace your skates",
+    "sectionTitle": "Game day",
+    "requires": [
+      "night-before-game-01",
+      "night-before-game-02",
+      "night-before-game-03",
+      "night-before-game-04"
+    ],
+    "body": "Take three slow breaths. Say your word to yourself, once on each breath.",
+    "action": {
+      "kind": "breathing",
+      "label": "Go to the breathing exercise"
+    }
+  },
+  {
+    "id": "routine-next-04",
+    "concept": "routine-next",
+    "track": "routine",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "routine-next",
+    "order": 4,
+    "icon": "check",
+    "title": "Nu är du redo",
+    "sectionTitle": "Matchdagen",
+    "requires": [
+      "night-before-game-01",
+      "night-before-game-02",
+      "night-before-game-03",
+      "night-before-game-04"
+    ],
+    "reward": {
+      "withAnswer": "Du valde: {answer}. Du har gjort din del. Resten gör du på isen.",
+      "empty": "Du har gjort din del. Resten gör du på isen."
+    },
+    "footnote": "Känns nerverna större än så här — prata med din tränare eller en vuxen du litar på. Den här rutinen är till för matchnerver, inte för allt.",
+    "nerves": true
+  },
+  {
+    "id": "routine-next-04",
+    "concept": "routine-next",
+    "track": "routine",
+    "level": 2,
+    "ageMin": 13,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "routine-next",
+    "order": 4,
+    "icon": "check",
+    "title": "Now you're ready",
+    "sectionTitle": "Game day",
+    "requires": [
+      "night-before-game-01",
+      "night-before-game-02",
+      "night-before-game-03",
+      "night-before-game-04"
+    ],
+    "reward": {
+      "withAnswer": "You chose: {answer}. You've done your part. The rest happens on the ice.",
+      "empty": "You've done your part. The rest happens on the ice."
+    },
+    "footnote": "If the nerves feel bigger than this, talk to your coach or an adult you trust. This routine is for game-day nerves, not for everything.",
+    "nerves": true
+  }
+]

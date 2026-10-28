@@ -1,0 +1,160 @@
+[
+  {
+    "concept": "night-before-game",
+    "track": "routine",
+    "level": 1,
+    "ageMin": 8,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "night-before-game",
+    "sectionTitle": "Kvällen innan match",
+    "id": "night-before-game-01",
+    "order": 1,
+    "icon": "backpack",
+    "title": "Det här är något spelare som vill bli riktigt bra gör kvällen innan match. Inte för att man måste — det funkar bara."
+  },
+  {
+    "concept": "night-before-game",
+    "track": "routine",
+    "level": 1,
+    "ageMin": 8,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "night-before-game",
+    "sectionTitle": "Kvällen innan match",
+    "id": "night-before-game-02",
+    "order": 2,
+    "icon": "pen-line",
+    "title": "Vad är EN sak du vill göra bra imorgon?",
+    "input": {
+      "placeholder": "t.ex. hålla huvudet uppe vid passningar",
+      "errorText": "Skriv en sak innan du går vidare."
+    }
+  },
+  {
+    "concept": "night-before-game",
+    "track": "routine",
+    "level": 1,
+    "ageMin": 8,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "night-before-game",
+    "sectionTitle": "Kvällen innan match",
+    "id": "night-before-game-03",
+    "order": 3,
+    "icon": "moon",
+    "title": "Precis innan lampan släcks",
+    "body": "Kör en kort andningsövning, eller tänk igenom den där EN saken i tio sekunder — se dig själv göra den, och att det går bra.",
+    "action": {
+      "kind": "breathing",
+      "label": "Gå till andningsövningen"
+    }
+  },
+  {
+    "concept": "night-before-game",
+    "track": "routine",
+    "level": 1,
+    "ageMin": 8,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "sv",
+    "status": "approved",
+    "pass": "night-before-game",
+    "sectionTitle": "Kvällen innan match",
+    "id": "night-before-game-04",
+    "order": 4,
+    "icon": "check",
+    "title": "Sen är du klar",
+    "reward": {
+      "withAnswer": "Du sa: {answer}. Oavsett vad som händer imorgon: du har gjort din del ikväll. Det räcker.",
+      "empty": "Oavsett vad som händer imorgon: du har gjort din del ikväll. Det räcker."
+    },
+    "footnote": "Känns nerverna större än så här — prata med din tränare eller en vuxen du litar på. Den här rutinen är till för matchnerver, inte för allt.",
+    "nerves": true
+  },
+  {
+    "concept": "night-before-game",
+    "track": "routine",
+    "level": 1,
+    "ageMin": 8,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "night-before-game",
+    "sectionTitle": "The night before a game",
+    "id": "night-before-game-01",
+    "order": 1,
+    "icon": "backpack",
+    "title": "This is something players who want to get really good do the night before a game. Not because you have to — it just works."
+  },
+  {
+    "concept": "night-before-game",
+    "track": "routine",
+    "level": 1,
+    "ageMin": 8,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "night-before-game",
+    "sectionTitle": "The night before a game",
+    "id": "night-before-game-02",
+    "order": 2,
+    "icon": "pen-line",
+    "title": "What's ONE thing you want to do well tomorrow?",
+    "input": {
+      "placeholder": "e.g. keep my head up on passes",
+      "errorText": "Write one thing before you continue."
+    }
+  },
+  {
+    "concept": "night-before-game",
+    "track": "routine",
+    "level": 1,
+    "ageMin": 8,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "night-before-game",
+    "sectionTitle": "The night before a game",
+    "id": "night-before-game-03",
+    "order": 3,
+    "icon": "moon",
+    "title": "Right before you turn off the light",
+    "body": "Do a short breathing exercise, or spend ten seconds picturing that one thing — see yourself doing it, and it going well.",
+    "action": {
+      "kind": "breathing",
+      "label": "Go to the breathing exercise"
+    }
+  },
+  {
+    "concept": "night-before-game",
+    "track": "routine",
+    "level": 1,
+    "ageMin": 8,
+    "ageMax": 18,
+    "surface": "link",
+    "lang": "en",
+    "status": "approved",
+    "pass": "night-before-game",
+    "sectionTitle": "The night before a game",
+    "id": "night-before-game-04",
+    "order": 4,
+    "icon": "check",
+    "title": "Then you're done",
+    "reward": {
+      "withAnswer": "You said: {answer}. Whatever happens tomorrow, you've done your part tonight. That's enough.",
+      "empty": "Whatever happens tomorrow, you've done your part tonight. That's enough."
+    },
+    "footnote": "If the nerves feel bigger than this, talk to your coach or an adult you trust. This routine is for game-day nerves, not for everything.",
+    "nerves": true
+  }
+]

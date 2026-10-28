@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
-import { Loader2, AlertCircle, Sparkles, Backpack, PenLine, Moon, Check } from 'lucide-react';
+import { Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { euFunctions } from '../services/firestore';
 import { useLanguage } from '../contexts/LanguageContext';
 import BreathingExercise from '../components/breathing/BreathingExercise';
-import RoutineStack, { RoutineStep } from '../components/routines/RoutineStack';
+import PlayerRoutine from '../components/routines/PlayerRoutine';
 import SeasonOverview from '../components/dashboard/SeasonOverview';
 import { plainCoachText } from '../utils/coachText';
 import ListenToMatch from '../components/ListenToMatch';
@@ -89,50 +89,6 @@ export default function PlayerLinkPage() {
     );
   }
 
-  // Enda rutinen i biblioteket idag — se routines.nightBeforeGame i
-  // translations.ts för copyn och content/routines/kvallen-fore-match.md
-  // för källdokumentet/resonemanget. RoutineStack är byggd generisk med
-  // avsikt: nästa rutin blir en ny steps-array här, inte en ny komponent.
-  const nightBeforeGameSteps: RoutineStep[] = [
-    {
-      icon: Backpack,
-      title: t('routines.nightBeforeGame.intro'),
-    },
-    {
-      icon: PenLine,
-      title: t('routines.nightBeforeGame.step1Title'),
-      input: {
-        placeholder: t('routines.nightBeforeGame.step1Placeholder'),
-        errorText: t('routines.nightBeforeGame.step1Error'),
-      },
-    },
-    {
-      icon: Moon,
-      title: t('routines.nightBeforeGame.step2Title'),
-      body: t('routines.nightBeforeGame.step2Body'),
-      action: {
-        label: t('routines.nightBeforeGame.step2Cta'),
-        onClick: () => document.getElementById('breathing-section')?.scrollIntoView({ behavior: 'smooth' }),
-      },
-    },
-    {
-      icon: Check,
-      title: t('routines.nightBeforeGame.rewardTitle'),
-      rewardBody: (answer) =>
-        answer
-          ? t('routines.nightBeforeGame.rewardBodyWithAnswer', { answer })
-          : t('routines.nightBeforeGame.rewardBodyEmpty'),
-      footnote: t('routines.nightBeforeGame.floor'),
-    },
-  ];
-
-  // Version 1: spelarens sida sparar ingenting. Rutinen görs i huvudet och på
-  // skärmen, men inget skickas till servern och ingen streak räknas, så att
-  // länken är skrivskyddad och inget samlas in från barnet. Slås på igen när ett
-  // hållbart samtyckes- och verifieringsflöde finns (ROUTINE_LOGGING_ENABLED i
-  // functions/.env plus den här koden).
-  const handleRoutineComplete = () => {};
-
   // Språk för lyssnakortet. Prioritet:
   //  1. Ett språk som besökaren själv valt på den här enheten (språkknappen i
   //     appen sparar det). Det är det som gäller när du testar EN/SV.
@@ -152,8 +108,6 @@ export default function PlayerLinkPage() {
     savedLang || data.listenLang || textLang || (language === 'sv' ? 'sv' : 'en');
   const coachMatches = !textLang || textLang === listenLang;
   const hasCoachLines = coachLines.trim().length > 0;
-
-  const streakNote = undefined;
 
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-8">
@@ -185,17 +139,17 @@ export default function PlayerLinkPage() {
           })}
         />
 
-        <div className="bg-gray-800 rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">{t('routines.nightBeforeGame.sectionTitle')}</h2>
-          <RoutineStack
-            steps={nightBeforeGameSteps}
-            backLabel={t('routines.nightBeforeGame.back')}
-            nextLabel={t('routines.nightBeforeGame.next')}
-            doneLabel={t('routines.nightBeforeGame.done')}
-            onComplete={handleRoutineComplete}
-            completionNote={streakNote}
-          />
-        </div>
+        {/* Rutinerna väljs ur kortbiblioteket i content/cards/ (bara godkända kort
+            byggs in). content/routines/kvallen-fore-match.md är källdokumentet
+            för kvällsrutinen. RoutineStack är byggd generisk med avsikt: nästa
+            rutin blir ny kortdata, inte en ny komponent.
+
+            Version 1: spelarens sida sparar ingenting på servern. Rutinen görs i
+            huvudet och på skärmen, men inget skickas till servern och ingen streak
+            räknas, så att länken är skrivskyddad och inget samlas in från barnet.
+            Slås på igen när ett hållbart samtyckes- och verifieringsflöde finns
+            (ROUTINE_LOGGING_ENABLED i functions/.env plus den här koden). */}
+        <PlayerRoutine key={token} />
 
         <div id="breathing-section" className="bg-gray-800 rounded-2xl p-6 scroll-mt-4">
           <h2 className="text-lg font-semibold text-white mb-4">{t('playerLink.breathingSectionTitle')}</h2>

@@ -8,10 +8,10 @@ durationMin: 2
 
 Källdokument för granskning — inte det appen läser vid körning. Texten
 nedan är shippad som RoutineStack-steg i src/pages/PlayerLinkPage.tsx,
-med copyn i src/utils/translations.ts under routines.nightBeforeGame
-(samma mönster som allt annat UI-innehåll i appen). Ändra copyn där; håll
-den här filen i synk manuellt tills vi eventuellt bygger riktig
-markdown-inläsning för fler rutiner.
+med kortcopyn i content/cards/routine/night-before-game.json. Ändra
+kortcopyn där; håll den här filen i synk manuellt tills vi eventuellt
+bygger riktig markdown-inläsning för fler rutiner. Navigationsetiketterna
+ligger fortfarande i src/utils/translations.ts.
 
 Statiskt innehåll skrivet av oss, inte AI-genererat: coachen pekar bara
 på det via ett tyst erbjudande (samma mönster som andningsövningen),
