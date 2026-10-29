@@ -30,3 +30,16 @@ Det som mäts är alltså om mönstret i matcherna ändras, inte om barnet titta
 
 - Nya spår kräver kort. `legends`-kort måste ha källa med `verified: true` för att byggas in.
 - `lastFocus` är härlett ur förälderns matchdata och följer med spelardokumentet i dataexport och radering.
+
+## Spelarlänkens flikar (byggda 2026-10-29)
+
+Länken är nu tre flikar i stället för en lång rullning (src/components/playerlink/):
+
+- **Senaste matchen:** poäng mot spelarens eget snitt, de tre största förändringarna sedan förra matchen, ett nytt märke om något tjänats in, lyssna och coachens anteckning.
+- **Öva:** veckans pass (coachens spår, steg 2), äldre rutiner och andningsövningen. Finns ingen ny match sedan sist visas "Inget nytt sedan sist" och fliken öppnas först.
+- **Utveckling:** "det som ändrats" som rader där ett tryck visar de senaste fem matcherna (och "lägst/högst hittills"), därefter kurva, totalsummor och märken.
+
+Allt som ändras efter en match räknas ur data som redan skickas till sidan (`src/utils/matchChanges.ts`), så ingen ny serverdata behövs. En försämring visas neutralt, aldrig som kritik. Vilken match som senast visades sparas som ett datum på enheten (`src/lib/linkVisit.ts`), aldrig på servern. Flikinnehåll monteras först när fliken öppnas och behålls sedan, så ett halvgjort kortpass inte nollas vid flikbyte.
+
+Tester: `npm run test:link`.
+
