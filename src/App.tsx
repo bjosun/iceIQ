@@ -6,6 +6,7 @@ import { TemplateProvider } from './contexts/TemplateContext'
 import { LanguageProvider } from './contexts/LanguageContext'
 import { captureUtmParams } from './utils/helpers'
 import { captureAcquisitionContext } from './utils/acquisitionContext'
+import { trackPageView } from './utils/track'
 
 // 1. Importera Toaster och CSS
 import { Toaster } from 'react-hot-toast'
@@ -22,6 +23,7 @@ const Privacy = lazy(() => import('./pages/Privacy'))
 const Support = lazy(() => import('./pages/Support'))
 const Success = lazy(() => import('./pages/Success'))
 const MatchTracker = lazy(() => import('./pages/MatchTracker'))
+const VoiceLab = lazy(() => import('./pages/VoiceLab'))
 const PlayerLinkPage = lazy(() => import('./pages/PlayerLinkPage'))
 const HockeyTrackingApp = lazy(() => import('./pages/landing/HockeyTrackingApp'))
 const YouthHockeyStats = lazy(() => import('./pages/landing/YouthHockeyStats'))
@@ -49,6 +51,12 @@ function AppContent() {
   useEffect(() => {
     captureAcquisitionContext();
   }, []);
+
+  // Besöksmätning mot plattformens funnel — publika sidor bara (spelarlänken
+  // och app-vyerna exkluderas i track.ts, inga nätverksanrop där).
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
 
   // /p/:token är spelarens egen, inloggningsfria sida (se PlayerLinkPage) —
   // ska aldrig visa förälderns Header/nav.
@@ -89,6 +97,8 @@ function AppContent() {
               <Route path="/" element={<Home />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/match" element={<MatchTracker />} />
+              {/* Internt röstlabb (fas 0, se docs/voice-coach-plan.md). Ingen länk i menyn. */}
+              <Route path="/voice-lab" element={<VoiceLab />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/support" element={<Support />} />

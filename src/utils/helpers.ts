@@ -80,6 +80,12 @@ export function consumeUtmParams(): Record<string, string | boolean> | null {
   return value ? { ...value, consent_ad_user_data: hasAdConsent() } : null;
 }
 
+// Som consume men utan att tömma: besöks-event (utils/track.ts) får bära
+// attributionen utan att stjäla den från det kontoskapande som ska äga den.
+export function peekUtmParams(): Record<string, string> | null {
+  return memoryUtm ? { ...memoryUtm } : null;
+}
+
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
