@@ -5,6 +5,7 @@ const admin = require("firebase-admin");
 const Stripe = require("stripe");
 const { Resend } = require("resend");
 const { GoogleGenAI, Type, FinishReason } = require('@google/genai');
+const { suggestedTrack, followUpPromptBlock } = require('./cardFocus');
 const { defineSecret } = require('firebase-functions/params');
 
 admin.initializeApp();
@@ -877,6 +878,7 @@ exports.askCoach = functions
       - Lägg till EN NY post (med dagens datum, ${today}) bara om du lärt dig något varaktigt nytt i det här samtalet — inte vid varje litet svar. Om inget nytt tillkommit: returnera listan oförändrad.
       - Listan får ALDRIG innehålla fler än 8 poster. Är den redan full när du vill lägga till en ny: slå ihop de två minst relevanta/äldsta posterna till en, så det finns plats. Radera aldrig hela historiken.
       - Varje post: max ~150 tecken, bara varaktigt relevanta fakta — inga engångsdetaljer om just dagens fråga.
+      ${mode === 'match' && !memoryOff ? followUpPromptBlock(playerDocData.lastFocus, today, FOCUS_TAGS) : ''}
       ${plan === 'elite' && mode === 'match' ? `
       ELITE-ANALYS (spelaren har Elite — detta UTÖKAR punkt 3 och FORMATERA-blocket för den första analysen)
       - Du får "Matchlogg" (en rad per sparad match), "Säsongstotaler per aktion" och "Snitt per säsong" i datan. Använd dem på riktigt: leta efter mönster över hela säsongen, inte bara de senaste matcherna.
@@ -1145,14 +1147,22 @@ ${(seasonTotals?.gameLog || []).map((l) => `        ${l}`).join('\n') || '      
 
     // Bara spelare som redan finns: annars skulle exempelspelaren
     // (eller ett felstavat namn) skapas som ett riktigt spelardokument.
-    if (playerRef && playerSnap?.exists && coachTimeline && !memoryOff) {
+    if (playerRef && playerSnap?.exists && !memoryOff && (coachTimeline || focusTags.length)) {
       // Bäst-ansträngning: minnet får inte blockera själva svaret till
       // spelaren om det här skulle strula. coachNotes (gamla strängfältet)
       // raderas medvetet inte — coachTimeline-läsningen ovan migrerar in
       // det vid behov, men vi rör inte bort det här ifall något annat
       // skulle läsa det.
-      await playerRef.set({ coachTimeline }, { merge: true }).catch((e) =>
-        console.warn(`askCoach: kunde inte spara coachTimeline för ${userId}/${playerName}: ${e.message}`)
+      //
+      // lastFocus: senaste tydliga fokusmönstret. Skrivs bara när coachen
+      // faktiskt pekade ut något, så en uppföljningsfråga utan taggar inte
+      // raderar det. Styr vilket rutinspår spelarlänken föreslår
+      // (suggestedTrack) och ger nästa analys en uppföljningsrad.
+      const memoryUpdate = {};
+      if (coachTimeline) memoryUpdate.coachTimeline = coachTimeline;
+      if (focusTags.length) memoryUpdate.lastFocus = { tags: focusTags, at: today };
+      await playerRef.set(memoryUpdate, { merge: true }).catch((e) =>
+        console.warn(`askCoach: kunde inte spara coachminnet för ${userId}/${playerName}: ${e.message}`)
       );
     }
 
@@ -1471,7 +1481,15 @@ exports.getPlayerLinkData = functions
       }
     }
 
-    return { playerName, games, summary, latestCoachNote, coachHighlight, coachThink, coachSpoken, listenLang, routineStreak };
+    // Spåret för rutinkorten som coachens senaste fokus pekar mot (t.ex. 'focus'),
+    // eller null. Bara ett neutralt spårnamn lämnar servern — varken taggar eller
+    // datum. Avstängt coachminne (coachMemoryOff) betyder att inget tips ges.
+    const playerData = playerDoc.data();
+    const track = playerData.coachMemoryOff === true
+      ? null
+      : suggestedTrack(playerData.lastFocus, new Date().toISOString().slice(0, 10), FOCUS_TAGS);
+
+    return { playerName, games, summary, latestCoachNote, coachHighlight, coachThink, coachSpoken, listenLang, routineStreak, suggestedTrack: track };
   });
 
 

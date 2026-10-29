@@ -29,7 +29,21 @@ function groupIntoPasses(cards: readonly Card[]): PassGroup[] {
   return result;
 }
 
-export function pickNextPass(cards: readonly Card[], progress: CardProgress): Card[] {
+export interface PickOptions {
+  /**
+   * Spår som föräldern/coachen föreslagit (kommer från servern, se
+   * suggestedTrack i getPlayerLinkData). Gäller bara så länge spåret har ett
+   * pass med osedda kort: är det slut faller valet tillbaka på den vanliga
+   * ordningen, så ett tips aldrig fastnar i en repris.
+   */
+  focusTrack?: string | null;
+}
+
+export function pickNextPass(
+  cards: readonly Card[],
+  progress: CardProgress,
+  options: PickOptions = {},
+): Card[] {
   const seen = progress.seen;
   const hasSeen = (id: string) => Object.prototype.hasOwnProperty.call(seen, id);
 
@@ -52,9 +66,13 @@ export function pickNextPass(cards: readonly Card[], progress: CardProgress): Ca
     }
   }
 
-  const preferredTrack = currentTrack ?? (groups.some((g) => g.track === 'routine') ? 'routine' : null);
-
   const withUnseen = groups.filter((g) => g.cards.some((c) => !hasSeen(c.id)));
+
+  const focusTrack = options.focusTrack ?? null;
+  const suggested = focusTrack !== null && withUnseen.some((g) => g.track === focusTrack);
+  const defaultTrack = currentTrack ?? (groups.some((g) => g.track === 'routine') ? 'routine' : null);
+  const preferredTrack = suggested ? focusTrack : defaultTrack;
+
   if (withUnseen.length) {
     const ranked = [...withUnseen].sort((a, b) => {
       const aPref = preferredTrack !== null && a.track === preferredTrack ? 0 : 1;

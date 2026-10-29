@@ -8,12 +8,18 @@ import { cardToStep } from '../../lib/cardSteps';
 
 const knownIds = approvedCards.filter((c) => c.lang === 'sv' && c.surface !== 'app').map((c) => c.id);
 
-export default function PlayerRoutine() {
+interface PlayerRoutineProps {
+  /** Spår som coachen föreslagit via spelarlänken. Saknas det gäller vanlig ordning. */
+  suggestedTrack?: string | null;
+}
+
+export default function PlayerRoutine({ suggestedTrack = null }: PlayerRoutineProps) {
   const { language, t } = useLanguage();
   const [pass] = useState(() =>
     pickNextPass(
       approvedCards.filter((c) => c.lang === 'sv'),
       readCardProgress(knownIds),
+      { focusTrack: suggestedTrack },
     ),
   );
   const cards = pass

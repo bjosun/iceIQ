@@ -27,3 +27,10 @@ React + Vite + TypeScript app (`npm run dev`, port 3000). Node >= 20 required â€
   approved card needs `verified: true`, set only by a human who has read the
   source. Never let an LLM supply a quote or attribution from memory, and never
   imply the person endorses Ice IQ. Paraphrase; quote only a short exact line.
+- Draft cards from the editor script (`scripts/generate-card-drafts.mjs`) live in
+  `content/card-drafts/`, which the app never reads. A human fact-checks them
+  against the source, then moves them to `content/cards/legends/` as approved
+  with `source.verified: true`. See docs/card-learning-loop.md.
+- `npm run test:cards` also covers the editor logic; coach-focus logic is tested
+  with `node --test functions/cardFocus.test.js`.
+

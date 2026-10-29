@@ -130,3 +130,35 @@ test('stabil ordning: samma indata ger samma pass varje gång', () => {
   const second = ids(pickNextPass([...input].reverse(), progress()));
   assert.deepEqual(first, second);
 });
+
+test('coachens spårtips går före nuvarande spår när spåret har osedda pass', () => {
+  const routine = pass('night-before-game', 4);
+  const focus = pass('focus-1', 4, { track: 'focus' });
+  const seen = Object.fromEntries(routine.map((c, i) => [c.id, T(10 + i)]));
+  assert.deepEqual(ids(pickNextPass([...routine, ...focus], progress(seen), { focusTrack: 'focus' })), ids(focus));
+});
+
+test('spårtips utan osedda pass i spåret ignoreras', () => {
+  const routine = pass('night-before-game', 4);
+  const routine2 = pass('routine-2', 4, { level: 2, requires: ['night-before-game-1'] });
+  const focus = pass('focus-1', 4, { track: 'focus' });
+  const seen = Object.fromEntries([...routine, ...focus].map((c, i) => [c.id, T(10 + i)]));
+  const picked = pickNextPass([...routine, ...routine2, ...focus], progress(seen), { focusTrack: 'focus' });
+  assert.deepEqual(ids(picked), ids(routine2));
+});
+
+test('okänt spårtips och null ändrar ingenting', () => {
+  const routine = pass('night-before-game', 4);
+  const focus = pass('focus-1', 4, { track: 'focus' });
+  const all = [...routine, ...focus];
+  const base = ids(pickNextPass(all, progress()));
+  assert.deepEqual(ids(pickNextPass(all, progress(), { focusTrack: 'finns-inte' })), base);
+  assert.deepEqual(ids(pickNextPass(all, progress(), { focusTrack: null })), base);
+});
+
+test('spårtips muterar inte indata', () => {
+  const all = [...pass('a', 4), ...pass('b', 4, { track: 'focus' })];
+  const before = JSON.stringify(all);
+  pickNextPass(all, progress(), { focusTrack: 'focus' });
+  assert.equal(JSON.stringify(all), before);
+});

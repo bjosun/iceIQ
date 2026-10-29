@@ -25,6 +25,8 @@ interface PlayerLinkData {
   listenLang?: 'sv' | 'en' | null;
   /** Matcher i rad med rutinen gjord — se computeRoutineStreak i functions/index.js. */
   routineStreak: number;
+  /** Spår för rutinkorten som coachen pekat ut (t.ex. 'focus'), eller null. */
+  suggestedTrack?: string | null;
 }
 
 type LoadState = 'loading' | 'ready' | 'not-found' | 'revoked' | 'error';
@@ -149,7 +151,7 @@ export default function PlayerLinkPage() {
             räknas, så att länken är skrivskyddad och inget samlas in från barnet.
             Slås på igen när ett hållbart samtyckes- och verifieringsflöde finns
             (ROUTINE_LOGGING_ENABLED i functions/.env plus den här koden). */}
-        <PlayerRoutine key={token} />
+        <PlayerRoutine key={token} suggestedTrack={data.suggestedTrack ?? null} />
 
         <div id="breathing-section" className="bg-gray-800 rounded-2xl p-6 scroll-mt-4">
           <h2 className="text-lg font-semibold text-white mb-4">{t('playerLink.breathingSectionTitle')}</h2>
