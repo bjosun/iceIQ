@@ -20,7 +20,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // Villkoren säger att konton är för vuxna (föräldrar, vårdnadshavare, tränare).
+  // Åldersgräns 13 (beslut 2026-10-30); under 18 med målsmans godkännande.
   // Ålder går inte att verifiera, men intyget gör villkoret aktivt.
   const [adult, setAdult] = useState(false);
 

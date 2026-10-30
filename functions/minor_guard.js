@@ -1,5 +1,5 @@
 // Skydd mot att barn under 13 skickar personuppgifter till AI-coachen.
-// Kontot är för vuxna (Terms/Privacy), men ålder går inte att verifiera. När
+// Åldersgränsen är 13 (Björn, 2026-10-30), men ålder går inte att verifiera. När
 // någon själv skriver att hen är under 13 i en coachfråga avbryter vi innan
 // frågan skickas till AI-tjänsten och innan något sparas eller dras i krediter.
 // Medvetet snävt: bara första person ("jag är 11", "I'm 12 years old"), så att
