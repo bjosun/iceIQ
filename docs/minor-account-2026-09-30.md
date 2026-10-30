@@ -1,7 +1,7 @@
 # Konto som uppger sig vara 11 år (upptäckt 2026-10-24, dokumenterat 2026-10-30)
 
-Status: **inget beslut taget.** Underlag för Björn och, vid behov, juridisk bedömning
-(se även `docs/legal-review-draft.md`). Dokumentet innehåller medvetet inga namn eller
+Status 2026-10-30: **kontot raderat** (Björn godkände) och två skydd byggda och deployade, se längst ned.
+Frågan om juridisk bedömning kvarstår (`docs/legal-review-draft.md`). Dokumentet innehåller medvetet inga namn eller
 adresser; kontot hittas i Firestore via `coachChats` (se längst ned).
 
 ## Vad vi vet
@@ -19,7 +19,7 @@ adresser; kontot hittas i Firestore via `coachChats` (se längst ned).
 
 - Om uppgiften stämmer. Den är självdeklarerad och går inte att verifiera.
 - Om vårdnadshavare känner till kontot.
-- Om AI-samtycket har givits på kontot. Det sparas bara i webbläsarens lagring (`aiConsent.ts`) och syns inte i databasen.
+- Om AI-samtycket har givits på kontot. Att samtycket gavs sparas bara i webbläsarens lagring (`aiConsent.ts`); i databasen finns bara en återkallelse (`aiConsent.withdrawnAt`).
 
 ## Vilka uppgifter om personen vi har
 
@@ -57,3 +57,11 @@ BankID fungerar inte som lösning: trafiken är mest Kanada och USA, och BankID 
 
 Sök i Firestore under `artifacts/default-app-id/users/*/coachChats` efter en chatt från
 2026-09-30 vars första användarmeddelande nämner en ålder. Användar-id:t är mappen ovanför.
+
+## Gjort 2026-10-30
+
+- **Kontot raderat:** användardokumentet med coachchatten, inloggningen i Firebase Auth. Ingen Stripe-kund och inga spelarlänkar fanns. Samma steg som `deleteMyAccount`, utförda som admin.
+- **Kryssruta vid registrering** (e-post, Google och Apple): "Jag är 18 år eller äldre, eller förälder eller vårdnadshavare som skapar kontot åt ett barn." (`SignupForm.tsx`)
+- **Coachen avbryter** om användaren i första person uppger en ålder 5–12, före allt AI-anrop, utan att spara och utan kreditavdrag (`functions/minor_guard.js`, med tester). Förälder eller tränare som skriver "min son är 11" stoppas inte.
+
+Kvar: att samtycket (version och tid) sparas i databasen, och den juridiska genomgången.
