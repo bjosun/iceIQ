@@ -165,6 +165,7 @@ const MAX_CREDIT_PACKS = 10;
 const SEASON_PASS_AMOUNT = { sek: 19900, usd: 1900 };
 const { seasonPassEnd } = require("./season_pass");
 const { invoiceSubscriptionId, subscriptionPeriodEndISO, iceiqCheckoutKind } = require("./stripe_events");
+const { statesUnder13 } = require("./minor_guard");
 
 // Ice IQ-scopad portalkonfiguration (varumärke, länkar). Stripe-kontot delas
 // med squareverse-ai, som har sin egen konfiguration — utan detta ID skulle
@@ -699,6 +700,12 @@ exports.askCoach = functions
   
   // VIKTIGT: Hämta 'lang' här också!
   const { playerStats, question, history, lang } = data;
+  // Någon som själv skriver att hen är under 13 får inget AI-svar: frågan
+  // skickas inte vidare, sparas inte och kostar ingen kredit (minor_guard.js).
+  if (statesUnder13(question)) {
+    console.warn(`askCoach: ${userId} uppgav ålder under 13 — avbryter`);
+    throw new functions.https.HttpsError('invalid-argument', 'UNDER_13');
+  }
   // Specialistläge: 'match' (standard, matchanalys) eller 'mental'. Allt annat blir 'match'.
   const mode = data.mode === 'mental' ? 'mental' : 'match';
 

@@ -279,6 +279,8 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade, isDemo = 
         setConsentOpen(true);
       } else if (err.message.includes('permission-denied')) {
         onUpgrade();
+      } else if (err.message.includes('UNDER_13')) {
+        setError(t('ai.underAge'));
       } else if (err.message.includes('resource-exhausted')) {
         // Saldot behöver inte tvingas till 0 här — servern spärrar först när
         // båda hinkarna är tomma, och snapshotten i useAiCredits visar redan det.

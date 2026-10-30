@@ -20,10 +20,18 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Villkoren säger att konton är för vuxna (föräldrar, vårdnadshavare, tränare).
+  // Ålder går inte att verifiera, men intyget gör villkoret aktivt.
+  const [adult, setAdult] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!adult) {
+      setError(t('auth.adultRequired'));
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError(t('passwordsDoNotMatch'));
@@ -50,6 +58,10 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   // Ny funktion för Google-registrering
   const handleGoogleSignup = async () => {
     setError('');
+    if (!adult) {
+      setError(t('auth.adultRequired'));
+      return;
+    }
     try {
       await loginWithGoogle();
     } catch (err: any) {
@@ -124,6 +136,16 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
           />
         </div>
 
+        <label className="flex items-start gap-3 text-sm text-gray-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={adult}
+            onChange={(e) => setAdult(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-600 bg-gray-800 accent-cyan-500"
+          />
+          <span>{t('auth.adultConfirm')}</span>
+        </label>
+
         <Button
           type="submit"
           variant="success"
@@ -160,7 +182,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             </svg>
             {t('continueWithGoogle')}
           </Button>
-          <AppleSignInButton onError={setError} />
+          <AppleSignInButton onError={setError} disabled={!adult} />
         </div>
       </div>
       {/* --- Slut på Google-sektionen --- */}
