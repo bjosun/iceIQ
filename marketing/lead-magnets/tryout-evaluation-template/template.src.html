@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Ice IQ — Free Hockey Player Evaluation Template</title>
+<!-- Källa för public/downloads/ice-iq-player-evaluation-template-en.pdf.
+     {{LOGO}} byts mot samma base64-logga som matchmallen när build.sh körs. -->
+<style>
+  @page roster { size: letter landscape; margin: 0.4in; }
+  @page player { size: letter portrait; margin: 0.45in; }
+  .page-roster { page: roster; }
+  .page-player { page: player; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: #1a1a1a;
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #0891b2;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .brand img { width: 30px; height: 30px; border-radius: 50%; }
+  .brand .word { font-weight: 800; font-size: 15px; letter-spacing: -0.3px; }
+  .brand .word .iq { color: #0891b2; }
+  .brand .tag { font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px; }
+  header .title { text-align: right; }
+  header .title h1 { font-size: 14px; margin: 0; font-weight: 700; }
+  header .title p { font-size: 9px; color: #666; margin: 1px 0 0; }
+
+  .infobar { display: grid; gap: 10px; font-size: 10px; margin-bottom: 10px; }
+  .infobar.four { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+  .infobar.three { grid-template-columns: 1.6fr 0.6fr 1fr; }
+  .field label { display: block; color: #666; font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+  .field .line { border-bottom: 1px solid #999; height: 14px; }
+
+  .scale {
+    display: flex;
+    gap: 14px;
+    font-size: 8.8px;
+    color: #444;
+    background: #f1f8fa;
+    border: 1px solid #d5ebf0;
+    border-radius: 6px;
+    padding: 5px 10px;
+    margin-bottom: 8px;
+  }
+  .scale b { color: #0891b2; }
+
+  table.roster { width: 100%; border-collapse: collapse; font-size: 9px; }
+  table.roster th, table.roster td { border: 1px solid #ddd; padding: 0 4px; text-align: center; height: 28px; }
+  table.roster th { background: #f4f4f4; font-weight: 600; font-size: 7.8px; text-transform: uppercase; color: #555; height: 30px; line-height: 1.2; }
+  table.roster th small { display: block; font-weight: 400; text-transform: none; color: #888; font-size: 7px; }
+  table.roster .num { width: 4%; }
+  table.roster .name { width: 17%; text-align: left; }
+  table.roster .pos { width: 4%; }
+  table.roster .rate { width: 7.5%; }
+  table.roster .total { width: 6%; background: #f1f8fa; }
+  table.roster .notes { text-align: left; }
+  table.roster td.total { background: #f7fbfc; }
+
+  .card { border: 1px solid #ccc; border-radius: 6px; padding: 8px 10px 10px; }
+  .card h2 {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 6px;
+    color: #0891b2;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 4px;
+  }
+
+  table.player { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+  table.player th, table.player td { border: 1px solid #ddd; padding: 5px 6px; vertical-align: middle; }
+  table.player th { background: #f4f4f4; font-weight: 600; font-size: 8.5px; text-transform: uppercase; color: #555; text-align: left; }
+  table.player td.cat { width: 34%; }
+  table.player td.cat b { display: block; font-size: 10px; }
+  table.player td.cat span { color: #777; font-size: 8.3px; }
+  table.player td.dots { width: 22%; text-align: center; letter-spacing: 7px; font-size: 13px; color: #999; white-space: nowrap; }
+  table.player td.saw { height: 60px; }
+  table.player th.c { text-align: center; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .lines div { border-bottom: 1px solid #e3e3e3; height: 20px; }
+  .hint { font-size: 8.3px; color: #888; margin: -2px 0 4px; }
+
+  footer {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  footer .cta { font-size: 9.5px; max-width: 560px; line-height: 1.4; }
+  footer .cta b { color: #0891b2; }
+  footer .url { font-size: 12px; font-weight: 800; white-space: nowrap; }
+  footer .url .iq { color: #0891b2; }
+</style>
+</head>
+<body>
+
+<!-- Sida 1: tryoutblad för en hel grupp, liggande -->
+<section class="page-roster">
+  <header>
+    <div class="brand">
+      <img src="{{LOGO}}" alt="Ice IQ" />
+      <div>
+        <div class="word">ICE <span class="iq">IQ</span></div>
+        <div class="tag">Smart Hockey Stats</div>
+      </div>
+    </div>
+    <div class="title">
+      <h1>Hockey Tryout Evaluation Sheet</h1>
+      <p>Skaters · rate each player 1–5 per skill · one sheet per group</p>
+    </div>
+  </header>
+
+  <div class="infobar four">
+    <div class="field"><label>Team / Age group</label><div class="line"></div></div>
+    <div class="field"><label>Session / Station</label><div class="line"></div></div>
+    <div class="field"><label>Date</label><div class="line"></div></div>
+    <div class="field"><label>Evaluator</label><div class="line"></div></div>
+  </div>
+
+  <div class="scale">
+    <span><b>1</b> Well below the group</span>
+    <span><b>2</b> Developing</span>
+    <span><b>3</b> At the group's level</span>
+    <span><b>4</b> Above the group</span>
+    <span><b>5</b> Stands out</span>
+    <span style="margin-left:auto; color:#777;">Rate against this age group, not against older players.</span>
+  </div>
+
+  <table class="roster">
+    <tr>
+      <th class="num">#</th>
+      <th class="name">Player name</th>
+      <th class="pos">F / D</th>
+      <th class="rate">Skating<small>stride, edges</small></th>
+      <th class="rate">Puck skills<small>handling</small></th>
+      <th class="rate">Passing<small>give &amp; receive</small></th>
+      <th class="rate">Shooting<small>release, accuracy</small></th>
+      <th class="rate">Hockey sense<small>reads the play</small></th>
+      <th class="rate">Compete<small>battles, effort</small></th>
+      <th class="total">Total<small>/ 30</small></th>
+      <th class="notes">Notes</th>
+    </tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="total"></td><td></td></tr>
+  </table>
+
+  <footer>
+    <div class="cta">A tryout shows where a player is today. <b>Ice IQ</b> shows whether they are improving: log each game in under two minutes and an AI coach turns it into one concrete thing to work on next. Free to start.</div>
+    <div class="url">ice<span class="iq">iq</span>.app</div>
+  </footer>
+</section>
+
+<!-- Sida 2: individuell utvärdering, stående -->
+<section class="page-player">
+  <header>
+    <div class="brand">
+      <img src="{{LOGO}}" alt="Ice IQ" />
+      <div>
+        <div class="word">ICE <span class="iq">IQ</span></div>
+        <div class="tag">Smart Hockey Stats</div>
+      </div>
+    </div>
+    <div class="title">
+      <h1>Player Evaluation Form</h1>
+      <p>One player · tryouts, mid-season, or end-of-season review</p>
+    </div>
+  </header>
+
+  <div class="infobar three">
+    <div class="field"><label>Player name</label><div class="line"></div></div>
+    <div class="field"><label>#  /  Position</label><div class="line"></div></div>
+    <div class="field"><label>Age group</label><div class="line"></div></div>
+  </div>
+  <div class="infobar three">
+    <div class="field"><label>Evaluator</label><div class="line"></div></div>
+    <div class="field"><label>Date</label><div class="line"></div></div>
+    <div class="field"><label>Context (tryout, game, practice)</label><div class="line"></div></div>
+  </div>
+
+  <div class="scale">
+    <span><b>1</b> Well below</span>
+    <span><b>2</b> Developing</span>
+    <span><b>3</b> At level</span>
+    <span><b>4</b> Above</span>
+    <span><b>5</b> Stands out</span>
+    <span style="margin-left:auto; color:#777;">Circle one per row.</span>
+  </div>
+
+  <table class="player">
+    <tr><th>Skill</th><th class="c">Rating</th><th>What I saw</th></tr>
+    <tr><td class="cat"><b>Skating</b><span>Stride, edges, crossovers, backwards</span></td><td class="dots">①②③④⑤</td><td class="saw"></td></tr>
+    <tr><td class="cat"><b>Puck handling</b><span>Protects the puck, head up while carrying</span></td><td class="dots">①②③④⑤</td><td class="saw"></td></tr>
+    <tr><td class="cat"><b>Passing &amp; receiving</b><span>Tape-to-tape, takes passes in stride</span></td><td class="dots">①②③④⑤</td><td class="saw"></td></tr>
+    <tr><td class="cat"><b>Shooting</b><span>Quick release, hits the net, shoots in motion</span></td><td class="dots">①②③④⑤</td><td class="saw"></td></tr>
+    <tr><td class="cat"><b>Hockey sense</b><span>Reads the play, finds open ice, supports the puck</span></td><td class="dots">①②③④⑤</td><td class="saw"></td></tr>
+    <tr><td class="cat"><b>Defensive play</b><span>Positioning, gap, gets back, wins pucks back</span></td><td class="dots">①②③④⑤</td><td class="saw"></td></tr>
+    <tr><td class="cat"><b>Compete</b><span>Battles on the boards, effort shift to shift</span></td><td class="dots">①②③④⑤</td><td class="saw"></td></tr>
+    <tr><td class="cat"><b>Coachability</b><span>Listens, tries the correction, supports teammates</span></td><td class="dots">①②③④⑤</td><td class="saw"></td></tr>
+  </table>
+
+  <div class="two">
+    <div class="card">
+      <h2>Biggest strength</h2>
+      <p class="hint">Something the player can be proud of. Be specific.</p>
+      <div class="lines"><div></div><div></div><div></div><div></div></div>
+    </div>
+    <div class="card">
+      <h2>One thing to work on</h2>
+      <p class="hint">Just one. A player can act on one thing; five get ignored.</p>
+      <div class="lines"><div></div><div></div><div></div><div></div></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="cta">Want to see if that one thing improves? <b>Ice IQ</b> tracks a player game by game and compares them with their own season average, never with other kids. Free to start.</div>
+    <div class="url">ice<span class="iq">iq</span>.app</div>
+  </footer>
+</section>
+
+</body>
+</html>
