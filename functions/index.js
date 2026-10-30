@@ -164,6 +164,7 @@ const MAX_CREDIT_PACKS = 10;
 // SEASON_PASS_PRICE i src/utils/pricing.ts (minsta enhet: öre/cent).
 const SEASON_PASS_AMOUNT = { sek: 19900, usd: 1900 };
 const { seasonPassEnd } = require("./season_pass");
+const { invoiceSubscriptionId, subscriptionPeriodEndISO, iceiqCheckoutKind } = require("./stripe_events");
 
 // Ice IQ-scopad portalkonfiguration (varumärke, länkar). Stripe-kontot delas
 // med squareverse-ai, som har sin egen konfiguration — utan detta ID skulle
@@ -1556,7 +1557,7 @@ exports.createStripeCheckoutSession = functions
             quantity: 1,
             adjustable_quantity: { enabled: true, minimum: 1, maximum: MAX_CREDIT_PACKS },
           }],
-          metadata: { type: 'credits', creditsPerPack: String(CREDITS_PER_PACK) },
+          metadata: { app: 'iceiq', type: 'credits', creditsPerPack: String(CREDITS_PER_PACK) },
           // Kontot delas med squareverse-ai — utan detta läser kunden bara
           // det gemensamma kontonamnet på sitt kontoutdrag och kan bestrida
           // en debitering hen inte känner igen. Bara giltigt i payment-läge;
@@ -1599,7 +1600,7 @@ exports.createStripeCheckoutSession = functions
             },
             quantity: 1,
           }],
-          metadata: { type: 'season_pass', currency },
+          metadata: { app: 'iceiq', type: 'season_pass', currency },
           payment_intent_data: { statement_descriptor_suffix: "ICEIQ" },
         });
 
@@ -1643,6 +1644,9 @@ exports.createStripeCheckoutSession = functions
         customer: customerId,
         line_items: [{ price: expected.id, quantity: 1 }],
         metadata: {
+            // Stripe-kontot delas med andra ventures: markeringen låter
+            // webhooken skilja iceIQ:s köp från deras (se stripe_events.js).
+            app: 'iceiq',
             planType: plan || 'premium',
             // Vilken valuta kunden faktiskt köpte i — syns i Stripe och gör att
             // en felanmälan går att härleda utan att gissa utifrån pris-ID:t.
@@ -1788,9 +1792,19 @@ exports.stripeWebhook = functions
         const subscriptionId = data.subscription;
         const customerId = data.customer;
 
+        // Stripe-kontot delas med andra ventures. Ett köp som inte är iceIQ:s,
+        // eller som pekar på en användare vi inte har, får aldrig skapa eller
+        // uppgradera ett konto här — och ska inte heller ge ett fel, för då
+        // levererar Stripe om händelsen i dagar.
+        const kind = iceiqCheckoutKind(data);
+        if (!kind || !(await usersRef.doc(userId).get()).exists) {
+          console.log(`↪️ Kassa ${data.id} är inte iceIQ:s (${kind || "okänd form"}${kind ? ", användaren finns inte" : ""}) — ignoreras`);
+          return res.json({ received: true, ignored: true });
+        }
+
         // Engångsköp av krediter: ingen prenumeration inblandad, så grenen
         // nedan (som slår upp subscriptionId) gäller inte här.
-        if (userId && data.mode === "payment" && data.metadata?.type === "credits") {
+        if (kind === "credits") {
           const lineItems = await stripeInstance.checkout.sessions.listLineItems(data.id, { limit: 1 });
           const packs = lineItems.data[0]?.quantity || 1;
           const perPack = Number(data.metadata.creditsPerPack) || CREDITS_PER_PACK;
@@ -1827,7 +1841,7 @@ exports.stripeWebhook = functions
             await sendPurchaseEmailSafely(userId, { kind: 'credits', credits: bought });
           }
 
-        } else if (userId && data.mode === "payment" && data.metadata?.type === "season_pass") {
+        } else if (kind === "season_pass") {
           // Engångsköp utan prenumeration: Premium med fast slutdatum. Absoluta
           // värden, så en omleverans från Stripe är ofarlig; bara mejlet spärras.
           const until = seasonPassEnd(new Date());
@@ -1861,8 +1875,9 @@ exports.stripeWebhook = functions
             await sendPurchaseEmailSafely(userId, { kind: 'season', planType: 'premium', credits: creditAmount, until: until.toISOString() });
           }
 
-        } else if (userId) {
+        } else if (kind === "subscription") {
           const subscription = await stripeInstance.subscriptions.retrieve(subscriptionId);
+          const periodEnd = subscriptionPeriodEndISO(subscription);
           const interval = subscription.items.data[0].plan.interval;
 
           const planType = data.metadata?.planType || "premium";
@@ -1876,7 +1891,7 @@ exports.stripeWebhook = functions
             subscriptionPlan: planType,
             subscriptionInterval: interval,
             subscriptionSource: "stripe",
-            subscriptionEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+            ...(periodEnd ? { subscriptionEnd: periodEnd } : {}),
             aiCredits: creditAmount
           }, { merge: true });
           console.log(`✅ ${planType} activated for ${userId} with ${creditAmount} AI credits`);
@@ -1906,7 +1921,9 @@ exports.stripeWebhook = functions
       // --- NYTT: FYLL PÅ KREDITER NÄR PRENUMERATIONEN FÖRNYAS NÄSTA MÅNAD ---
       if (event.type === "invoice.payment_succeeded") {
         const customerId = data.customer;
-        const subscriptionId = data.subscription;
+        // Nyare Stripe-versioner har id:t under invoice.parent (se stripe_events.js);
+        // att bara läsa data.subscription gjorde att alla förnyelser hoppades över.
+        const subscriptionId = invoiceSubscriptionId(data);
         
         // Vi vill bara agera på fakturor som tillhör en prenumeration (inte engångsköp)
         if (subscriptionId) {
@@ -1920,10 +1937,11 @@ exports.stripeWebhook = functions
 
             const snapshot = await usersRef.where("stripeCustomerId", "==", customerId).get();
             if (!snapshot.empty) {
+                const periodEnd = subscriptionPeriodEndISO(subscription);
                 await snapshot.docs[0].ref.update({ 
                     subscriptionStatus: "active",
                     aiCredits: creditAmount,
-                    subscriptionEnd: new Date(subscription.current_period_end * 1000).toISOString()
+                    ...(periodEnd ? { subscriptionEnd: periodEnd } : {})
                 });
                 console.log(`🔄 Renewed! Refilled ${creditAmount} credits for customer ${customerId}`);
             }
@@ -1945,8 +1963,12 @@ exports.stripeWebhook = functions
         // inte nollas av att en gammal Stripe-prenumeration avslutas.
         // Ett säsongspass bärs inte av prenumerationen: en gammal prenumeration
         // som avslutas ska inte ta ifrån kunden ett betalt pass.
+        // Och bara den prenumeration kontot faktiskt har: avslutas en äldre
+        // (t.ex. efter ett byte) ska den nya inte nedgraderas.
+        const currentSubId = snapshot.empty ? null : snapshot.docs[0].data().subscriptionId;
         if (!snapshot.empty && snapshot.docs[0].data().subscriptionSource !== "apple" &&
-            snapshot.docs[0].data().subscriptionInterval !== "season") {
+            snapshot.docs[0].data().subscriptionInterval !== "season" &&
+            (!currentSubId || currentSubId === data.id)) {
           // Planen skrivs över till "free" i samma anrop — utan att spara
           // den gamla planen här kan ops-digesten aldrig säga VAD som sades
           // upp, bara ATT något gjorde det.
