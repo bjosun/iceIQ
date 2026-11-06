@@ -119,3 +119,5 @@ Som bygge 7 men med webbkopian från senare HEAD: **svensk integritetspolicy med
 - **Kampanjlänkar:** alla länkar får `ct` (`home_hero`, `home_section`, `footer`, `home_qr`). För att App Store Connect ska spåra dem krävs även leverantörstoken `pt`: hämta den under **App Analytics → Campaigns** (skapa en kampanjlänk, `pt=` står i länken), lägg `VITE_APP_STORE_PT=<token>` i `.env` och kör `node scripts/make-app-qr.mjs` (uppdaterar QR-koden), sedan deploy.
 - **Startsidans app-sektion:** `src/components/home/AppSection.tsx`. Skärmdumpar saknas medvetet (de gamla visar inte nya knappvyn); lägg in nya när de tagits fram.
 
+**2026-11: Sverige och EU öppnade** (trader-status verifierad). `VITE_APP_STORE_SE_OPEN=true` i `.env` (gitignorerad, måste finnas i deploy-kopian), så App Store-knappen, app-sektionen, QR-koden och Smart App Banner visas även för svenska besökare.
+
