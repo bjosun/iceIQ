@@ -15,7 +15,8 @@ import {
   type Interval,
 } from '../utils/pricing';
 import { isNativeApp } from '../utils/platform';
-import { APP_STORE_URL } from '../utils/appStore';
+import { appStoreAvailable, appStoreUrl } from '../utils/appStore';
+import AppSection from '../components/home/AppSection';
 import {
   BarChart3,
   Cloud,
@@ -191,9 +192,9 @@ function HomePage() {
               {t('common.viewPlans')}
             </a>
             )}
-            {!isNativeApp && APP_STORE_URL && (
+            {!isNativeApp && appStoreAvailable(language) && (
               <a
-                href={APP_STORE_URL}
+                href={appStoreUrl('home_hero')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 rounded-xl font-semibold text-lg transition-all hover:bg-gray-200"
@@ -344,6 +345,8 @@ function HomePage() {
       </section>
 
       {/* --- PRICING SECTION --- */}
+      <AppSection />
+
       <section id="pricing" className={`py-24 bg-gray-800/30 relative overflow-hidden ${isNativeApp ? 'hidden' : ''}`}>
         <RinkLines className="absolute inset-0 w-full h-full opacity-[0.13]" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

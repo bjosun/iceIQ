@@ -5,7 +5,7 @@ import { Github, Mail, Shield, FileText, Building2 } from 'lucide-react';
 import { SUPPORT_EMAIL, COMPANY_NAME, COMPANY_COUNTRY, COMPANY_URL, COMPANY_ORG_NR } from '../../utils/contact';
 import guides from '../../data/guides.json';
 import { isNativeApp } from '../../utils/platform';
-import { APP_STORE_URL } from '../../utils/appStore';
+import { appStoreAvailable, appStoreUrl } from '../../utils/appStore';
 
 export default function Footer() {
   const { t, language } = useLanguage();
@@ -166,10 +166,10 @@ export default function Footer() {
           </div>
         </div>
 
-        {APP_STORE_URL && (
+        {appStoreAvailable(language) && (
           <div className="mt-8 text-center">
             <a
-              href={APP_STORE_URL}
+              href={appStoreUrl('footer')}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-gray-900 font-semibold hover:bg-gray-200 transition-colors"

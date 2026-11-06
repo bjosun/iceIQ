@@ -113,3 +113,9 @@ Som bygge 7 men med webbkopian från senare HEAD: **svensk integritetspolicy med
 - Webben har `VITE_APP_STORE_ID` och `VITE_APP_STORE_URL` satta i `.env`, så Smart App Banner, strukturerad data och App Store-knappen visas. `.env` är gitignorerad, så värdena måste finnas i deploy-kopian.
 - Nästa: IAP via RevenueCat (v1.1).
 
+### App Store på webben: Sverige och kampanjspårning
+
+- **Sverige:** knappen, app-sektionen och QR-koden döljs när sidan visas på svenska så länge `VITE_APP_STORE_SE_OPEN` inte är `true` (se `src/utils/appStore.ts`). När Sverige står som *Available* i App Store Connect: sätt `VITE_APP_STORE_SE_OPEN=true` i `.env` och deploya webben. Smart App Banner döljs för webbläsare med svenskt språk av samma skäl (skriptet läggs in av `vite.config.ts`).
+- **Kampanjlänkar:** alla länkar får `ct` (`home_hero`, `home_section`, `footer`, `home_qr`). För att App Store Connect ska spåra dem krävs även leverantörstoken `pt`: hämta den under **App Analytics → Campaigns** (skapa en kampanjlänk, `pt=` står i länken), lägg `VITE_APP_STORE_PT=<token>` i `.env` och kör `node scripts/make-app-qr.mjs` (uppdaterar QR-koden), sedan deploy.
+- **Startsidans app-sektion:** `src/components/home/AppSection.tsx`. Skärmdumpar saknas medvetet (de gamla visar inte nya knappvyn); lägg in nya när de tagits fram.
+

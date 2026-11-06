@@ -13,7 +13,14 @@ const appStoreHtml = (env: Record<string, string>) => ({
     const id = env.VITE_APP_STORE_ID
     const url = env.VITE_APP_STORE_URL
     if (!id || !url) return html
-    const banner = `    <meta name="apple-itunes-app" content="app-id=${id}">\n`
+    // Sverige (och EU) är stängt i App Store tills trader-statusen är verifierad:
+    // svenska webbläsare ska inte få ett banner som leder till "inte tillgänglig".
+    // Skriptet tar bort bannern innan sidan laddats klart. Slås av med
+    // VITE_APP_STORE_SE_OPEN=true.
+    const hideForSwedish = env.VITE_APP_STORE_SE_OPEN === 'true'
+      ? ''
+      : `    <script>try{if((navigator.language||'').toLowerCase().indexOf('sv')===0){var m=document.querySelector('meta[name="apple-itunes-app"]');if(m)m.remove()}}catch(e){}</script>\n`
+    const banner = `    <meta name="apple-itunes-app" content="app-id=${id}">\n${hideForSwedish}`
     const jsonLd = `    <script type="application/ld+json">
     ${JSON.stringify({
       '@context': 'https://schema.org',
