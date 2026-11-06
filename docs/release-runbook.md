@@ -104,3 +104,12 @@ Som bygge 7 men med webbkopian från senare HEAD: **svensk integritetspolicy med
 - iPad är inte anpassad (rekommendation: iPhone-only i v1; ändra under Deployment Info i Xcode).
 - Barnchatt är inte byggd och ska hållas avstängd tills barnflöde och regionala regler är lösta.
 - Röstkoden (`src/voice`, `VoiceLab`) är ocommittad arbetskopia och är inte del av någon release.
+
+## Publicerad 2026-11-06
+
+- **iOS 1.0 (bygge 13) godkänd** av App Review och *Ready for Distribution*. Appens Apple-ID är **6821041037**, länk `https://apps.apple.com/app/id6821041037`.
+- Tillgänglighet: alla länder utom EU (inkl. Sverige) tills **DSA trader status** är verifierad (inskickad 2026-11-06). När den är *Available* öppnas EU.
+- Deklaration av reglerad medicinteknisk produkt (EU/UK/US) ska göras under App Information senast i början av 2027: svar **No**.
+- Webben har `VITE_APP_STORE_ID` och `VITE_APP_STORE_URL` satta i `.env`, så Smart App Banner, strukturerad data och App Store-knappen visas. `.env` är gitignorerad, så värdena måste finnas i deploy-kopian.
+- Nästa: IAP via RevenueCat (v1.1).
+
