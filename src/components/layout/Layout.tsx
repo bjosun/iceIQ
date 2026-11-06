@@ -65,6 +65,7 @@ export default function Layout({ children }: LayoutProps) {
             isOpen={showProfile}
             onClose={() => setShowProfile(false)}
             isPremium={isPremium}
+            onUpgrade={() => setShowSub(true)}
           />
 
           <SubscriptionModal

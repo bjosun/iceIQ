@@ -4,6 +4,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { isNativeApp } from '../../utils/platform';
+import { iapEnabled } from '../../services/purchases';
+import IapPaywall from './IapPaywall';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -115,9 +117,19 @@ export default function SubscriptionModal({ isOpen, onClose, initialPlan = 'prem
     ? ''
     : selectedInterval === 'monthly' ? (language === 'en' ? '/mo' : '/mån') : (language === 'en' ? '/yr' : '/år');
 
+  // iPhone-appen säljer via Apple (RevenueCat), inte via Stripe: egen skärm,
+  // och helt avstängd tills köp i appen är påslaget (iapEnabled).
+  if (isNativeApp) {
+    return (
+      <Modal isOpen={isOpen && iapEnabled} onClose={onClose} title={t('iap.title')} size="md">
+        <IapPaywall onDone={onClose} />
+      </Modal>
+    );
+  }
+
   return (
     <Modal
-      isOpen={isOpen && !isNativeApp}
+      isOpen={isOpen}
       onClose={onClose}
       title={t('selectYourPlan') || "Select Your Plan"}
       size="lg"

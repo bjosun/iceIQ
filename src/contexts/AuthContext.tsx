@@ -21,6 +21,7 @@ import { auth } from '../services/firebase'
 import { consumeUtmParams } from '../utils/helpers'
 import { consumeAcquisitionContext } from '../utils/acquisitionContext'
 import { clearUserLocalData, forgetLastUser, switchLocalUser } from '../utils/localData'
+import { iapLogIn, iapLogOut } from '../services/purchases'
 
 interface AuthContextType {
   user: User | null
@@ -110,6 +111,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Byter någon konto på den här enheten ska det förra kontots lokala
         // data (senast använda lag, utkast, Swish-nummer) inte följa med.
         switchLocalUser(currentUser.uid)
+        // Köp i appen hör till kontot (RevenueCat), inte till enheten.
+        void iapLogIn(currentUser.uid)
         // Ett helt nytt konto måste ha sitt dokument innan appen visas. För
         // alla andra räcker det att kontrollen körs i bakgrunden: att vänta
         // på den (en Firestore-rundtur plus SDK-nedladdning) var det som
@@ -122,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           saveNewUserToDatabase(currentUser);
         }
       }
+      if (!currentUser) void iapLogOut();
       setUser(currentUser);
       setLoading(false);
     });

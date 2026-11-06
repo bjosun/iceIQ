@@ -14,6 +14,7 @@ import { renderInsightCard } from '../../utils/insightCard';
 import { ReportFormat } from '../../utils/shareCanvas';
 import { creditPackPrice, CREDITS_PER_PACK } from '../../utils/pricing';
 import { isNativeApp } from '../../utils/platform';
+import { iapEnabled } from '../../services/purchases';
 import { plainCoachText } from '../../utils/coachText';
 import { hasAiConsent, recordAiConsent } from '../../utils/aiConsent';
 import AiConsentModal from './AiConsentModal';
@@ -108,6 +109,12 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade, isDemo = 
   const isLocked = !isPremium && outOfQuestions;
   // "interval" styr bara prenumerationsköp — engångsköp av krediter
   // ignorerar den, se createStripeCheckoutSession.
+  // I iPhone-appen köps krediter via Apple (paywallen), på webben via Stripe.
+  // Utan IAP (iapEnabled) finns inga köpvägar i appen alls.
+  const canBuy = !isNativeApp || iapEnabled;
+  const buyCredits = () => (isNativeApp ? onUpgrade() : handleBuyCredits());
+  const buyCreditsLabel = () =>
+    isNativeApp ? t('iap.buyCredits') : t('ai.buyCredits', creditPriceParams);
   const handleBuyCredits = async () => {
     setBuyingCredits(true);
     try {
@@ -368,9 +375,9 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade, isDemo = 
             Ice IQ Coach <span className="text-[10px] bg-cyan-500 text-black px-1.5 py-0.5 rounded font-black">AI</span>
           </h3>
           <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">
-            {isNativeApp ? t('ai.usedUpDesc') : t('ai.upsellDesc')}
+            {canBuy ? t('ai.upsellDesc') : t('ai.usedUpDesc')}
           </p>
-          {!isNativeApp && (
+          {canBuy && (
           <button
             onClick={onUpgrade}
             className="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-cyan-500/20 transition-all transform hover:scale-105"
@@ -381,14 +388,14 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade, isDemo = 
           {/* Krediterna finns till just för den som inte vill binda upp sig
               i en prenumeration — utan denna är "lås upp" enda vägen ut
               härifrån, vilket motverkar hela poängen med engångsköp. */}
-          {!isNativeApp && (
+          {canBuy && (
           <button
-            onClick={handleBuyCredits}
+            onClick={buyCredits}
             disabled={buyingCredits}
             className="mt-3 inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-200 text-sm font-medium disabled:opacity-60 transition-colors"
           >
             <ShoppingCart size={14} />
-            {buyingCredits ? t('ai.buyingCredits') : t('ai.buyCreditsInstead', creditPriceParams)}
+            {buyingCredits ? t('ai.buyingCredits') : (isNativeApp ? t('iap.buyCredits') : t('ai.buyCreditsInstead', creditPriceParams))}
           </button>
           )}
         </div>
@@ -440,9 +447,9 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade, isDemo = 
             <History size={14} />
           </button>
           <button
-            onClick={isNativeApp ? undefined : handleBuyCredits}
-            disabled={buyingCredits || isNativeApp}
-            title={isNativeApp ? undefined : t('ai.buyCredits', creditPriceParams)}
+            onClick={canBuy ? buyCredits : undefined}
+            disabled={buyingCredits || !canBuy}
+            title={canBuy ? buyCreditsLabel() : undefined}
             className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-colors disabled:opacity-60 ${
               lowOnCredits
                 ? 'bg-red-500/10 border-red-500/40 animate-pulse hover:bg-red-500/20'
@@ -647,15 +654,15 @@ export default function AiCoach({ playerStats, playerEmail, onUpgrade, isDemo = 
         {error && (
           <div className="bg-red-500/10 text-red-200 p-4 rounded-lg text-sm text-center border border-red-500/20">
             <p className="mb-0">{error}</p>
-            {showUpgradeCta && !isNativeApp && (
+            {showUpgradeCta && canBuy && (
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 <button
-                  onClick={handleBuyCredits}
+                  onClick={buyCredits}
                   disabled={buyingCredits}
                   className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 disabled:opacity-60 text-white font-bold text-sm py-2 px-5 rounded-xl transition-colors"
                 >
                   <ShoppingCart size={16} />
-                  {buyingCredits ? t('ai.buyingCredits') : t('ai.buyCredits', creditPriceParams)}
+                  {buyingCredits ? t('ai.buyingCredits') : buyCreditsLabel()}
                 </button>
                 {/* Elite har inget högre steg att uppgradera till — bara
                     krediter är ett meningsfullt köp för dem här. */}

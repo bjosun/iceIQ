@@ -11,6 +11,8 @@ export interface Subscription {
   status: 'active' | 'inactive' | 'cancelled' | 'past_due';
   interval?: 'monthly' | 'yearly' | 'season';
   subscriptionEnd?: string;
+  /** Vilken kassa som äger prenumerationen (satt av webhookarna). */
+  source?: 'stripe' | 'apple';
 }
 
 interface SubscriptionContextType {
@@ -22,6 +24,8 @@ interface SubscriptionContextType {
   upgradeSubscription: (plan: 'premium' | 'elite' | 'credits' | 'season', interval: 'monthly' | 'yearly') => Promise<void>;
   manageSubscription: () => Promise<void>;
   checkUserSubscription: () => Promise<void>;
+  /** Läser om prenumerationen tills den ändrats (efter ett köp i appen). True om den ändrades. */
+  refreshAfterPurchase: () => Promise<boolean>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -75,7 +79,10 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
           plan: plan,
           status: userData.subscriptionStatus || 'active',
           interval: userData.subscriptionInterval,
-          subscriptionEnd: userData.subscriptionEnd
+          subscriptionEnd: userData.subscriptionEnd,
+          source: userData.subscriptionSource === 'apple' || userData.subscriptionSource === 'stripe'
+            ? userData.subscriptionSource
+            : undefined
         });
       } else {
         setSubscription({ plan: 'free', status: 'active' });
@@ -85,6 +92,26 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     } finally {
       setLoading(false);
     }
+  };
+
+  // Efter ett köp i appen skriver RevenueCats webhook till Firestore med någon
+  // sekunds fördröjning. Läs om en stund tills planen har ändrats.
+  const refreshAfterPurchase = async (): Promise<boolean> => {
+    if (!user) return false;
+    const { firestore } = await import('../services/firestore');
+    const before = subscription.plan;
+    for (let i = 0; i < 12; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      try {
+        const userData = await firestore.getUserData(user.uid);
+        const plan = (userData?.subscriptionPlan as SubscriptionPlan) || 'free';
+        if (plan !== before) {
+          await checkUserSubscription();
+          return true;
+        }
+      } catch { /* försök igen */ }
+    }
+    return false;
   };
 
   const upgradeSubscription = async (plan: 'premium' | 'elite' | 'credits' | 'season', interval: 'monthly' | 'yearly') => {
@@ -133,7 +160,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     isElite,
     upgradeSubscription, // Bytte namn från upgradeToPremium för att vara tydligare
     manageSubscription,
-    checkUserSubscription
+    checkUserSubscription,
+    refreshAfterPurchase
   };
 
   return (

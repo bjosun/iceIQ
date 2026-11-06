@@ -11,7 +11,7 @@ Status 2026-11-06. Bygger på `docs/ios-app-plan.md` (serversidan finns) och på
 | Fältet `subscriptionSource` (`stripe` / `apple`) som hindrar att en kassa nollar den andras prenumeration | Klart |
 | Paid Apps-avtal, bank- och skatteuppgifter | **Klart** (bekräftat av Björn 2026-11-06) |
 | RevenueCat-projekt och App Store Connect-produkter | **Oklart, kontrolleras först** (se steg 0) |
-| Klientkod (SDK, inloggning mot RevenueCat, köpskärm, Restore Purchases) | **Inte byggd** |
+| Klientkod (SDK, inloggning mot RevenueCat, köpskärm, Restore Purchases) | **Byggd 2026-11-06, avstängd** (`VITE_IAP_ENABLED=false`). iOS-bygget kompilerar med pluginet |
 | Köpskärmar i appen | Dolda med `isNativeApp` i 10 filer (se längst ned) |
 
 ## Steg 0: kontrollera vad som redan finns (10 minuter, du)
@@ -83,3 +83,17 @@ Resultatet avgör hur mycket av steg 1 till 3 som redan är gjort.
 1. Behålla både Premium och Elite i appen från start, eller börja med bara Premium och krediter? (Mindre att granska och testa.)
 2. Prisparitet mot Stripe eller Apples närmaste prispunkt?
 3. Ska krediter (`iceiq_credits_15`) vara med i första versionen eller vänta?
+
+## Byggt 2026-11-06 (avstängt tills produkterna finns)
+
+- `src/services/purchases.ts`: RevenueCat-modulen (dynamisk import, bara i appen). På när `VITE_IAP_ENABLED=true` och `VITE_REVENUECAT_IOS_KEY` börjar med `appl_`. Båda ligger i `.env` (nyckeln är satt, flaggan är `false`).
+- `src/components/modals/IapPaywall.tsx`: köpskärmen (Premium månad/år från offering `default`, krediter från offering `credits`, Restore Purchases, villkorslänkar, Apples juridiska text, "Hantera prenumeration").
+- `AuthContext`: `Purchases.logIn(uid)` vid inloggning och `logOut()` vid utloggning. Utan det ignorerar webhooken köpen.
+- `SubscriptionContext`: fältet `source` (`stripe`/`apple`) och `refreshAfterPurchase()` som väntar in webhooken.
+- `SubscriptionModal` visar köpskärmen i appen (helt avstängd när flaggan är `false`). Ingångar: Mitt konto (knapp), AI-coachens kreditknapp och slut-på-krediter-rutan.
+- Stripe-kunder i appen ser "Hanteras på webben" i stället för köpskärmen (ingen dubbelbetalning).
+
+**Att slå på (v1.1):** sätt `VITE_IAP_ENABLED=true`, deploya webhooken (`REVENUECAT_WEBHOOK_AUTH`), bygg och testa i sandbox. Lägg också till capability **In-App Purchase** i Xcode (Signing & Capabilities).
+
+**Ännu inte kopplat** (kvar att göra): fliken "Statistik & Trend" i Spelarhistorik, spelargränsmeddelandet och Elite i köpskärmen.
+

@@ -10,6 +10,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { isNativeApp } from '../../utils/platform';
+import { iapEnabled } from '../../services/purchases';
 import { appLockAvailable, appLockEnabled, setAppLockEnabled, unlockWithBiometry } from '../../utils/appLock';
 import { createStripePortalSession } from '../../services/firestore'; // Från din städade firebase.ts
 import Modal from '../ui/Modal';
@@ -21,9 +22,11 @@ interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   isPremium: boolean;
+  /** Öppnar köpskärmen. Används i iPhone-appen när köp är påslaget. */
+  onUpgrade?: () => void;
 }
 
-export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModalProps) {
+export default function ProfileModal({ isOpen, onClose, isPremium, onUpgrade }: ProfileModalProps) {
   const { user, logout, deleteAccount } = useAuth();
   const { t, language } = useLanguage();
   const { subscription } = useSubscription();
@@ -244,6 +247,11 @@ export default function ProfileModal({ isOpen, onClose, isPremium }: ProfileModa
           {isPremium && !isNativeApp && !onSeasonPass && (
             <Button variant="secondary" onClick={handleManageSubscription} loading={loading} fullWidth>
               {language === 'en' ? "Manage / Cancel Subscription" : "Hantera / Avsluta Prenumeration"}
+            </Button>
+          )}
+          {isNativeApp && iapEnabled && !onSeasonPass && onUpgrade && (
+            <Button variant="secondary" onClick={() => { onClose(); onUpgrade(); }} fullWidth>
+              {isPremium ? t('iap.manage') : t('iap.cta')}
             </Button>
           )}
         </Card>
