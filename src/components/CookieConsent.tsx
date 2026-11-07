@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { applyAdConsent } from '../utils/helpers';
+import { isNativeApp } from '../utils/platform';
 
 /**
  * Annonsdatasamtycke — samma kontrakt som company_template/components/CookieConsent:
@@ -31,6 +32,11 @@ export default function CookieConsent() {
     applyAdConsent(mode === 'all');
     setVisible(false);
   };
+
+  // Annonsdatasamtycket gäller besökare som kommer från en annons på webben. I
+  // iPhone-appen finns ingen sådan ankomst, så rutan visas inte där (den låg
+  // annars över inloggningen vid första starten).
+  if (isNativeApp) return null;
 
   return (
     <div
