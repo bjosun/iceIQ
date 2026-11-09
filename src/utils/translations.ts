@@ -68,9 +68,9 @@ export const translations = {
     // Home / Hero Section
     home: {
       badge: "Now with AI Coach",
-      heroTitle1: "Your Personal",
-      heroTitle2: "Hockey Analyst",
-      heroDesc: "Log a game in a couple of minutes and let the AI coach turn the stats into concrete advice. Simple enough for any parent, player, or coach.",
+      heroTitle1: "Track the Game.",
+      heroTitle2: "Get the Coaching.",
+      heroDesc: "Follow your player's actions in a game by tapping what happens, live or from video. Ice IQ shows what repeats from game to game, and the AI coach suggests one thing to work on next. Free to start.",
       goToDashboard: "Go to Dashboard",
       tryAiCoach: "Try the AI Coach",
       aiCardQuote: "\"Great game! You had 85% positive actions in the defensive zone. Focus on breakout passes next period.\"",
@@ -490,7 +490,7 @@ export const translations = {
     // CTA Section
     cta: {
       title: "Ready to Transform Your Game?",
-      desc: "Get started in a couple of minutes. Free, no card required.",
+      desc: "Add a player and follow your first game. Free, no card required.",
       titleUser: "Ready to analyze the next game?",
       descUser: "Your AI coach is waiting for new data."
     },
@@ -935,9 +935,9 @@ export const translations = {
     // Home / Hero Section
     home: {
       badge: "Nu med AI-coach",
-      heroTitle1: "Din personliga",
-      heroTitle2: "Hockeyanalytiker",
-      heroDesc: "Registrera en match på ett par minuter och låt AI-coachen göra om statistiken till konkreta råd. Enkelt nog för alla föräldrar, spelare och tränare.",
+      heroTitle1: "Registrera matchen.",
+      heroTitle2: "Få coachningen.",
+      heroDesc: "Följ din spelares aktioner i en match genom att trycka på det som händer, live eller från video. Ice IQ visar vad som upprepas från match till match, och AI-coachen föreslår en sak att jobba med. Gratis att börja.",
       goToDashboard: "Gå till Dashboard",
       tryAiCoach: "Testa AI-coachen",
       aiCardQuote: "\"Bra match! Du hade 85% positiva aktioner i defensiv zon. Fokusera på uppspelen i nästa period.\"",
@@ -1354,7 +1354,7 @@ export const translations = {
     // CTA Section
     cta: {
       title: "Redo att transformera ditt spel?",
-      desc: "Kom igång på ett par minuter. Gratis, inget kort krävs.",
+      desc: "Lägg till en spelare och följ din första match. Gratis, inget kort krävs.",
       titleUser: "Redo att analysera nästa match?",
       descUser: "Din AI-coach väntar på ny data."
     },

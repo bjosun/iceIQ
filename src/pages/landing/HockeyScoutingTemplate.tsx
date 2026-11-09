@@ -56,7 +56,7 @@ export default function HockeyScoutingTemplate() {
         },
       ]}
       ctaHeading="Try It Instead of a Spreadsheet"
-      ctaDesc="Log your first game in a couple of minutes and see the stats build themselves."
+      ctaDesc="Follow your first game, live or from video, and see the stats build as you tap."
     />
   );
 }

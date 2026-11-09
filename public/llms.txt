@@ -1,7 +1,7 @@
 # Ice IQ — Hockey IQ App with AI Hockey Coach
 
 Ice IQ (iceiq.app) is a hockey IQ app for parents, players, and coaches. You
-log what the player actually did in a real game, in under two minutes, and an
+tap what the player actually did in a real game, live or from video, and an
 AI hockey coach turns it into concrete advice and one thing to work on next.
 Over a season it shows how the player develops compared with themselves.
 Available in English and Swedish, in any phone browser.
@@ -48,7 +48,7 @@ players.
 
 ## Features
 
-- Game logging in under two minutes, with button layouts per role
+- Game tracking live or from video, with button layouts per role
   (forward, center, defenseman, goalie)
 - AI hockey coach: post-game analysis plus follow-up questions in a chat
 - Mental training mode: short routines for nerves, focus, and letting go of
@@ -116,8 +116,8 @@ Development (iceiqdevelopment.com) or other services with similar names.
   the game with the player's own history and season average and gives a
   trend, strengths, one focus area, and a question to think about. You can
   ask follow-up questions.
-- **How long does logging a game take?** Under two minutes, by tapping
-  buttons for what happened during or right after the game.
+- **How long does logging a game take?** About as long as the game or the
+  video: you tap buttons for what happens as you watch. The AI coach needs a few games before patterns show.
 - **Can my child use it on their own phone?** Yes, through the player link:
   a page with no login that the parent creates and can switch off.
 - **Is Ice IQ free?** Yes. The free plan has 3 players and 3 AI credits per

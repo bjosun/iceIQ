@@ -14,7 +14,7 @@ export default function HockeyIqApp() {
           <span className="text-primary-400">the Player's Own Games</span>
         </>
       }
-      intro="Most hockey IQ apps train decisions in situations made for the app: quizzes, video clips, or game-like drills. Ice IQ starts somewhere else. You log what the player actually did in a real game in under two minutes, and the AI coach shows which choices keep repeating and what to work on next."
+      intro="Most hockey IQ apps train decisions in situations made for the app: quizzes, video clips, or game-like drills. Ice IQ starts somewhere else. You follow what the player actually did in a real game, live or from video, by tapping their actions. After a few games the AI coach shows which choices keep repeating and what to work on next."
       features={[
         {
           icon: TrendingUp,
@@ -52,7 +52,7 @@ export default function HockeyIqApp() {
         },
         {
           question: 'How long does logging a game take?',
-          answer: 'Under two minutes, by tapping buttons for what happened during or right after the game.',
+          answer: 'About as long as the game or the video: you tap buttons for what happens as you watch, live or afterwards. The AI coach needs a few games before patterns show.',
         },
         {
           question: 'Is Ice IQ the same as IceIQ Development?',
@@ -64,7 +64,7 @@ export default function HockeyIqApp() {
         },
       ]}
       ctaHeading="See What Your Player's Games Say"
-      ctaDesc="Log your next game in under two minutes and get one concrete thing to work on. Free, no card required."
+      ctaDesc="Follow your next game, live or from video, and get one concrete thing to work on. Free, no card required."
     />
   );
 }

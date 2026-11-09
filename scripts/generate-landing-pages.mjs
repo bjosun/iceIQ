@@ -33,10 +33,10 @@ const pages = [
   {
     slug: 'hockey-tracking-app',
     title: 'Hockey Tracking App with an AI Coach | Ice IQ',
-    description: "Ice IQ is a hockey tracking app for parents, players, and coaches. Log a game in a couple of minutes and get concrete, AI-generated advice on what to work on next. Free to start.",
+    description: "Ice IQ is a hockey tracking app for parents, players, and coaches. Follow a game live or from video and get concrete, AI-generated advice on what to work on next. Free to start.",
     ogTitle: 'Hockey Tracking App with an AI Coach',
     h1: 'The Hockey Tracking App That Tells You What to Work On Next',
-    intro: "Most hockey tracking apps stop at a scoresheet. Ice IQ logs a game in a couple of minutes, then its AI coach turns that stat line into specific, tactical advice — for parents watching from the stands, players who want a plan, and coaches who don't have time to build one after every game.",
+    intro: "Most hockey tracking apps stop at a scoresheet. Ice IQ follows a game live or from video, then its AI coach turns that stat line into specific, tactical advice — for parents watching from the stands, players who want a plan, and coaches who don't have time to build one after every game.",
     features: [
       ['Log a Game in Minutes', 'A simple action grid for goals, assists, shots, and more — built to use rinkside, not at a desk after the fact.'],
       ['AI Coach Feedback', 'After every logged game, the AI coach reads the stats and gives tactical, specific advice instead of a raw number dump.'],
@@ -120,7 +120,7 @@ const pages = [
     description: "Most hockey IQ apps train decisions in made-up situations. Ice IQ shows how a player's decisions play out in their real games, with an AI coach and one thing to work on next. Free to start.",
     ogTitle: "A Hockey IQ App Built on the Player's Own Games",
     h1: "A Hockey IQ App Built on the Player's Own Games",
-    intro: "Most hockey IQ apps train decisions in situations made for the app: quizzes, video clips, or game-like drills. Ice IQ starts somewhere else. You log what the player actually did in a real game in under two minutes, and the AI coach shows which choices keep repeating and what to work on next.",
+    intro: "Most hockey IQ apps train decisions in situations made for the app: quizzes, video clips, or game-like drills. Ice IQ starts somewhere else. You follow what the player actually did in a real game, live or from video, by tapping their actions. After a few games the AI coach shows which choices keep repeating and what to work on next.",
     features: [
       ['Compared With Themselves', "Every game is measured against the player's own recent games and season average, never against other kids."],
       ['One Thing to Work On', 'After each game the AI coach gives a trend, strengths, and one focus area, backed by the numbers from that game.'],
@@ -131,7 +131,7 @@ const pages = [
       ['What is hockey IQ?', "A player's ability to read the game, make quick decisions, and position themselves well on the ice. Scenario apps train it in made-up situations. Ice IQ shows how those decisions actually play out in the player's own games."],
       ['Is Ice IQ a hockey IQ training app like Project Hockey or RinkIQ?', "No, it complements them. Those apps train decisions with quizzes, clips, or drills. Ice IQ tracks the player's real games and gives AI feedback on what to work on next."],
       ['Can I use Ice IQ together with a scenario app?', 'Yes. Train situations in a scenario app, then log games in Ice IQ to see whether the same decisions start showing up on the ice.'],
-      ['How long does logging a game take?', 'Under two minutes, by tapping buttons for what happened during or right after the game.'],
+      ['How long does logging a game take?', 'About as long as the game or the video: you tap buttons for what happens as you watch, live or afterwards. The AI coach needs a few games before patterns show.'],
       ['Is Ice IQ the same as IceIQ Development?', 'No. Ice IQ (iceiq.app, by SquareVerse Group AB) is not affiliated with IceIQ Development or other services with similar names.'],
       ['Is Ice IQ free?', 'Yes. The free plan includes up to 3 saved players, game scoring, game history, and 3 AI credits per month. Premium and Elite add more players, cloud sync, and more AI credits.'],
     ],
@@ -187,7 +187,7 @@ const pages = [
       ['How do you run evaluations at hockey tryouts?', 'Split players into groups, give each evaluator one sheet per group or station, and rate against the age group rather than older players. Use more than one evaluator and more than one session, and compare totals only after every session is done.'],
       ['Is the template free?', 'Yes. It is a free PDF with no account or email required. Print as many copies as you need.'],
       ['Does it work for goalies?', 'The sheets are built for skaters. Goalies need different criteria, such as positioning, rebound control, and tracking the puck, so evaluate them separately.'],
-      ['How can I follow a player after the evaluation?', 'An evaluation shows where a player is on one day. Ice IQ logs each game in under two minutes and compares the player with their own season average, so you can see whether the thing they are working on actually improves.'],
+      ['How can I follow a player after the evaluation?', 'An evaluation shows where a player is on one day. Ice IQ follows each game, live or from video, and compares the player with their own season average, so you can see whether the thing they are working on actually improves.'],
     ],
   },
 ];

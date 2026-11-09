@@ -6,7 +6,7 @@ export default function HockeyTrackingApp() {
     <LandingPage
       path="/hockey-tracking-app"
       seoTitle="Hockey Tracking App with an AI Coach | Ice IQ"
-      seoDescription="Ice IQ is a hockey tracking app for parents, players, and coaches. Log a game in a couple of minutes and get concrete, AI-generated advice on what to work on next. Free to start."
+      seoDescription="Ice IQ is a hockey tracking app for parents, players, and coaches. Follow a game live or from video and get concrete, AI-generated advice on what to work on next. Free to start."
       badge="Hockey Tracking App"
       h1={
         <>
@@ -14,7 +14,7 @@ export default function HockeyTrackingApp() {
           <span className="text-primary-400">What to Work On Next</span>
         </>
       }
-      intro="Most hockey tracking apps stop at a scoresheet. Ice IQ logs a game in a couple of minutes, then its AI coach turns that stat line into specific, tactical advice — for parents watching from the stands, players who want a plan, and coaches who don't have time to build one after every game."
+      intro="Most hockey tracking apps stop at a scoresheet. Ice IQ follows a game live or from video, then its AI coach turns that stat line into specific, tactical advice — for parents watching from the stands, players who want a plan, and coaches who don't have time to build one after every game."
       features={[
         {
           icon: Zap,
@@ -56,7 +56,7 @@ export default function HockeyTrackingApp() {
         },
       ]}
       ctaHeading="Try the Hockey Tracking App Free"
-      ctaDesc="Log your first game in a couple of minutes and see what the AI coach has to say about it."
+      ctaDesc="Follow your first game live or from video and see what the AI coach has to say about it."
     />
   );
 }

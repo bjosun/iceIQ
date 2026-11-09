@@ -1,7 +1,7 @@
 {
   "name": "Ice IQ",
   "short_name": "Ice IQ",
-  "description": "Log a hockey game in two minutes and get concrete advice from the AI hockey coach.",
+  "description": "Follow your player's actions in a hockey game and get concrete advice from the AI hockey coach.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -132,7 +132,7 @@
     {
       "heading": "After the evaluation",
       "paragraphs": [
-        "An evaluation is a snapshot. Whether a player develops shows up over a season of games, which is where Ice IQ comes in: log each game in under two minutes, and the AI coach compares the player with their own season average and suggests one thing to work on next."
+        "An evaluation is a snapshot. Whether a player develops shows up over a season of games, which is where Ice IQ comes in: follow each game live or from video by tapping the player's actions, and the AI coach compares the player with their own season average and suggests one thing to work on next."
       ],
       "link": { "text": "Why season trends matter more than single games", "path": "/youth-hockey-stats" }
     }
@@ -142,7 +142,7 @@
       "heading": "Two kinds of hockey IQ tools",
       "paragraphs": [
         "Most hockey IQ apps, such as Project Hockey, RinkIQ, Project Intuition, or Hockey IntelliGym, train decisions in situations built for the app. A clip or a drawn-up play stops, and the player picks what to do next. That is good practice for reading the game.",
-        "Ice IQ answers a different question: what did this player actually do in their last game, and which choices keep coming back? You log the game in under two minutes, and the AI coach compares it with the player's own history. Ice IQ is not a quiz or a video library, and it does not replace coaching on the ice."
+        "Ice IQ answers a different question: what did this player actually do in their last game, and which choices keep coming back? You follow the game live or from video by tapping the player's actions, and the AI coach compares it with the player's own history. Ice IQ is not a quiz or a video library, and it does not replace coaching on the ice."
       ]
     },
     {

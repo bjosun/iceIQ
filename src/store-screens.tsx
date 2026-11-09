@@ -27,7 +27,7 @@ try { localStorage.setItem('iceiq-language', lang) } catch { /* */ }
 
 const CAPTIONS: Record<string, string[]> = {
   sv: [
-    'Logga matchen på ett par minuter',
+    'Följ din spelares aktioner i matchen',
     'Se hur det gick, mot ditt eget snitt',
     'Coachen: det som gick bra och något att tänka på',
     'Följ utvecklingen över säsongen',
@@ -35,7 +35,7 @@ const CAPTIONS: Record<string, string[]> = {
     'Dela en matchbild med laget',
   ],
   en: [
-    'Log a game in a couple of minutes',
+    'Follow your player\'s actions in the game',
     'See how it went, against your own average',
     'The coach: what went well and something to think about',
     'Follow the progress through the season',

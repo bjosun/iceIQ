@@ -272,12 +272,12 @@ const buildWelcomeEmail = (lang, displayName) => {
   const steps = en
     ? [
         ["Add a player", "Name is enough to get started."],
-        ["Log a game", "Tap the actions as they happen, or fill it in afterwards — takes about two minutes."],
+        ["Log a game", "Tap the actions as they happen, live or from video, or fill it in afterwards from what you remember."],
         ["Ask the AI coach", "Get a concrete read on the game and how things are trending."],
       ]
     : [
         ["Lägg till en spelare", "Namnet räcker för att komma igång."],
-        ["Logga en match", "Tryck på händelserna medan de sker, eller fyll i efteråt — tar ett par minuter."],
+        ["Logga en match", "Tryck på händelserna medan de sker, live eller från video, eller fyll i efteråt utifrån det du minns."],
         ["Fråga AI-coachen", "Få en konkret bild av matchen och hur utvecklingen ser ut."],
       ];
 
@@ -2306,7 +2306,7 @@ const buildActivationNudgeEmail = (lang, displayName, kind, uid) => {
 
   const subject = noPlayer
     ? (en ? "Your Ice IQ account is ready — add a player" : "Ditt Ice IQ-konto är redo — lägg till en spelare")
-    : (en ? "Your first game takes about two minutes" : "Din första match tar ett par minuter");
+    : (en ? "Add your first game to Ice IQ" : "Lägg in din första match i Ice IQ");
 
   const steps = noPlayer
     ? (en

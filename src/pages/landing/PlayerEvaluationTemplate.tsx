@@ -67,11 +67,11 @@ export default function PlayerEvaluationTemplate() {
         },
         {
           question: 'How can I follow a player after the evaluation?',
-          answer: "An evaluation shows where a player is on one day. Ice IQ logs each game in under two minutes and compares the player with their own season average, so you can see whether the thing they are working on actually improves.",
+          answer: "An evaluation shows where a player is on one day. Ice IQ follows each game, live or from video, and compares the player with their own season average, so you can see whether the thing they are working on actually improves.",
         },
       ]}
       ctaHeading="Follow Development After Tryouts"
-      ctaDesc="Log games in under two minutes and get one concrete thing to work on after each one. Free to start, no card required."
+      ctaDesc="Follow games live or from video and get one concrete thing to work on after each one. Free to start, no card required."
     />
   );
 }
