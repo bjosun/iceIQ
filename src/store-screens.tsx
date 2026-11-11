@@ -75,7 +75,14 @@ function CountedGrid() {
     if (negatives[0]) next[JSON.stringify(negatives[0].name)] = 1
     setCounts(next)
   }, [currentTemplate])
-  return <ActionGrid actionCounts={counts} onCountChange={setCounts} />
+  // Skärmdumpen visar bara knapparna: skärmlås- och effektrutorna överst och
+  // "Lägg till knapp"-rutan längst ned döljs (den senare finns ännu inte i den
+  // släppta appen).
+  return (
+    <div className="[&>div>div:nth-child(-n+2)]:hidden [&_button.border-dashed]:hidden">
+      <ActionGrid actionCounts={counts} onCountChange={setCounts} />
+    </div>
+  )
 }
 
 function ReportImage() {
@@ -109,7 +116,7 @@ function Screen() {
     <div className="bg-[#0b1220] min-h-screen" style={{ width: W, height: H, overflow: 'hidden' }}>
       <Caption text={caption} />
       <div style={{ paddingTop: 150 }} className="px-4">
-        {slide === 1 && <div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', marginTop: -140 }}><CountedGrid /></div>}
+        {slide === 1 && <div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', marginTop: 0 }}><CountedGrid /></div>}
         {slide === 2 && (
           <MatchSummaryReveal
             isOpen onContinue={() => {}} onClose={() => {}} playerName="Elias" points={18}

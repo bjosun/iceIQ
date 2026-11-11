@@ -39,7 +39,7 @@ Följ din spelares aktioner i en match genom att trycka på det som händer: pas
 SÅ FUNGERAR DET
 • Skapa ett gratis konto, lägg till en spelare och välj en mall
 • Tryck in händelserna medan du tittar, live eller från video
-• Spara och få en sammanfattning, märken för vana och framsteg, och något att tänka på till nästa gång
+• Spara och få en sammanfattning, en jämförelse med spelarens eget snitt, och något att tänka på till nästa gång
 
 AI-COACH
 Ice IQ Coach läser matchstatistiken och ger konkret feedback: det som gick bra och det som är värt att öva på. Du bestämmer själv när du frågar. Spelarens uppgifter skickas bara efter ditt godkännande.
@@ -75,7 +75,7 @@ Follow your player's actions in a game by tapping what happens: passes, tackles,
 HOW IT WORKS
 • Create a free account, add a player and pick a template
 • Tap the events as you watch, live or from video
-• Save it and get a recap, badges for habits and progress, and something to think about for next time
+• Save it and get a recap, a comparison with the player's own average, and something to think about for next time
 
 AI COACH
 Ice IQ Coach reads the game stats and gives concrete feedback: what went well and what is worth practising. You decide when to ask. The player's information is only sent after you agree to it.
@@ -102,9 +102,9 @@ Färdiga i `marketing/app-store-screenshots/sv/` och `.../en/` (1320 × 2868, iP
 | # | Rubrik (sv) | Visar |
 |---|---|---|
 | 01 | Följ din spelares aktioner i matchen | Inmatningen med stora knappar |
-| 02 | Se hur det gick, mot ditt eget snitt | Sammanfattningen, märken, "att jobba på" |
+| 02 | Se hur det gick, mot ditt eget snitt | Sammanfattningen, "att jobba på" |
 | 03 | Coachen: det som gick bra och något att tänka på | Coachens svar och de två korten |
-| 04 | Följ utvecklingen över säsongen | Kurvan, nyckeltal och märkeshyllan |
+| 04 | Följ utvecklingen över säsongen | Kurvan, nyckeltal |
 | 05 | Lyssna på matchen i korta klipp | Lyssnakortet |
 | 06 | Dela en matchbild med laget | Matchrapporten som bild |
 

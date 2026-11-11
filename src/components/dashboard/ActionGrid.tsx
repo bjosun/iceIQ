@@ -442,7 +442,7 @@ export default function ActionGrid({ actionCounts, onCountChange, onUpgrade }: A
             {t('positiveActions')}
           </h2>
           <span className="px-3 py-1 bg-green-900/30 text-green-400 rounded-full text-sm">
-            +{calculatePoints(positiveActions)} pts
+            +{calculatePoints(positiveActions)} {language === 'sv' ? 'p' : 'pts'}
           </span>
         </div>
         {grid
@@ -461,7 +461,7 @@ export default function ActionGrid({ actionCounts, onCountChange, onUpgrade }: A
             {t('negativeActions')}
           </h2>
           <span className="px-3 py-1 bg-red-900/30 text-red-400 rounded-full text-sm">
-            {calculatePoints(negativeActions)} pts
+            {calculatePoints(negativeActions)} {language === 'sv' ? 'p' : 'pts'}
           </span>
         </div>
         {grid ? renderTiles(grid.negative, false, { compact: true, extra: addTile }) : renderTiles(negativeActions, false)}
