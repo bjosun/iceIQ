@@ -34,6 +34,20 @@ const revenueCatWebhookAuth = defineSecret('REVENUECAT_WEBHOOK_AUTH');
 // Stripes success/cancel-redirect måste peka hit, annars landar kunden
 // på fel sajt efter betalning.
 const APP_URL = "https://iceiq.app";
+
+// App Store-länken i mejlen. Samma id och leverantörstoken (pt) som webben
+// använder i src/utils/appStore.ts; ct är kampanjnamnet så att App Store
+// Connect visar vilket mejl som gav installationen.
+const APP_STORE_BASE = "https://apps.apple.com/app/id6821041037";
+const APP_STORE_PT = "129588435";
+const appStoreLinkHtml = (lang, campaign) => {
+  const en = lang === 'en';
+  const url = `${APP_STORE_BASE}?pt=${APP_STORE_PT}&ct=${campaign}&mt=8`;
+  return `<p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">
+        ${en ? "Ice IQ also works as an iPhone app:" : "Ice IQ finns också som app för iPhone:"}
+        <a href="${url}" style="color:#0891b2;">${en ? "get it on the App Store" : "ladda ner i App Store"}</a>
+      </p>`;
+};
 const APP_ID = "default-app-id";
 const FREE_MONTHLY_CREDITS = 3; // Gratisplanens AI-krediter per månad
 
@@ -300,8 +314,8 @@ const buildWelcomeEmail = (lang, displayName) => {
       </p>
       <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
         ${en
-          ? "Ice IQ turns a couple of minutes of match logging into a clear picture of how a player is developing — no spreadsheets, no guesswork."
-          : "Ice IQ gör om ett par minuters matchloggning till en tydlig bild av hur en spelare utvecklas — inga kalkylark, ingen gissning."}
+          ? "Ice IQ turns the games you follow into a clear picture of how a player is developing — no spreadsheets, no guesswork."
+          : "Ice IQ gör om matcherna du följer till en tydlig bild av hur en spelare utvecklas — inga kalkylark, ingen gissning."}
       </p>
       <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">${stepRows}</table>
       <p style="margin:28px 0;">
@@ -309,6 +323,7 @@ const buildWelcomeEmail = (lang, displayName) => {
           ${en ? "Open Ice IQ" : "Öppna Ice IQ"}
         </a>
       </p>
+      ${appStoreLinkHtml(lang, 'welcome_email')}
       <p style="color:#6b7280;font-size:14px;line-height:1.6;">
         ${en
           ? "Questions or feedback? Just reply to this email — we read everything."
@@ -2362,6 +2377,7 @@ const buildActivationNudgeEmail = (lang, displayName, kind, uid) => {
           ${en ? "Open Ice IQ" : "Öppna Ice IQ"}
         </a>
       </p>
+      ${appStoreLinkHtml(lang, 'nudge_email')}
       ${uid ? feedbackBlockHtml(uid, lang) : ''}
       <p style="color:#6b7280;font-size:14px;line-height:1.6;">
         ${en
