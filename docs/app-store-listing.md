@@ -28,7 +28,7 @@ Tonen följer [copy-tonen](../README.md): inga påståenden om antal användare,
 (100 tecken. Ord som redan står i namn eller undertitel ska inte upprepas, och Apple tittar inte på mellanslag.)
 
 **Marknadstext (max 170, kan ändras utan ny granskning):**
-Följ din spelares aktioner i en match, live eller från video, och få konkreta råd av AI-coachen. Gratis att börja. För föräldrar, spelare och tränare.
+Följ din spelares aktioner i en match, live eller från video, och få konkreta råd av AI-coachen. Gratis. Skapa konto för att börja. För föräldrar, spelare och tränare.
 
 **Beskrivning:**
 ```
@@ -37,7 +37,7 @@ Ice IQ gör det enkelt att hålla koll på en hockeyspelares utveckling.
 Följ din spelares aktioner i en match genom att trycka på det som händer: pass, tacklingar, mål. Gör det live eller från video, eller fyll i efteråt utifrån det du minns. Se hur spelaren utvecklas över säsongen, mot sitt eget snitt. En match ger lite, fem ger mönster.
 
 SÅ FUNGERAR DET
-• Lägg till en spelare och välj en mall
+• Skapa ett gratis konto, lägg till en spelare och välj en mall
 • Tryck in händelserna medan du tittar, live eller från video
 • Spara och få en sammanfattning, märken för vana och framsteg, och något att tänka på till nästa gång
 
@@ -64,7 +64,7 @@ Ice IQ drivs av SquareVerse Group AB.
 **Name:** `Ice IQ – Hockey Stats`
 **Subtitle:** `Game stats & AI coach` (21)
 **Keywords (max 100):** `hockey,youth hockey,stats,tracker,parents,player development,scouting,ice hockey,game log,coach` (95)
-**Promotional text:** Follow your player's actions in a game, live or from video, and get concrete advice from the AI coach. Free to start. For parents, players and coaches.
+**Promotional text:** Follow your player's actions in a game, live or from video, and get concrete advice from the AI coach. Free. Create an account to start. For parents, players and coaches.
 
 **Description:**
 ```
@@ -73,7 +73,7 @@ Ice IQ makes it easy to follow a hockey player's development.
 Follow your player's actions in a game by tapping what happens: passes, tackles, goals. Do it live or from video, or fill it in afterwards from what you remember. See how the player develops through the season, measured against their own average. One game tells you little, five show patterns.
 
 HOW IT WORKS
-• Add a player and pick a template
+• Create a free account, add a player and pick a template
 • Tap the events as you watch, live or from video
 • Save it and get a recap, badges for habits and progress, and something to think about for next time
 
