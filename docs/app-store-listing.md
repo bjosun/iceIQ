@@ -28,17 +28,17 @@ Tonen följer [copy-tonen](../README.md): inga påståenden om antal användare,
 (100 tecken. Ord som redan står i namn eller undertitel ska inte upprepas, och Apple tittar inte på mellanslag.)
 
 **Marknadstext (max 170, kan ändras utan ny granskning):**
-Logga en match på ett par minuter och få konkreta råd av AI-coachen. Enkelt nog för alla föräldrar, spelare och tränare.
+Följ din spelares aktioner i en match, live eller från video, och få konkreta råd av AI-coachen. Gratis att börja. För föräldrar, spelare och tränare.
 
 **Beskrivning:**
 ```
 Ice IQ gör det enkelt att hålla koll på en hockeyspelares utveckling.
 
-Logga en match på ett par minuter. Tryck på det som händer: pass, tacklingar, mål. Se hur spelaren utvecklas över säsongen, mot sitt eget snitt.
+Följ din spelares aktioner i en match genom att trycka på det som händer: pass, tacklingar, mål. Gör det live eller från video, eller fyll i efteråt utifrån det du minns. Se hur spelaren utvecklas över säsongen, mot sitt eget snitt. En match ger lite, fem ger mönster.
 
 SÅ FUNGERAR DET
 • Lägg till en spelare och välj en mall
-• Tryck in händelserna under matchen
+• Tryck in händelserna medan du tittar, live eller från video
 • Spara och få en sammanfattning, märken för vana och framsteg, och något att tänka på till nästa gång
 
 AI-COACH
@@ -64,17 +64,17 @@ Ice IQ drivs av SquareVerse Group AB.
 **Name:** `Ice IQ – Hockey Stats`
 **Subtitle:** `Game stats & AI coach` (21)
 **Keywords (max 100):** `hockey,youth hockey,stats,tracker,parents,player development,scouting,ice hockey,game log,coach` (95)
-**Promotional text:** Log a game in a couple of minutes and get concrete advice from the AI coach. Simple enough for any parent, player or coach.
+**Promotional text:** Follow your player's actions in a game, live or from video, and get concrete advice from the AI coach. Free to start. For parents, players and coaches.
 
 **Description:**
 ```
 Ice IQ makes it easy to follow a hockey player's development.
 
-Log a game in a couple of minutes. Tap what happens: passes, tackles, goals. See how the player develops through the season, measured against their own average.
+Follow your player's actions in a game by tapping what happens: passes, tackles, goals. Do it live or from video, or fill it in afterwards from what you remember. See how the player develops through the season, measured against their own average. One game tells you little, five show patterns.
 
 HOW IT WORKS
 • Add a player and pick a template
-• Tap the events during the game
+• Tap the events as you watch, live or from video
 • Save it and get a recap, badges for habits and progress, and something to think about for next time
 
 AI COACH
@@ -101,7 +101,7 @@ Färdiga i `marketing/app-store-screenshots/sv/` och `.../en/` (1320 × 2868, iP
 
 | # | Rubrik (sv) | Visar |
 |---|---|---|
-| 01 | Logga matchen på ett par minuter | Inmatningen med stora knappar |
+| 01 | Följ din spelares aktioner i matchen | Inmatningen med stora knappar |
 | 02 | Se hur det gick, mot ditt eget snitt | Sammanfattningen, märken, "att jobba på" |
 | 03 | Coachen: det som gick bra och något att tänka på | Coachens svar och de två korten |
 | 04 | Följ utvecklingen över säsongen | Kurvan, nyckeltal och märkeshyllan |
